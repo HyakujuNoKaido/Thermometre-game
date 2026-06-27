@@ -205,7 +205,7 @@
       letter-spacing:.12em;
       color:#0f172a;
       background:rgba(15,23,42,.06);
-      transition:background .18s ease,color .18s ease,box-shadow .18s ease,transform .12s ease;
+      transition:background .18s ease,color .18s ease,box-shadow .18s.ease,transform .12s ease;
     }
     .mode-btn.active{
       background:#0f172a;
@@ -244,7 +244,7 @@
       align-items:center;
       justify-content:center;
       gap:.4rem;
-      transition:transform .12s ease, box-shadow .12s ease, background .12s.ease, color .12s ease;
+      transition:transform .12s ease, box-shadow .12s ease, background .12s ease, color .12s ease;
     }
     .btn-primary{
       background:var(--mode-main);
@@ -542,13 +542,16 @@
   <div class="confetti" id="confettiRoot"></div>
 
   <script>
-    const MODES = {
+    function $(sel){ return document.querySelector(sel); }
+    function $all(sel){ return Array.prototype.slice.call(document.querySelectorAll(sel)); }
+
+    var MODES = {
       Chill: { bg:'var(--chill-bg)', main:'var(--chill-main)', soft:'var(--chill-soft)', label:'Chill' },
       Spicy: { bg:'var(--spicy-bg)', main:'var(--spicy-main)', soft:'var(--spicy-soft)', label:'Spicy' },
       Hardcore: { bg:'var(--hard-bg)', main:'var(--hard-main)', soft:'var(--hard-soft)', label:'Hardcore' }
     };
 
-    const QUESTION_BANK = {
+    var QUESTION_BANK = {
       Chill: [
         'Quel pourcentage de {name} est susceptible de s’endormir devant un film avant le générique ?',
         'Quel pourcentage de {name} a le pire sens de l’orientation du groupe ?',
@@ -572,7 +575,7 @@
       ]
     };
 
-    const ACTION_CARDS = {
+    var ACTION_CARDS = {
       Chill: [
         'Carte action : tout le monde sauf {name} boit 2 gorgées.',
         'Carte action : {name} choisit quelqu’un qui boit 3 gorgées.'
@@ -587,14 +590,14 @@
       ]
     };
 
-    const JOKERS = [
+    var JOKERS = [
       { key:'SHIELD', label:'Bouclier', desc:'Annule tes gorgées une fois.' },
       { key:'MIRROR', label:'Miroir', desc:'Envoie tes gorgées à quelqu’un d’autre.' },
       { key:'DOUBLE', label:'Double ou rien', desc:'Tente d’annuler ou de doubler ton malus.' },
       { key:'SWAP', label:'Swap', desc:'Échange de score avec un autre joueur.' }
-    };
+    ];
 
-    const state = {
+    var state = {
       role: null,
       mode: 'Chill',
       roomCode: null,
@@ -611,72 +614,78 @@
       currentResult: null
     };
 
-    const $ = sel => document.querySelector(sel);
-    const $$ = sel => Array.from(document.querySelectorAll(sel));
-
     function uid(){ return Math.random().toString(36).slice(2,9); }
+
+    function stringReplaceAll(str, search, replacement){
+      return str.split(search).join(replacement);
+    }
 
     function applyMode(mode){
       state.mode = mode;
-      const m = MODES[mode];
-      const root = document.documentElement;
-      const bgVal = getComputedStyle(root).getPropertyValue(m.bg.replace('var(','').replace(')','')).trim() || '#c7f3ff';
-      const mainVal = getComputedStyle(root).getPropertyValue(m.main.replace('var(','').replace(')','')).trim() || '#36d9ff';
-      const softVal = getComputedStyle(root).getPropertyValue(m.soft.replace('var(','').replace(')','')).trim() || '#e5f8ff';
+      var m = MODES[mode];
+      var root = document.documentElement;
+      function resolveVar(v){
+        var name = v.replace('var(','').replace(')','');
+        return getComputedStyle(root).getPropertyValue(name).trim();
+      }
+      var bgVal = resolveVar(m.bg) || '#c7f3ff';
+      var mainVal = resolveVar(m.main) || '#36d9ff';
+      var softVal = resolveVar(m.soft) || '#e5f8ff';
       root.style.setProperty('--mode-bg', bgVal);
       root.style.setProperty('--mode-main', mainVal);
       root.style.setProperty('--mode-soft', softVal);
-      document.body.style.background = `radial-gradient(circle at top, rgba(255,255,255,0.9), ${bgVal})`;
-      $('main').style.background = `radial-gradient(circle at top, #ffffff, ${softVal})`;
-      $$('.mode-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
-      const label = $('#modeLabel');
-      if(label) label.textContent = `Mode ${m.label}`;
-      const brandIcon = $('#brandIcon');
+      document.body.style.background = 'radial-gradient(circle at top, rgba(255,255,255,0.9), '+bgVal+')';
+      document.querySelector('main').style.background = 'radial-gradient(circle at top, #ffffff, '+softVal+')';
+      $all('.mode-btn').forEach(function(b){ b.classList.toggle('active', b.getAttribute('data-mode') === mode); });
+      var label = $('#modeLabel');
+      if(label){ label.textContent = 'Mode '+m.label; }
+      var brandIcon = $('#brandIcon');
       if(brandIcon){
         brandIcon.classList.remove('bump');
         void brandIcon.offsetWidth;
         brandIcon.classList.add('bump');
-        setTimeout(()=>brandIcon.classList.remove('bump'),250);
+        setTimeout(function(){ brandIcon.classList.remove('bump'); },250);
       }
     }
 
     function updateStepper(step){
-      $$('#stepper .step-pill').forEach(p => {
-        const s = p.dataset.step;
+      $all('#stepper .step-pill').forEach(function(p){
+        var s = p.getAttribute('data-step');
         p.classList.toggle('active', s === step);
       });
     }
 
     function showScreen(id){
-      const target = $('#'+id);
-      const step = target?.dataset.step || 'lobby';
-      $$('.screen').forEach(s => s.classList.remove('active'));
-      if(target){
-        target.classList.add('active');
+      var target = document.getElementById(id);
+      var step = 'lobby';
+      if(target && target.getAttribute('data-step')){
+        step = target.getAttribute('data-step');
       }
+      $all('.screen').forEach(function(s){ s.classList.remove('active'); });
+      if(target){ target.classList.add('active'); }
       updateStepper(step);
     }
 
     function roomCode(){
-      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-      let code='';
-      for(let i=0;i<4;i++) code += chars[Math.floor(Math.random()*chars.length)];
+      var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      var code='';
+      for(var i=0;i<4;i++) code += chars[Math.floor(Math.random()*chars.length)];
       return code;
     }
 
     function renderPlayers(){
-      const container = $('#playersList');
+      var container = $('#playersList');
       if(!container) return;
       container.innerHTML = '';
-      state.players.forEach(p => {
-        const span = document.createElement('span');
+      state.players.forEach(function(p){
+        var span = document.createElement('span');
         span.className = 'pill';
-        const streak = state.streaks[p.id] || 0;
-        span.textContent = p.name;
+        var streak = state.streaks[p.id] || 0;
+        span.appendChild(document.createTextNode(p.name));
         if(streak >= 2){
-          const b = document.createElement('span');
+          var b = document.createElement('span');
           b.className = 'streak-badge';
-          b.textContent = `🔥 x${streak}`;
+          b.textContent = '🔥 x'+streak;
           span.appendChild(b);
         }
         container.appendChild(span);
@@ -684,12 +693,12 @@
     }
 
     function assignJoker(){
-      const j = JOKERS[Math.floor(Math.random()*JOKERS.length)];
+      var j = JOKERS[Math.floor(Math.random()*JOKERS.length)];
       return j.key;
     }
 
     function createHost(){
-      const name = $('#hostName').value.trim().slice(0,20);
+      var name = $('#hostName').value.trim().slice(0,20);
       if(!name){ alert('Entre ton prénom.'); return; }
       state.role = 'HOST';
       state.roomCode = roomCode();
@@ -702,11 +711,13 @@
       showScreen('screen-host-lobby');
     }
 
-    function addPlayerInternal(name, isHost=false){
-      const clean = name.trim().slice(0,20);
+    function addPlayerInternal(name, isHost){
+      if(isHost === void 0) isHost = false;
+      var clean = name.trim().slice(0,20);
       if(!clean) return;
-      if(state.players.some(p => p.name.toLowerCase() === clean.toLowerCase())) return;
-      const p = { id: uid(), name: clean, joker: assignJoker(), jokerUsed:false };
+      var duplicate = state.players.some(function(p){ return p.name.toLowerCase() === clean.toLowerCase(); });
+      if(duplicate) return;
+      var p = { id: uid(), name: clean, joker: assignJoker(), jokerUsed:false };
       state.players.push(p);
       state.scores[p.id] = 0;
       state.streaks[p.id] = 0;
@@ -715,53 +726,53 @@
     }
 
     function addPlayerFromLobby(){
-      const input = $('#newPlayerName');
-      const name = input.value.trim();
+      var input = $('#newPlayerName');
+      var name = input.value.trim();
       if(!name){ alert('Entre un prénom.'); return; }
       addPlayerInternal(name, false);
       input.value = '';
     }
 
     function joinRoomPrototype(){
-      const code = $('#joinCode').value.trim().toUpperCase();
-      const name = $('#joinName').value.trim().slice(0,20);
+      var code = $('#joinCode').value.trim().toUpperCase();
+      var name = $('#joinName').value.trim().slice(0,20);
       if(!code || !name){ alert('Entre le code et ton prénom.'); return; }
       if(!state.roomCode){
         state.roomCode = code;
         $('#roomCodeHost').textContent = code;
       }
       addPlayerInternal(name, false);
-      alert("Dans ce prototype, tout tourne encore sur un seul appareil. Sur un vrai backend, ce bouton connecterait ton téléphone au salon "+code+".");
+      alert('Dans ce prototype, tout tourne encore sur un seul appareil. Sur un vrai backend, ce bouton connecterait ton téléphone au salon '+code+'.');
       showScreen('screen-host-lobby');
     }
 
     function randomItem(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
 
     function buildQuestion(){
-      const target = randomItem(state.players);
+      var target = randomItem(state.players);
       state.currentTargetId = target.id;
-      const roll = Math.random();
+      var roll = Math.random();
       if(roll < 0.2){
-        const actionTemplate = randomItem(ACTION_CARDS[state.mode] || []);
+        var actionTemplate = randomItem(ACTION_CARDS[state.mode] || []);
         state.currentCardType = 'ACTION';
-        state.currentQuestion = actionTemplate.replaceAll('{name}', target.name);
+        state.currentQuestion = stringReplaceAll(actionTemplate, '{name}', target.name);
       } else {
-        const qTemplate = randomItem(QUESTION_BANK[state.mode] || []);
+        var qTemplate = randomItem(QUESTION_BANK[state.mode] || []);
         state.currentCardType = 'PERCENT';
-        state.currentQuestion = qTemplate.replaceAll('{name}', target.name);
+        state.currentQuestion = stringReplaceAll(qTemplate, '{name}', target.name);
       }
     }
 
     function thermometerGradient(value){
-      const v = Math.max(0, Math.min(100, value));
-      const hue = 190 - v * 1.2;
-      const h2 = hue - 40;
-      return `linear-gradient(180deg, hsl(${hue},85%,55%), hsl(${h2},90%,45%))`;
+      var v = Math.max(0, Math.min(100, value));
+      var hue = 190 - v * 1.2;
+      var h2 = hue - 40;
+      return 'linear-gradient(180deg, hsl('+hue+',85%,55%), hsl('+h2+',90%,45%))';
     }
 
     function setThermo(el, value){
-      const v = Math.max(0, Math.min(100, value));
-      const h = 15 + v * 0.7;
+      var v = Math.max(0, Math.min(100, value));
+      var h = 15 + v * 0.7;
       el.style.height = h + '%';
       el.style.background = thermometerGradient(v);
     }
@@ -784,12 +795,12 @@
     }
 
     function showVoteScreen(){
-      const target = state.players.find(p => p.id === state.currentTargetId);
-      $('#questionTag').textContent = `Manche ${state.round} • Cible : ${target.name}`;
+      var target = state.players.filter(function(p){ return p.id === state.currentTargetId; })[0];
+      $('#questionTag').textContent = 'Manche '+state.round+' • Cible : '+target.name;
       $('#questionText').textContent = state.currentQuestion;
-      $('#modeLabel').textContent = `Mode ${MODES[state.mode].label}`;
-      const slider = $('#voteSlider');
-      const startVal = 50;
+      $('#modeLabel').textContent = 'Mode '+MODES[state.mode].label;
+      var slider = $('#voteSlider');
+      var startVal = 50;
       slider.value = startVal;
       $('#sliderValue').textContent = startVal;
       setThermo($('#thermoVote'), startVal);
@@ -799,7 +810,7 @@
     }
 
     function showActionCard(){
-      $('#revealTag').textContent = `Manche ${state.round} • Carte action`;
+      $('#revealTag').textContent = 'Manche '+state.round+' • Carte action';
       $('#revealQuestion').textContent = state.currentQuestion;
       $('#averageValue').textContent = '--';
       setThermo($('#thermoReveal'), 50);
@@ -814,15 +825,15 @@
     function startTimer(){
       clearInterval(state.timerId);
       state.timeLeft = 15;
-      const label = $('#timerLabel');
+      var label = $('#timerLabel');
       label.classList.remove('urgent');
       label.textContent = '15 s restantes';
-      state.timerId = setInterval(() => {
+      state.timerId = setInterval(function(){
         state.timeLeft -= 1;
         if(state.timeLeft <= 0){
           clearInterval(state.timerId);
           label.classList.remove('urgent');
-          label.textContent = "Temps écoulé, vote auto.";
+          label.textContent = 'Temps écoulé, vote auto.';
           if(Object.keys(state.votes).length < state.players.length){
             submitVote(true);
           }
@@ -836,17 +847,18 @@
     }
 
     function handleSliderInput(e){
-      const v = Number(e.target.value);
+      var v = Number(e.target.value);
       $('#sliderValue').textContent = v;
       setThermo($('#thermoVote'), v);
     }
 
-    function submitVote(auto=false){
-      const slider = $('#voteSlider');
-      let value = Number(slider.value);
+    function submitVote(auto){
+      if(auto === void 0) auto = false;
+      var slider = $('#voteSlider');
+      var value = Number(slider.value);
       if(auto){ value = Math.floor(Math.random()*101); }
-      const everyone = state.players;
-      everyone.forEach(p => {
+      var everyone = state.players;
+      everyone.forEach(function(p){
         if(state.votes[p.id] == null){ state.votes[p.id] = auto ? Math.floor(Math.random()*101) : value; }
       });
       clearInterval(state.timerId);
@@ -854,58 +866,60 @@
     }
 
     function autoVoteAll(){
-      const everyone = state.players;
-      everyone.forEach(p => { state.votes[p.id] = Math.floor(Math.random()*101); });
+      var everyone = state.players;
+      everyone.forEach(function(p){ state.votes[p.id] = Math.floor(Math.random()*101); });
       clearInterval(state.timerId);
       reveal();
     }
 
     function reveal(){
-      const votes = Object.values(state.votes);
-      const avg = Math.round(votes.reduce((a,b)=>a+b,0)/votes.length);
-      const average = avg;
-      const target = state.players.find(p => p.id === state.currentTargetId);
-      const targetVote = state.votes[target.id] ?? 50;
-      const diff = Math.abs(targetVote - average);
+      var votes = Object.keys(state.votes).map(function(id){ return state.votes[id]; });
+      var sum = votes.reduce(function(a,b){ return a+b; }, 0);
+      var avg = Math.round(sum / votes.length);
+      var average = avg;
+      var target = state.players.filter(function(p){ return p.id === state.currentTargetId; })[0];
+      var targetVote = (state.votes[target.id] != null) ? state.votes[target.id] : 50;
+      var diff = Math.abs(targetVote - average);
 
-      let sips = 1;
+      var sips = 1;
       if(diff > 20) sips = 2;
       if(diff > 40) sips = 4;
       if(state.mode === 'Hardcore') sips += 1;
 
       state.scores[target.id] = (state.scores[target.id] || 0) + diff;
 
-      Object.entries(state.votes).forEach(([id,val]) => {
-        const d = Math.abs(val - average);
+      Object.keys(state.votes).forEach(function(id){
+        var val = state.votes[id];
+        var d = Math.abs(val - average);
         if(d <= 10){ state.streaks[id] = (state.streaks[id] || 0) + 1; }
         else { state.streaks[id] = 0; }
       });
 
       state.currentResult = {
-        average,
-        diff,
-        sips,
+        average: average,
+        diff: diff,
+        sips: sips,
         targetId: target.id,
         targetName: target.name,
         jokerApplied:false
       };
 
-      $('#revealTag').textContent = `Manche ${state.round}`;
+      $('#revealTag').textContent = 'Manche '+state.round;
       $('#revealQuestion').textContent = state.currentQuestion;
       $('#averageValue').textContent = average + '%';
       setThermo($('#thermoReveal'), average);
 
-      const close = diff <= 15;
+      var close = diff <= 15;
       if(close){
-        $('#verdictText').textContent = `Bien deviné : la moyenne est à ${average} %. Tout le monde boit 1 gorgée.`;
+        $('#verdictText').textContent = 'Bien deviné : la moyenne est à '+average+' %. Tout le monde boit 1 gorgée.';
       } else {
-        $('#verdictText').textContent = `${target.name} boit ${sips} gorgée${sips>1?'s':''} à cause de ses ${diff} points d'écart avec la moyenne (${average} %).`;
+        $('#verdictText').textContent = target.name+' boit '+sips+' gorgée'+(sips>1?'s':'')+' à cause de ses '+diff+' points d ecart avec la moyenne ('+average+' %).';
       }
 
-      const player = target;
-      const joker = JOKERS.find(j => j.key === player.joker) || JOKERS[0];
-      $('#jokerInfo').textContent = player.jokerUsed ? 'Joker déjà utilisé.' : `Joker de ${player.name} : ${joker.label} – ${joker.desc}`;
-      $('#useJokerBtn').style.display = player.jokerUsed || sips === 0 ? 'none' : 'inline-flex';
+      var player = target;
+      var joker = JOKERS.filter(function(j){ return j.key === player.joker; })[0] || JOKERS[0];
+      $('#jokerInfo').textContent = player.jokerUsed ? 'Joker déjà utilisé.' : 'Joker de '+player.name+' : '+joker.label+' – '+joker.desc;
+      $('#useJokerBtn').style.display = (player.jokerUsed || sips === 0) ? 'none' : 'inline-flex';
 
       renderPlayers();
       if(state.round === 1){
@@ -916,39 +930,39 @@
     }
 
     function useJoker(){
-      const r = state.currentResult;
+      var r = state.currentResult;
       if(!r || r.jokerApplied) return;
-      const target = state.players.find(p => p.id === r.targetId);
-      const joker = JOKERS.find(j => j.key === target.joker);
-      if(target.jokerUsed || !joker) return;
+      var target = state.players.filter(function(p){ return p.id === r.targetId; })[0];
+      var joker = JOKERS.filter(function(j){ return j.key === target.joker; })[0];
+      if(!joker || target.jokerUsed) return;
 
       if(joker.key === 'SHIELD'){
         state.scores[target.id] -= r.diff;
         r.sips = 0; r.diff = 0;
-        $('#verdictText').textContent = `${target.name} utilise Bouclier : aucune gorgée, aucun malus.`;
+        $('#verdictText').textContent = target.name+' utilise Bouclier : aucune gorgée, aucun malus.';
       } else if(joker.key === 'MIRROR'){
-        const others = state.players.filter(p => p.id !== target.id);
-        const victim = others[Math.floor(Math.random()*others.length)] || target;
+        var others = state.players.filter(function(p){ return p.id !== target.id; });
+        var victim = others.length ? others[Math.floor(Math.random()*others.length)] : target;
         state.scores[target.id] -= r.diff;
         state.scores[victim.id] = (state.scores[victim.id] || 0) + r.diff;
-        $('#verdictText').textContent = `${target.name} utilise Miroir : ${victim.name} prend ${r.sips} gorgée${r.sips>1?'s':''} et le malus à sa place.`;
+        $('#verdictText').textContent = target.name+' utilise Miroir : '+victim.name+' prend '+r.sips+' gorgée'+(r.sips>1?'s':'')+' et le malus à sa place.';
       } else if(joker.key === 'DOUBLE'){
         if(r.diff <= 10){
           state.scores[target.id] -= r.diff;
           r.diff = 0; r.sips = 0;
-          $('#verdictText').textContent = `${target.name} tente Double ou rien et tombe juste : zéro gorgée, zéro malus.`;
+          $('#verdictText').textContent = target.name+' tente Double ou rien et tombe juste : zéro gorgée, zéro malus.';
         } else {
           state.scores[target.id] += r.diff;
           r.diff *= 2; r.sips *= 2;
-          $('#verdictText').textContent = `${target.name} tente Double ou rien et se plante : malus et gorgées doublés.`;
+          $('#verdictText').textContent = target.name+' tente Double ou rien et se plante : malus et gorgées doublés.';
         }
       } else if(joker.key === 'SWAP'){
-        const others = state.players.filter(p => p.id !== target.id);
-        const victim = others[Math.floor(Math.random()*others.length)] || target;
-        const tmp = state.scores[target.id];
-        state.scores[target.id] = state.scores[victim.id] || 0;
-        state.scores[victim.id] = tmp;
-        $('#verdictText').textContent = `${target.name} utilise Swap et échange son score avec ${victim.name}.`;
+        var others2 = state.players.filter(function(p){ return p.id !== target.id; });
+        var victim2 = others2.length ? others2[Math.floor(Math.random()*others2.length)] : target;
+        var tmp = state.scores[target.id];
+        state.scores[target.id] = state.scores[victim2.id] || 0;
+        state.scores[victim2.id] = tmp;
+        $('#verdictText').textContent = target.name+' utilise Swap et échange son score avec '+victim2.name+'.';
       }
 
       target.jokerUsed = true;
@@ -964,16 +978,18 @@
     }
 
     function endGame(){
-      const entries = Object.entries(state.scores);
-      const list = $('#statsList');
+      var entries = Object.keys(state.scores).map(function(id){ return { id:id, score:state.scores[id] }; });
+      var list = $('#statsList');
       list.innerHTML = '';
-      const sorted = entries.map(([id,score]) => ({ id, score, name: state.players.find(p => p.id===id)?.name || '?', streak: state.streaks[id] || 0 }))
-        .sort((a,b)=>a.score-b.score);
-      sorted.forEach((p,i) => {
-        const row = document.createElement('div');
+      entries.sort(function(a,b){ return a.score - b.score; });
+      entries.forEach(function(p, idx){
+        var player = state.players.filter(function(pl){ return pl.id === p.id; })[0];
+        var name = player ? player.name : '?';
+        var streak = state.streaks[p.id] || 0;
+        var row = document.createElement('div');
         row.className = 'stats-line';
-        const streakText = p.streak >= 2 ? `🔥 Streak x${p.streak}` : '';
-        row.innerHTML = `<span>${i+1}. ${p.name} ${streakText}</span><span>${p.score} pts</span>`;
+        var streakText = streak >= 2 ? '🔥 Streak x'+streak : '';
+        row.innerHTML = '<span>'+(idx+1)+'. '+name+' '+streakText+'</span><span>'+p.score+' pts</span>';
         list.appendChild(row);
       });
       showScreen('screen-stats');
@@ -986,37 +1002,37 @@
       state.currentTargetId = null;
       state.currentCardType = 'PERCENT';
       state.currentResult = null;
-      Object.keys(state.scores).forEach(id => state.scores[id] = 0);
-      Object.keys(state.streaks).forEach(id => state.streaks[id] = 0);
+      Object.keys(state.scores).forEach(function(id){ state.scores[id] = 0; });
+      Object.keys(state.streaks).forEach(function(id){ state.streaks[id] = 0; });
       renderPlayers();
       showScreen('screen-host-lobby');
     }
 
     function loadExternalQuestions(){
       try {
-        fetch('./questions.json').then(r => {
-          if(!r.ok) return;
+        fetch('./questions.json').then(function(r){
+          if(!r.ok) return null;
           return r.json();
-        }).then(data => {
+        }).then(function(data){
           if(!data) return;
-          Object.assign(QUESTION_BANK, data);
-        }).catch(()=>{});
+          for(var k in data){ if(data.hasOwnProperty(k)){ QUESTION_BANK[k] = data[k]; } }
+        })['catch'](function(){});
       } catch(e){}
     }
 
     function fireConfetti(){
-      const root = $('#confettiRoot');
+      var root = $('#confettiRoot');
       if(!root) return;
       root.innerHTML = '';
-      const colors = ['#facc15','#fb7185','#34d399','#38bdf8','#a855f7'];
-      const pieces = 40;
-      for(let i=0;i<pieces;i++){
-        const div = document.createElement('div');
+      var colors = ['#facc15','#fb7185','#34d399','#38bdf8','#a855f7'];
+      var pieces = 40;
+      for(var i=0;i<pieces;i++){
+        var div = document.createElement('div');
         div.className = 'confetti-piece';
-        const x = Math.random()*100;
-        const xEnd = x + (Math.random()*20-10);
-        const dur = 1.8 + Math.random()*0.7;
-        const delay = Math.random()*0.3;
+        var x = Math.random()*100;
+        var xEnd = x + (Math.random()*20-10);
+        var dur = 1.8 + Math.random()*0.7;
+        var delay = Math.random()*0.3;
         div.style.left = x+'vw';
         div.style.setProperty('--x', x+'vw');
         div.style.setProperty('--x-end', xEnd+'vw');
@@ -1025,48 +1041,51 @@
         div.style.animationDelay = delay+'s';
         root.appendChild(div);
       }
-      setTimeout(()=>{ root.innerHTML=''; }, 2600);
+      setTimeout(function(){ root.innerHTML=''; }, 2600);
     }
 
     function flipToFront(){
-      const front = $('#questionCardFront');
-      const back = $('#questionCardBack');
+      var front = $('#questionCardFront');
+      var back = $('#questionCardBack');
       if(front){ front.classList.remove('flip'); }
       if(back){ back.classList.add('flip'); }
     }
 
     function flipToBack(){
-      const front = $('#questionCardFront');
-      const back = $('#questionCardBack');
+      var front = $('#questionCardFront');
+      var back = $('#questionCardBack');
       if(front){ front.classList.add('flip'); }
       if(back){ back.classList.remove('flip'); }
     }
 
-    $('#roleHostBtn').addEventListener('click', () => { state.role = 'HOST'; showScreen('screen-host-setup'); });
-    $('#rolePlayerBtn').addEventListener('click', () => { state.role = 'PLAYER'; showScreen('screen-player-join'); });
+    document.addEventListener('DOMContentLoaded', function(){
+      $('#roleHostBtn').addEventListener('click', function(){ state.role = 'HOST'; showScreen('screen-host-setup'); });
+      $('#rolePlayerBtn').addEventListener('click', function(){ state.role = 'PLAYER'; showScreen('screen-player-join'); });
 
-    $$('.mode-btn').forEach(btn => btn.addEventListener('click', () => applyMode(btn.dataset.mode)));
+      $all('.mode-btn').forEach(function(btn){
+        btn.addEventListener('click', function(){ applyMode(btn.getAttribute('data-mode')); });
+      });
 
-    $('#createRoomBtn').addEventListener('click', createHost);
-    $('#addPlayerBtn').addEventListener('click', addPlayerFromLobby);
-    $('#newPlayerName').addEventListener('keydown', e => { if(e.key==='Enter'){ e.preventDefault(); addPlayerFromLobby(); }});
+      $('#createRoomBtn').addEventListener('click', createHost);
+      $('#addPlayerBtn').addEventListener('click', addPlayerFromLobby);
+      $('#newPlayerName').addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); addPlayerFromLobby(); }});
 
-    $('#joinRoomBtn').addEventListener('click', joinRoomPrototype);
+      $('#joinRoomBtn').addEventListener('click', joinRoomPrototype);
+      $('#startGameBtn').addEventListener('click', startGame);
 
-    $('#startGameBtn').addEventListener('click', startGame);
+      $('#voteSlider').addEventListener('input', handleSliderInput);
+      $('#submitVoteBtn').addEventListener('click', function(){ submitVote(false); });
+      $('#autoVoteBtn').addEventListener('click', autoVoteAll);
 
-    $('#voteSlider').addEventListener('input', handleSliderInput);
-    $('#submitVoteBtn').addEventListener('click', () => submitVote(false));
-    $('#autoVoteBtn').addEventListener('click', autoVoteAll);
+      $('#useJokerBtn').addEventListener('click', useJoker);
+      $('#nextRoundBtn').addEventListener('click', nextRound);
+      $('#endGameBtn').addEventListener('click', endGame);
+      $('#restartBtn').addEventListener('click', restart);
 
-    $('#useJokerBtn').addEventListener('click', useJoker);
-    $('#nextRoundBtn').addEventListener('click', nextRound);
-    $('#endGameBtn').addEventListener('click', endGame);
-    $('#restartBtn').addEventListener('click', restart);
-
-    applyMode('Chill');
-    updateStepper('lobby');
-    loadExternalQuestions();
+      applyMode('Chill');
+      updateStepper('lobby');
+      loadExternalQuestions();
+    });
   </script>
 </body>
 </html>
