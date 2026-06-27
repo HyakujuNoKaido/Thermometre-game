@@ -13,20 +13,11 @@
       --text-lg: clamp(1.125rem, 1rem + 0.75vw, 1.5rem);
       --text-xl: clamp(1.5rem, 1.2rem + 1.25vw, 2rem);
       --space-1: .25rem; --space-2: .5rem; --space-3: .75rem; --space-4: 1rem;
-      --space-5: 1.25rem; --space-6: 1.5rem; --space-8: 2rem; --space-10: 2.5rem;
-      --radius-sm: .75rem; --radius-md: 1.25rem; --radius-lg: 1.75rem; --radius-xl: 2.25rem; --radius-full: 999px;
+      --space-5: 1.25rem; --space-6: 1.5rem;
 
-      --chill-main: #34d5ff;
-      --chill-bg: #0f172a;
-      --chill-soft: #111827;
-
-      --spicy-main: #ff7a3c;
-      --spicy-bg: #111827;
-      --spicy-soft: #1f2933;
-
-      --hard-main: #c259ff;
-      --hard-bg: #020617;
-      --hard-soft: #030712;
+      --chill-main: #34d5ff; --chill-bg: #0f172a; --chill-soft: rgba(17, 24, 39, 0.7);
+      --spicy-main: #ff7a3c; --spicy-bg: #2a0808; --spicy-soft: rgba(42, 8, 8, 0.8);
+      --hard-main: #ff003c; --hard-bg: #050000; --hard-soft: rgba(10, 0, 5, 0.85);
 
       --mode-main: var(--chill-main);
       --mode-bg: var(--chill-bg);
@@ -35,990 +26,848 @@
 
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     html{-webkit-font-smoothing:antialiased;text-size-adjust:none}
-    body{
-      min-height:100dvh;
-      font-family:'Satoshi',system-ui,-apple-system,BlinkMacSystemFont,sans-serif;
-      font-size:var(--text-base);
-      background:radial-gradient(circle at top, #020617, var(--mode-bg));
-      display:flex;
-      justify-content:center;
-      align-items:stretch;
-      padding:var(--space-4);
-      transition:background .35s ease;
-      color:#e5e7eb;
-    }
-    @media (max-width: 600px){body{padding:0;}}
+    
+    /* ANIMATIONS GLOBALES */
+    @keyframes floatChill { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+    @keyframes pulseSpicy { 0%, 100% { box-shadow: inset 0 0 50px rgba(255,122,60,0.1); } 50% { box-shadow: inset 0 0 150px rgba(255,122,60,0.3); } }
+    @keyframes glitchText { 0% { transform: translate(0) } 20% { transform: translate(-2px, 1px) } 40% { transform: translate(-1px, -1px) } 60% { transform: translate(2px, 1px) } 80% { transform: translate(1px, -1px) } 100% { transform: translate(0) } }
+    @keyframes slotMachine { 0% { filter: blur(4px); transform: translateY(-10px); opacity: 0; } 50% { filter: blur(0px); transform: translateY(0); opacity: 1; } 100% { filter: blur(4px); transform: translateY(10px); opacity: 0; } }
 
-    .app{
-      width:100%;
-      max-width:480px;
-      min-height:100%;
-      background:#020617;
-      color:#e5e7eb;
-      border-radius:2.25rem;
-      box-shadow:0 30px 80px rgba(0,0,0,.9);
-      display:flex;
-      flex-direction:column;
-      overflow:hidden;
-      transition:transform .2s ease, box-shadow .2s ease, background .35s ease;
-    }
-    @media (max-width:600px){.app{border-radius:0;}}
-    .app:active{transform:scale(.995);box-shadow:0 18px 50px rgba(0,0,0,.9);}
-
-    header{
-      padding:var(--space-4) var(--space-5) var(--space-3);
-      display:flex;
-      flex-direction:column;
-      gap:var(--space-3);
-      background:conic-gradient(from 220deg at 0% 0%, var(--mode-main), #020617, var(--mode-main));
-      color:white;
-      transition:background .35s ease;
+    body {
+      min-height: 100dvh;
+      font-family: 'Satoshi', sans-serif;
+      font-size: var(--text-base);
+      display: flex; justify-content: center; align-items: stretch;
+      padding: var(--space-4); color: #e5e7eb;
+      transition: background 0.5s ease, box-shadow 0.5s ease;
+      overflow-x: hidden;
     }
 
-    .brand-row{display:flex;align-items:center;justify-content:space-between;gap:var(--space-3);}
-    .brand{display:flex;align-items:center;gap:var(--space-3);}
-    .brand-icon{
-      width:46px;height:46px;border-radius:1.4rem;
-      background:radial-gradient(circle at 30% 0,#fff,rgba(255,255,255,0.1));
-      border:2px solid rgba(255,255,255,0.8);
-      box-shadow:0 10px 24px rgba(0,0,0,.8);
-      display:flex;align-items:center;justify-content:center;
-      font-size:1.6rem;transform-origin:center;transition:transform .25s ease;
+    /* THEMES */
+    body.theme-chill { background: linear-gradient(-45deg, #0f172a, #1e3a8a, #064e3b, #0f172a); background-size: 400% 400%; animation: floatChill 15s ease infinite; }
+    body.theme-spicy { background: radial-gradient(circle at center, #3f0909, #0a0101); animation: pulseSpicy 4s ease-in-out infinite; }
+    body.theme-hardcore { background: #000; position: relative; }
+    body.theme-hardcore::before {
+      content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,0,60,0.1) 2px, rgba(255,0,60,0.1) 4px);
+      pointer-events: none; z-index: -1;
     }
-    .brand-icon.bump{transform:scale(1.1) rotate(-6deg);}
+    body.theme-hardcore h1 { text-shadow: 2px 2px var(--hard-main), -2px -2px #00fff9; animation: glitchText 0.3s infinite; }
 
-    h1{font-size:var(--text-lg);font-weight:900;letter-spacing:.04em;text-transform:uppercase;}
-    .subtitle{font-size:var(--text-xs);opacity:.9;font-weight:600;text-transform:uppercase;letter-spacing:.16em;}
+    @media (max-width: 600px){ body{padding:0;} }
 
-    .stepper{display:flex;gap:.35rem;font-size:var(--text-xs);text-transform:uppercase;letter-spacing:.14em;opacity:.9;}
-    .step-pill{flex:1;padding:.25rem .5rem;border-radius:999px;background:rgba(15,23,42,.8);text-align:center;color:rgba(249,250,251,.7);}
-    .step-pill.active{background:#f9fafb;color:#020617;font-weight:800;}
+    /* CONTENEUR PRINCIPAL (GLASSMORPHISM) */
+    .app {
+      width: 100%; max-width: 480px; min-height: 100%;
+      background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+      border-radius: 2.25rem; border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 30px 80px rgba(0,0,0,.9);
+      display: flex; flex-direction: column; overflow-y: auto; overflow-x: hidden;
+      position: relative;
+    }
+    @media (max-width:600px){ .app{border-radius:0; border:none;} }
 
-    main{flex:1;display:flex;flex-direction:column;gap:var(--space-3);padding:var(--space-4) var(--space-5) var(--space-5);background:radial-gradient(circle at top, #020617, var(--mode-soft));transition:background .35s ease;}
+    header { padding: var(--space-4) var(--space-5) var(--space-3); border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .brand-row { display: flex; align-items: center; justify-content: space-between; }
+    h1 { font-size: var(--text-lg); font-weight: 900; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 0.2rem; }
+    .subtitle { font-size: var(--text-xs); font-weight: 700; text-transform: uppercase; letter-spacing: .16em; color: var(--mode-main); }
 
-    .screen{display:none;flex-direction:column;gap:var(--space-4);height:100%;opacity:0;transform:translateY(12px) scale(.99);transition:opacity .25s ease, transform .25s ease;}
-    .screen.active{display:flex;opacity:1;transform:translateY(0) scale(1);}
+    /* STEPPER */
+    .stepper { display: flex; gap: .35rem; font-size: 0.65rem; text-transform: uppercase; font-weight: 800; margin-top: 1rem; }
+    .step-pill { flex: 1; padding: .4rem .2rem; border-radius: 999px; background: rgba(255,255,255,0.05); text-align: center; color: rgba(255,255,255,0.4); transition: all 0.3s; }
+    .step-pill.active { background: var(--mode-main); color: #000; box-shadow: 0 0 15px var(--mode-main); }
 
-    .card{background:#020617;border-radius:1.75rem;padding:var(--space-5);box-shadow:0 18px 50px rgba(0,0,0,.9);border:1px solid rgba(148,163,184,.35);}
-    .question-card-wrapper{perspective:1200px;}
-    .question-card{background:linear-gradient(135deg, color-mix(in oklab, var(--mode-main) 70%, #020617), #020617);color:white;text-align:center;padding:var(--space-6) var(--space-5);border-radius:1.9rem;box-shadow:0 26px 70px rgba(0,0,0,.95);transition:background .35s ease, transform .45s cubic-bezier(.2,.7,.2,1), box-shadow .3s ease;transform-style:preserve-3d;}
-    .question-card.flip{transform:rotateY(180deg);box-shadow:0 30px 80px rgba(0,0,0,1);}
-    .question-tag{font-size:var(--text-xs);text-transform:uppercase;letter-spacing:.16em;font-weight:800;color:rgba(249,250,251,.9);margin-bottom:var(--space-3);}
-    .question-text{font-size:var(--text-xl);font-weight:800;line-height:1.2;margin-bottom:var(--space-4);}
+    main { flex: 1; display: flex; flex-direction: column; padding: var(--space-4); background: var(--mode-soft); }
 
-    .players-list{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:var(--space-3);}
-    .pill{padding:.35rem .9rem;border-radius:999px;background:#111827;font-size:var(--text-xs);font-weight:600;display:inline-flex;align-items:center;gap:.25rem;color:#e5e7eb;}
-    .pill.host{background:color-mix(in oklab, var(--mode-main) 30%, #111827);}
-    .pill.me{outline:2px solid rgba(255,255,255,.8);}
+    .screen { display: none; flex-direction: column; gap: var(--space-4); height: 100%; opacity: 0; transform: translateY(15px); transition: all .4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+    .screen.active { display: flex; opacity: 1; transform: translateY(0); }
 
-    label{display:block;font-size:var(--text-sm);font-weight:600;margin-bottom:.2rem;}
-    .input{width:100%;min-height:46px;border-radius:999px;border:1px solid #4b5563;padding:0 var(--space-4);font-size:var(--text-sm);background:#020617;color:#e5e7eb;}
+    .card { background: rgba(0,0,0,0.4); border-radius: 1.5rem; padding: var(--space-4); border: 1px solid rgba(255,255,255,.05); }
+    
+    /* CARTES DE JEU */
+    .question-card {
+      background: linear-gradient(135deg, color-mix(in oklab, var(--mode-main) 40%, transparent), rgba(0,0,0,0.9));
+      color: white; text-align: center; padding: var(--space-6) var(--space-4); border-radius: 1.5rem;
+      box-shadow: 0 20px 50px rgba(0,0,0,.8), inset 0 0 20px rgba(255,255,255,0.05);
+      border: 1px solid color-mix(in oklab, var(--mode-main) 30%, transparent);
+    }
+    .question-tag { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .16em; font-weight: 800; color: rgba(255,255,255,.6); margin-bottom: var(--space-3); }
+    .question-text { font-size: var(--text-xl); font-weight: 900; line-height: 1.2; text-shadow: 0 4px 10px rgba(0,0,0,0.8); }
 
-    .modes{display:flex;gap:.5rem;margin-top:.75rem;}
-    .mode-btn{flex:1;border-radius:999px;border:none;padding:.55rem .9rem;font-size:var(--text-xs);font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:#e5e7eb;background:rgba(15,23,42,.8);transition:background .18s ease,color .18s ease,box-shadow .18s ease,transform .12s ease;}
-    .mode-btn.active{background:#f9fafb;color:#020617;box-shadow:0 8px 24px rgba(0,0,0,.9);transform:translateY(-1px);}
+    /* LISTE DES JOUEURS */
+    .players-list { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: 0.5rem; }
+    .pill { padding: .4rem 1rem; border-radius: 999px; background: rgba(0,0,0,0.6); font-size: var(--text-xs); font-weight: 700; border: 1px solid rgba(255,255,255,0.1); }
+    .pill.host { border-color: var(--mode-main); color: var(--mode-main); }
+    .pill.me { outline: 2px solid #fff; }
 
-    .role-row{display:flex;gap:.75rem;margin-top:var(--space-3);}
-    .role-btn{flex:1;border-radius:1.4rem;padding:var(--space-3);border:1px solid rgba(148,163,184,.5);background:rgba(15,23,42,.9);font-size:var(--text-sm);font-weight:700;display:flex;flex-direction:column;gap:.35rem;text-align:left;box-shadow:0 10px 28px rgba(0,0,0,.9);transition:transform .12s ease, box-shadow .12s ease;}
-    .role-btn span{font-size:var(--text-xs);color:#9ca3af;font-weight:500;}
-    .role-btn:active{transform:translateY(1px);box-shadow:0 4px 16px rgba(0,0,0,.95);}
+    /* FORMULAIRES */
+    label { display: block; font-size: var(--text-sm); font-weight: 700; margin-bottom: .4rem; color: #d1d5db; }
+    .input { width: 100%; min-height: 54px; border-radius: 1rem; border: 1px solid rgba(255,255,255,0.15); padding: 0 var(--space-4); font-size: var(--text-base); font-family: inherit; background: rgba(0,0,0,0.5); color: #fff; outline: none; transition: border-color 0.2s; }
+    .input:focus { border-color: var(--mode-main); box-shadow: 0 0 15px rgba(255,255,255,0.1); }
 
-    .btn{border-radius:999px;border:none;padding:.9rem 1.4rem;font-size:var(--text-sm);font-weight:800;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:.4rem;transition:transform .12s ease, box-shadow .12s ease, background .12s ease, color .12s ease;}
-    .btn-primary{background:var(--mode-main);color:white;box-shadow:0 12px 34px rgba(0,0,0,.95);width:100%;}
-    .btn-primary:active{transform:translateY(1px) scale(.98);box-shadow:0 4px 18px rgba(0,0,0,1);}
-    .btn-ghost{background:transparent;border:1px solid #4b5563;color:#e5e7eb;}
-    .btn-ghost:active{transform:translateY(1px) scale(.99);}
-    .btn[disabled]{opacity:.45;pointer-events:none;}
+    .modes { display: flex; gap: .5rem; margin-top: .5rem; }
+    .mode-btn { flex: 1; border-radius: 1rem; border: 1px solid rgba(255,255,255,0.1); padding: .8rem; font-size: var(--text-xs); font-weight: 800; text-transform: uppercase; color: #9ca3af; background: rgba(0,0,0,0.4); cursor: pointer; transition: all .2s; }
+    .mode-btn.active { background: var(--mode-main); color: #000; transform: translateY(-2px); border-color: transparent; box-shadow: 0 10px 20px color-mix(in oklab, var(--mode-main) 30%, transparent); }
 
-    .slider-wrap{margin-top:var(--space-3);}
-    .slider-label{font-size:var(--text-xs);text-align:center;color:#9ca3af;margin-bottom:var(--space-2);}
-    .slider-value-bubble{display:inline-flex;align-items:center;justify-content:center;min-width:3rem;padding:.3rem .7rem;border-radius:999px;background:#f9fafb;color:#020617;font-size:var(--text-sm);font-weight:800;box-shadow:0 8px 22px rgba(0,0,0,.9);margin:0 auto .4rem;}
-    .slider-row{position:relative;margin-bottom:var(--space-2);}
+    .btn { border-radius: 1rem; border: none; padding: 1.2rem; font-size: var(--text-sm); font-weight: 900; text-transform: uppercase; letter-spacing: .05em; cursor: pointer; width: 100%; transition: all .2s; font-family: inherit; }
+    .btn-primary { background: var(--mode-main); color: #000; box-shadow: 0 10px 30px color-mix(in oklab, var(--mode-main) 40%, transparent); }
+    .btn-primary:active { transform: scale(.97); }
+    .btn-ghost { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); color: #fff; padding: 0.8rem; }
+    .btn-ghost:active { background: rgba(255,255,255,0.1); transform: scale(.98); }
+    .btn[disabled] { opacity: .5; pointer-events: none; filter: grayscale(1); }
 
-    input[type=range]{width:100%;-webkit-appearance:none;background:transparent;}
-    input[type=range]::-webkit-slider-runnable-track{height:10px;border-radius:999px;background:linear-gradient(90deg, rgba(148,163,184,.5), rgba(55,65,81,.6));}
-    input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:24px;height:24px;border-radius:50%;background:#f9fafb;border:3px solid var(--mode-main);box-shadow:0 0 0 4px rgba(0,0,0,.8);margin-top:-7px;transition:transform .12s ease, box-shadow .12s ease, border-color .2s ease;}
-    input[type=range]:active::-webkit-slider-thumb{transform:scale(1.05);box-shadow:0 0 0 6px rgba(0,0,0,1);}
-    input[type=range]::-moz-range-track{height:10px;border-radius:999px;background:linear-gradient(90deg, rgba(148,163,184,.5), rgba(55,65,81,.6));}
-    input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:#f9fafb;border:3px solid var(--mode-main);box-shadow:0 0 0 4px rgba(0,0,0,.9);}
+    /* SLIDER & THERMOMETRE */
+    .slider-wrap { margin-top: var(--space-4); }
+    .slider-value-bubble { display: inline-flex; justify-content: center; min-width: 5rem; padding: .5rem 1rem; border-radius: 1rem; background: var(--mode-main); color: #000; font-size: var(--text-xl); font-weight: 900; box-shadow: 0 10px 25px rgba(0,0,0,.6); margin: 0 auto 1.5rem; }
+    
+    input[type=range] { width: 100%; -webkit-appearance: none; background: transparent; margin-bottom: 2rem; }
+    input[type=range]::-webkit-slider-runnable-track { height: 14px; border-radius: 999px; background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.1); }
+    input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 34px; height: 34px; border-radius: 50%; background: #fff; border: 4px solid var(--mode-main); box-shadow: 0 0 20px var(--mode-main); margin-top: -11px; transition: transform .1s; cursor: grab; }
+    input[type=range]:active::-webkit-slider-thumb { transform: scale(1.2); }
 
-    .timer{margin-top:.6rem;font-size:var(--text-xs);text-align:center;color:#9ca3af;transition:color .2s ease, transform .2s ease;}
-    .timer.urgent{color:#f97316;animation:pulse 0.7s ease-in-out infinite alternate;}
-    @keyframes pulse{from{transform:scale(1);} to{transform:scale(1.05);}}
+    .thermo-wrap { display: flex; flex-direction: column; align-items: center; gap: 0; margin-top: 1rem; }
+    .thermo-bar { width: 44px; height: 180px; border-radius: 999px 999px 0 0; background: rgba(0,0,0,0.8); border: 2px solid rgba(255,255,255,0.1); border-bottom: none; padding: 4px; display: flex; align-items: flex-end; justify-content: center; z-index: 1; }
+    .thermo-mercury { width: 100%; border-radius: 999px; height: 0%; background: var(--mode-main); transition: height 0.1s linear, background 0.3s ease; box-shadow: inset 0 0 10px rgba(0,0,0,0.8); }
+    .thermo-bulb { width: 60px; height: 60px; border-radius: 50%; background: var(--mode-main); margin-top: -15px; box-shadow: inset -5px -5px 15px rgba(0,0,0,0.6), 0 10px 20px rgba(0,0,0,.8); border: 2px solid rgba(255,255,255,0.1); z-index: 2; transition: background 0.3s; }
 
-    .thermo-wrap{display:flex;flex-direction:column;align-items:center;gap:.5rem;margin-top:var(--space-4);}
-    .thermo-shell{display:flex;flex-direction:column;align-items:center;gap:.4rem;}
-    .thermo-bar{width:48px;height:170px;border-radius:999px;background:#111827;padding:4px;display:flex;align-items:flex-end;justify-content:center;}
-    .thermo-mercury{width:100%;border-radius:999px;height:50%;background:linear-gradient(180deg,#22c55e,#ef4444);transition:height .25s ease, background .22s ease;}
-    .thermo-bulb{width:34px;height:34px;border-radius:999px;background:var(--mode-main);margin-top:.15rem;box-shadow:0 4px 12px rgba(0,0,0,.9);}
-    .thermo-label{font-size:var(--text-xs);color:#9ca3af;text-transform:uppercase;letter-spacing:.12em;}
-    .big-number{font-size:3rem;font-weight:900;text-align:center;margin-bottom:.3rem;}
-    .center{display:flex;flex-direction:column;gap:var(--space-3);align-items:stretch;}
+    /* ROULETTE DES GAGES */
+    .roulette-box { background: #000; border: 2px solid var(--mode-main); border-radius: 1rem; padding: 1rem; text-align: center; margin: 1rem 0; overflow: hidden; height: 80px; display: flex; align-items: center; justify-content: center; position: relative; box-shadow: 0 0 20px rgba(255,0,60,0.4); }
+    .roulette-text { font-size: var(--text-lg); font-weight: 900; color: #fff; white-space: nowrap; }
+    .roulette-text.spin { animation: slotMachine 0.1s infinite linear; }
 
-    .stats-line{display:flex;flex-direction:column;gap:.15rem;padding:.4rem 0;border-bottom:1px solid rgba(148,163,184,.25);}
-    .stats-header{display:flex;justify-content:space-between;align-items:center;}
-    .stats-name{font-size:var(--text-sm);font-weight:700;}
-    .stats-score{font-size:var(--text-sm);color:#e5e7eb;}
-    .player-title{font-size:var(--text-xs);color:#f97316;font-weight:700;}
-    .player-power{font-size:var(--text-xs);color:#9ca3af;}
-    .status-note{font-size:var(--text-xs);color:#9ca3af;text-align:center;}
-    .hidden{display:none !important;}
+    /* CHRONO */
+    .timer-bar-container { width: 100%; height: 8px; background: rgba(0,0,0,0.5); border-radius: 999px; overflow: hidden; margin-bottom: 1rem; }
+    .timer-bar { height: 100%; width: 100%; background: #22c55e; transition: width 1s linear, background-color 0.5s; }
+    .timer-bar.warning { background: #facc15; }
+    .timer-bar.danger { background: #ef4444; }
 
-    footer{padding:0 var(--space-5) var(--space-4);font-size:var(--text-xs);color:#6b7280;text-align:center;background:#020617;}
-    .confetti{position:fixed;top:0;left:0;width:100%;height:0;pointer-events:none;overflow:visible;}
-    .confetti-piece{position:absolute;width:8px;height:14px;border-radius:2px;animation:confetti-fall linear forwards;}
-    @keyframes confetti-fall{0%{transform:translate3d(var(--x,0),-10%,0) rotateZ(0);opacity:1;}100%{transform:translate3d(var(--x-end,0),110vh,0) rotateZ(360deg);opacity:0;}}
+    /* MODAL JOKER */
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); z-index: 100; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+    .modal-overlay.active { opacity: 1; pointer-events: auto; }
+    .modal-card { background: var(--mode-soft); border: 1px solid var(--mode-main); padding: 2rem; border-radius: 1.5rem; width: 90%; max-width: 400px; text-align: center; }
+    .modal-card h3 { font-size: var(--text-lg); margin-bottom: 1rem; }
+
+    .big-number { font-size: 4rem; font-weight: 900; text-align: center; color: var(--mode-main); text-shadow: 0 5px 20px rgba(0,0,0,0.8); margin-bottom: 0.5rem; }
+    .verdict-box { background: rgba(0,0,0,0.5); padding: 1rem; border-radius: 1rem; border-left: 4px solid var(--mode-main); font-weight: 800; text-align: center; margin-top: 1rem; }
+
+    /* STATS */
+    .stats-line { display: flex; justify-content: space-between; align-items: center; padding: 1rem; background: rgba(0,0,0,0.3); border-radius: 1rem; margin-bottom: 0.5rem; }
+    .stats-name { font-weight: 900; font-size: var(--text-lg); }
+    .stats-score { font-weight: 900; color: var(--mode-main); font-size: var(--text-xl); }
+    .stats-desc { font-size: var(--text-xs); color: #9ca3af; margin-top: 0.2rem; }
+
+    .joker-alert { background: #ff003c; color: white; padding: 1rem; border-radius: 1rem; text-align: center; font-weight: 900; margin-top: 1rem; animation: pulseSpicy 1s infinite; text-transform: uppercase; }
+
+    .hidden { display: none !important; }
   </style>
 </head>
-<body>
+<body class="theme-chill">
   <div class="app">
     <header>
       <div class="brand-row">
-        <div class="brand">
-          <div class="brand-icon" id="brandIcon">🌡️</div>
-          <div>
-            <h1>Le Thermomètre</h1>
-            <div class="subtitle">Jeu à boire</div>
-          </div>
+        <div>
+          <h1>Le Thermomètre</h1>
+          <div class="subtitle">Tranquille sur le canap</div>
         </div>
       </div>
       <div class="stepper" id="stepper">
         <div class="step-pill" data-step="lobby">Salon</div>
         <div class="step-pill" data-step="vote">Vote</div>
         <div class="step-pill" data-step="reveal">Résultat</div>
-        <div class="step-pill" data-step="stats">Classement</div>
+        <div class="step-pill" data-step="stats">Score</div>
       </div>
     </header>
 
     <main>
+      <!-- ROLE -->
       <section class="screen active" id="screen-role" data-step="lobby">
-        <div class="card">
-          <h2 style="font-size:var(--text-lg);font-weight:800;margin-bottom:var(--space-3);">Qui es-tu ?</h2>
-          <p style="font-size:var(--text-sm);color:#d1d5db;margin-bottom:var(--space-3);">Choisis ton rôle pour cette partie.</p>
-          <div class="role-row">
-            <button type="button" class="role-btn" id="roleHostBtn">
-              <strong>Créateur du salon</strong>
-              <span>Crée le code, ajoute les joueurs, lance les manches et gère les jokers.</span>
-            </button>
-            <button type="button" class="role-btn" id="rolePlayerBtn">
-              <strong>Joueur</strong>
-              <span>Entre un code de salon et joue depuis ton téléphone.</span>
-            </button>
-          </div>
+        <div class="card" style="display:flex;flex-direction:column;gap:1rem;">
+          <button class="btn btn-primary" id="roleHostBtn">Créer un salon</button>
+          <button class="btn btn-ghost" id="rolePlayerBtn">Rejoindre un pote</button>
         </div>
       </section>
 
+      <!-- SETUP HOST -->
       <section class="screen" id="screen-host-setup" data-step="lobby">
-        <div class="card">
-          <h2 style="font-size:var(--text-lg);font-weight:800;margin-bottom:var(--space-3);">Créer un salon</h2>
-          <div style="display:flex;flex-direction:column;gap:var(--space-3);">
-            <div>
-              <label for="hostName">Ton prénom</label>
-              <input id="hostName" class="input" placeholder="Ex. Alex" maxlength="20" />
-            </div>
-            <div>
-              <span style="font-size:var(--text-sm);font-weight:600;">Mode</span>
-              <div class="modes">
-                <button type="button" class="mode-btn active" data-mode="Chill">Chill</button>
-                <button type="button" class="mode-btn" data-mode="Spicy">Spicy</button>
-                <button type="button" class="mode-btn" data-mode="Hardcore">Hardcore</button>
-              </div>
-            </div>
-            <button class="btn btn-primary" id="createRoomBtn">Créer le salon</button>
+        <div class="card" style="display:flex;flex-direction:column;gap:1.5rem;">
+          <div>
+            <label>Ton prénom</label>
+            <input id="hostName" class="input" placeholder="Ex. Alex" maxlength="15" />
           </div>
+          <div>
+            <label>Ambiance</label>
+            <div class="modes">
+              <button class="mode-btn active" data-mode="Chill">Chill</button>
+              <button class="mode-btn" data-mode="Spicy">Spicy</button>
+              <button class="mode-btn" data-mode="Hardcore">Hardcore</button>
+            </div>
+          </div>
+          <button class="btn btn-primary" id="createRoomBtn">Lancer le salon</button>
         </div>
       </section>
 
+      <!-- LOBBY HOST -->
       <section class="screen" id="screen-host-lobby" data-step="lobby">
         <div class="card">
-          <h2 style="font-size:var(--text-lg);font-weight:800;margin-bottom:var(--space-2);">Salon <span id="roomCodeHost"></span></h2>
-          <p style="font-size:var(--text-xs);color:#9ca3af;margin-bottom:var(--space-3);">Partage ce code aux autres. Ils choisissent « Joueur » et le saisissent sur leur téléphone.</p>
-          <div style="display:flex;flex-direction:column;gap:var(--space-3);">
-            <div>
-              <label for="newPlayerName">Ajouter un joueur (local)</label>
-              <input id="newPlayerName" class="input" placeholder="Ex. Sam" maxlength="20" />
-            </div>
-            <button class="btn btn-ghost" id="addPlayerBtn">Ajouter (sur cet appareil)</button>
-            <div>
-              <span style="font-size:var(--text-sm);font-weight:600;">Joueurs</span>
-              <div class="players-list" id="playersList"></div>
-            </div>
-            <div class="status-note" id="hostLobbyNote"></div>
-            <button class="btn btn-primary" id="startGameBtn">Lancer la partie</button>
+          <h2 style="font-size:var(--text-lg);font-weight:900;margin-bottom:1rem;">Code : <span id="roomCodeHost" style="color:var(--mode-main);"></span></h2>
+          
+          <label>Dossiers anonymes (Optionnel)</label>
+          <div style="display:flex; gap:0.5rem; margin-bottom: 1.5rem;">
+            <input id="customQuestionHost" class="input" placeholder="Écris une question vicieuse..." style="min-height:44px; font-size:var(--text-sm);" />
+            <button class="btn btn-ghost" id="submitCustomHostBtn" style="width:auto; padding:0 1rem;">Envoyer</button>
           </div>
+
+          <label>Joueurs (<span id="hostPlayerCount">1</span>)</label>
+          <div class="players-list" id="playersList"></div>
+
+          <button class="btn btn-primary" id="startGameBtn" style="margin-top: 2rem;">Démarrer la partie</button>
         </div>
       </section>
 
+      <!-- JOIN PLAYER -->
       <section class="screen" id="screen-player-join" data-step="lobby">
-        <div class="card">
-          <h2 style="font-size:var(--text-lg);font-weight:800;margin-bottom:var(--space-3);">Rejoindre un salon</h2>
-          <div style="display:flex;flex-direction:column;gap:var(--space-3);">
-            <div>
-              <label for="joinCode">Code de salon</label>
-              <input id="joinCode" class="input" placeholder="ABCD" maxlength="4" />
-            </div>
-            <div>
-              <label for="joinName">Ton prénom</label>
-              <input id="joinName" class="input" placeholder="Ex. Sam" maxlength="20" />
-            </div>
-            <button class="btn btn-primary" id="joinRoomBtn">Rejoindre via Firebase</button>
-            <p style="font-size:var(--text-xs);color:#9ca3af;">Une fois dans le salon, l’écran se synchronise automatiquement avec l’hôte.</p>
+        <div class="card" style="display:flex;flex-direction:column;gap:1.5rem;">
+          <div>
+            <label>Code du salon</label>
+            <input id="joinCode" class="input" placeholder="ABCD" maxlength="4" style="text-transform:uppercase;" />
           </div>
+          <div>
+            <label>Ton prénom</label>
+            <input id="joinName" class="input" placeholder="Ex. Sam" maxlength="15" />
+          </div>
+          <button class="btn btn-primary" id="joinRoomBtn">Rejoindre</button>
         </div>
       </section>
 
+      <!-- LOBBY PLAYER -->
       <section class="screen" id="screen-player-lobby" data-step="lobby">
         <div class="card">
-          <h2 style="font-size:var(--text-lg);font-weight:800;margin-bottom:var(--space-2);">Salon <span id="roomCodePlayer"></span></h2>
-          <p style="font-size:var(--text-xs);color:#9ca3af;margin-bottom:var(--space-3);">En attente du lancement de la partie par l’hôte.</p>
-          <div>
-            <span style="font-size:var(--text-sm);font-weight:600;">Joueurs</span>
-            <div class="players-list" id="playersListPlayer"></div>
+          <h2 style="font-size:var(--text-lg);font-weight:900;margin-bottom:1rem;">Salon : <span id="roomCodePlayer" style="color:var(--mode-main);"></span></h2>
+          
+          <label>Dossiers anonymes</label>
+          <div style="display:flex; gap:0.5rem; margin-bottom: 1.5rem;">
+            <input id="customQuestionPlayer" class="input" placeholder="Balance un dossier..." style="min-height:44px; font-size:var(--text-sm);" />
+            <button class="btn btn-ghost" id="submitCustomPlayerBtn" style="width:auto; padding:0 1rem;">Envoyer</button>
           </div>
-          <div class="status-note" id="playerLobbyNote" style="margin-top:var(--space-3);"></div>
+
+          <label>Joueurs présents</label>
+          <div class="players-list" id="playersListPlayer"></div>
+          <p style="font-size:var(--text-xs); color:#9ca3af; margin-top:1.5rem; text-align:center;">En attente de l'hôte...</p>
         </div>
       </section>
 
+      <!-- VOTE -->
       <section class="screen" id="screen-vote" data-step="vote">
-        <div class="question-card-wrapper">
-          <div class="question-card" id="questionCardFront">
-            <div class="question-tag" id="questionTag">Manche 1 • Cible : Alex</div>
-            <div class="question-text" id="questionText">Question…</div>
-            <div style="font-size:var(--text-xs);color:rgba(249,250,251,.9);" id="modeLabel"></div>
-          </div>
+        <div class="timer-bar-container"><div class="timer-bar" id="voteTimerBar"></div></div>
+        <div class="question-card">
+          <div class="question-tag" id="questionTag">Manche 1 • Cible : Alex</div>
+          <div class="question-text" id="questionText">Question…</div>
         </div>
-        <div class="card">
-          <div class="center">
-            <div class="slider-wrap">
-              <div class="slider-value-bubble"><span id="sliderValue">50</span>&nbsp;%</div>
-              <div class="slider-label">Ton estimation en pourcentage</div>
-              <div class="slider-row">
-                <input type="range" id="voteSlider" min="0" max="100" value="50" />
-              </div>
-            </div>
-            <div class="timer" id="timerLabel">15 s restantes</div>
-            <div class="thermo-wrap">
-              <div class="thermo-shell">
-                <div class="thermo-bar"><div class="thermo-mercury" id="thermoVote"></div></div>
-                <div class="thermo-bulb"></div>
-              </div>
-              <div class="thermo-label">Température de ton vote</div>
-            </div>
-            <div class="status-note" id="voteStatus"></div>
-            <button class="btn btn-primary" id="submitVoteBtn">Valider mon vote</button>
-            <button class="btn btn-ghost" id="autoVoteBtn">Auto pour tout le monde</button>
+        
+        <div class="card" style="margin-top:1rem; text-align:center;">
+          <div class="slider-wrap">
+            <div class="slider-value-bubble"><span id="sliderValue">50</span>%</div>
+            <input type="range" id="voteSlider" min="0" max="100" value="50" />
           </div>
+          <div style="font-size:var(--text-xs); color:#9ca3af; margin-bottom:1rem;" id="voteStatus">À toi de voter !</div>
+          <button class="btn btn-primary" id="submitVoteBtn">Je valide</button>
         </div>
       </section>
 
+      <!-- REVEAL -->
       <section class="screen" id="screen-reveal" data-step="reveal">
-        <div class="question-card-wrapper">
-          <div class="question-card" id="questionCardBack">
-            <div class="question-tag" id="revealTag">Résultat</div>
-            <div class="question-text" id="revealQuestion">Question…</div>
-          </div>
+        <div class="question-card">
+          <div class="question-tag">Résultat</div>
+          <div class="question-text" id="revealQuestion" style="font-size:var(--text-lg); opacity:0.9;">Question…</div>
         </div>
-        <div class="card">
-          <div class="center">
-            <div>
-              <div style="font-size:var(--text-xs);text-transform:uppercase;letter-spacing:.16em;color:#9ca3af;text-align:center;margin-bottom:.25rem;">Moyenne du groupe</div>
-              <div class="big-number" id="averageValue">50%</div>
+
+        <div class="card" style="margin-top:1rem; display:flex; flex-direction:column; align-items:center;">
+          <div style="font-size:var(--text-xs); text-transform:uppercase; letter-spacing:.1em; color:#9ca3af; margin-bottom:0.5rem;">Moyenne du groupe</div>
+          <div class="big-number" id="averageValue">--%</div>
+          
+          <div class="thermo-wrap">
+            <div class="thermo-bar"><div class="thermo-mercury" id="thermoReveal"></div></div>
+            <div class="thermo-bulb" id="thermoBulbReveal"></div>
+          </div>
+
+          <div id="rouletteContainer" class="hidden" style="width:100%;">
+            <div class="roulette-box">
+              <div class="roulette-text" id="rouletteText">GÉNÉRATION DU GAGE...</div>
             </div>
-            <div class="thermo-wrap">
-              <div class="thermo-shell">
-                <div class="thermo-bar"><div class="thermo-mercury" id="thermoReveal"></div></div>
-                <div class="thermo-bulb"></div>
-              </div>
-              <div class="thermo-label">Résultat global</div>
-            </div>
-            <p id="verdictText" style="text-align:center;font-size:var(--text-sm);"></p>
-            <div id="jokerInfo" style="text-align:center;font-size:var(--text-xs);color:#9ca3af;"></div>
-            <button class="btn btn-primary" id="useJokerBtn">Utiliser mon joker</button>
-            <button class="btn btn-ghost" id="nextRoundBtn">Manche suivante</button>
-            <button class="btn btn-ghost" id="endGameBtn">Fin de partie</button>
+          </div>
+
+          <div id="jokerAlertContainer" class="hidden" style="width:100%;"></div>
+
+          <div class="verdict-box" id="verdictText" style="width:100%;"></div>
+
+          <div style="width:100%; margin-top:1.5rem; display:flex; flex-direction:column; gap:0.5rem;">
+            <button class="btn btn-ghost" id="btnOpenJoker">Utiliser mon joker (<span id="myJokerName"></span>)</button>
+            <button class="btn btn-primary hidden" id="nextRoundBtn">Manche suivante</button>
+            <button class="btn btn-ghost hidden" id="endGameBtn">Terminer la partie</button>
           </div>
         </div>
       </section>
 
+      <!-- STATS -->
       <section class="screen" id="screen-stats" data-step="stats">
         <div class="card">
-          <h2 style="font-size:var(--text-lg);font-weight:800;margin-bottom:var(--space-3);">Classement</h2>
+          <h2 style="font-size:var(--text-xl); font-weight:900; text-align:center; margin-bottom:2rem;">Bilan de la soirée</h2>
           <div id="statsList"></div>
-          <p style="font-size:var(--text-xs);color:#9ca3af;margin-top:var(--space-3);">Appliquez ces titres et pouvoirs dans la vraie vie pour clôturer la partie.</p>
+          <button class="btn btn-primary" id="restartBtn" style="margin-top:2rem;">Rejouer</button>
         </div>
-        <button class="btn btn-primary" id="restartBtn">Rejouer avec le même salon</button>
       </section>
     </main>
-
-    <footer>
-      Inspiré des apps type Picolo. Multijoueur synchronisé via Firebase Realtime Database.
-    </footer>
   </div>
 
-  <div class="confetti" id="confettiRoot"></div>
+  <!-- MODAL JOKER -->
+  <div class="modal-overlay" id="jokerModal">
+    <div class="modal-card">
+      <h3 id="jokerModalTitle">Action du Joker</h3>
+      <p style="font-size:var(--text-sm); color:#9ca3af; margin-bottom:1.5rem;" id="jokerModalDesc"></p>
+      
+      <div id="jokerTargetSelectContainer" class="hidden" style="margin-bottom:1.5rem;">
+        <label>Choisis ta victime :</label>
+        <select id="jokerTargetSelect" class="input" style="appearance:none; text-align:center;"></select>
+      </div>
+
+      <div style="display:flex; gap:0.5rem;">
+        <button class="btn btn-ghost" id="cancelJokerBtn">Annuler</button>
+        <button class="btn btn-primary" id="confirmJokerBtn">Valider</button>
+      </div>
+    </div>
+  </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
-    import { getDatabase, ref, set, get, onValue, update, runTransaction, off } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
+    import { getDatabase, ref, set, get, onValue, update, push, off } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyBEwzH6QEPWegpgBmnevtiBX9gqy3V3dcY",
       authDomain: "le-thermometre.firebaseapp.com",
       databaseURL: "https://le-thermometre-default-rtdb.europe-west1.firebasedatabase.app",
-      projectId: "le-thermometre",
-      storageBucket: "le-thermometre.firebasestorage.app",
-      messagingSenderId: "650617838327",
-      appId: "1:650617838327:web:f20b05a54fe85a781011f2",
-      measurementId: "G-L9FLQZ1768"
+      projectId: "le-thermometre"
     };
 
     const appFb = initializeApp(firebaseConfig);
     const db = getDatabase(appFb);
 
     function generateCode() {
-      const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-      let code = "";
+      const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; let code = "";
       for (let i = 0; i < 4; i++) code += chars[Math.floor(Math.random() * chars.length)];
       return code;
     }
     function generateId() { return Math.random().toString(36).slice(2, 10); }
 
-    async function createUniqueRoom(hostName, mode) {
-      const hostId = generateId();
-      for (let tries = 0; tries < 12; tries++) {
-        const code = generateCode();
+    // Jokers Disponibles
+    const JOKER_TYPES = ['SHIELD', 'DICTATOR', 'AMNESIAC'];
+    const JOKER_LABELS = { 'SHIELD': 'Bouclier', 'DICTATOR': 'Dictateur', 'AMNESIAC': 'Amnésique' };
+    
+    function randomJoker() { return JOKER_TYPES[Math.floor(Math.random() * JOKER_TYPES.length)]; }
+
+    window.firebaseApi = {
+      db, ref, get, onValue, off, update, push, set,
+      
+      createRoom: async (hostName, mode) => {
+        const hostId = generateId();
+        let code = generateCode();
+        let roomRef = ref(db, 'rooms/' + code);
+        
+        await set(roomRef, {
+          mode, phase: 'LOBBY', round: 0, hostId, createdAt: Date.now(),
+          customQuestions: [], currentRound: null, result: null,
+          players: { [hostId]: { name: hostName, score: 0, joker: randomJoker(), jokerUsed: false, isHost: true } }
+        });
+        return { code, hostId };
+      },
+
+      joinRoom: async (code, playerName) => {
         const roomRef = ref(db, 'rooms/' + code);
         const snap = await get(roomRef);
-        if (snap.exists()) continue;
-        const initialData = {
-          mode,
-          phase: 'LOBBY',
-          round: 0,
-          hostId,
-          createdAt: Date.now(),
-          currentRound: null,
-          result: null,
-          players: {
-            [hostId]: {
-              name: hostName,
-              score: 0,
-              joker: 'SHIELD',
-              jokerUsed: false,
-              isHost: true,
-              joinedAt: Date.now()
-            }
-          }
-        };
-        await set(roomRef, initialData);
-        return { code, hostId };
+        if (!snap.exists()) throw new Error('Salon introuvable');
+        if (snap.val().phase !== 'LOBBY') throw new Error('Partie en cours');
+        
+        const playerId = generateId();
+        await set(ref(db, `rooms/${code}/players/${playerId}`), {
+          name: playerName, score: 0, joker: randomJoker(), jokerUsed: false, isHost: false
+        });
+        return { playerId };
+      },
+
+      addCustomQuestion: async (code, question) => {
+        const qRef = push(ref(db, `rooms/${code}/customQuestions`));
+        await set(qRef, question);
+      },
+
+      startRound: async (code, payload) => {
+        await update(ref(db, 'rooms/' + code), { phase: 'VOTE', round: payload.round, currentRound: payload, result: null });
+      },
+
+      submitVote: async (code, roundId, playerId, value) => {
+        await set(ref(db, `rooms/${code}/currentRound/votes/${playerId}`), { value, votedAt: Date.now() });
+      },
+
+      setReveal: async (code, result) => {
+        await update(ref(db, 'rooms/' + code), { phase: 'REVEAL', result });
+      },
+
+      updateScores: async (code, scoreUpdates) => {
+        const updates = {};
+        Object.keys(scoreUpdates).forEach(id => { updates[`players/${id}/score`] = scoreUpdates[id]; });
+        await update(ref(db, `rooms/${code}`), updates);
+      },
+
+      useJoker: async (code, playerId, roundId, jokerEvent) => {
+        const updates = {};
+        updates[`players/${playerId}/jokerUsed`] = true;
+        updates[`currentRound/jokerEvent`] = jokerEvent;
+        await update(ref(db, `rooms/${code}`), updates);
+      },
+
+      endGame: async (code) => { await update(ref(db, 'rooms/' + code), { phase: 'STATS' }); },
+      resetRoom: async (code) => {
+        const snap = await get(ref(db, `rooms/${code}/players`));
+        const players = snap.val() || {};
+        const updates = { phase: 'LOBBY', round: 0, currentRound: null, result: null, customQuestions: [] };
+        Object.keys(players).forEach(id => {
+          updates[`players/${id}/score`] = 0;
+          updates[`players/${id}/joker`] = randomJoker();
+          updates[`players/${id}/jokerUsed`] = false;
+        });
+        await update(ref(db, 'rooms/' + code), updates);
       }
-      throw new Error('Impossible de générer un code unique');
-    }
-
-    async function joinRoom(code, playerName) {
-      const roomRef = ref(db, 'rooms/' + code);
-      const snap = await get(roomRef);
-      if (!snap.exists()) throw new Error('Salon introuvable');
-      const data = snap.val() || {};
-      if (data.phase && data.phase !== 'LOBBY') throw new Error('La partie a déjà commencé');
-      const players = data.players || {};
-      const existing = Object.entries(players).find(([,p]) => (p?.name || '').toLowerCase() === playerName.toLowerCase());
-      if (existing) throw new Error('Ce prénom existe déjà');
-      const playerId = generateId();
-      await set(ref(db, 'rooms/' + code + '/players/' + playerId), {
-        name: playerName,
-        score: 0,
-        joker: 'SHIELD',
-        jokerUsed: false,
-        isHost: false,
-        joinedAt: Date.now()
-      });
-      return { playerId };
-    }
-
-    async function addLocalPlayerToRoom(code, name) {
-      const clean = name.trim().slice(0,20);
-      if (!clean) throw new Error('Nom invalide');
-      const roomSnap = await get(ref(db, 'rooms/' + code + '/players'));
-      const players = roomSnap.val() || {};
-      const existing = Object.values(players).find(p => (p?.name || '').toLowerCase() === clean.toLowerCase());
-      if (existing) throw new Error('Ce prénom existe déjà');
-      const id = generateId();
-      await set(ref(db, 'rooms/' + code + '/players/' + id), {
-        name: clean,
-        score: 0,
-        joker: 'SHIELD',
-        jokerUsed: false,
-        isHost: false,
-        joinedAt: Date.now()
-      });
-      return id;
-    }
-
-    async function startRoundInDb(code, payload) {
-      await update(ref(db, 'rooms/' + code), {
-        phase: 'VOTE',
-        round: payload.round,
-        currentRound: payload,
-        result: null
-      });
-    }
-
-    async function submitVoteToDb(code, roundId, playerId, value) {
-      await set(ref(db, `rooms/${code}/currentRound/votes/${playerId}`), {
-        value,
-        votedAt: Date.now()
-      });
-      return true;
-    }
-
-    async function setRevealInDb(code, result, playerScoreUpdates, streakUpdates) {
-      const updates = {
-        phase: 'REVEAL',
-        result,
-        currentRound: { ...(result.roundData || {}), resolvedAt: Date.now() }
-      };
-      Object.keys(playerScoreUpdates).forEach(id => {
-        updates[`players/${id}/score`] = playerScoreUpdates[id];
-      });
-      Object.keys(streakUpdates).forEach(id => {
-        updates[`players/${id}/streak`] = streakUpdates[id];
-      });
-      await update(ref(db, 'rooms/' + code), updates);
-    }
-
-    async function setPhase(code, phase) {
-      await update(ref(db, 'rooms/' + code), { phase });
-    }
-
-    async function endGameInDb(code) { await update(ref(db, 'rooms/' + code), { phase: 'STATS' }); }
-
-    async function resetRoom(code, mode) {
-      const snap = await get(ref(db, 'rooms/' + code + '/players'));
-      const players = snap.val() || {};
-      const updates = { mode, phase: 'LOBBY', round: 0, currentRound: null, result: null };
-      Object.keys(players).forEach(id => {
-        updates[`players/${id}/score`] = 0;
-        updates[`players/${id}/streak`] = 0;
-        updates[`players/${id}/joker`] = 'SHIELD';
-        updates[`players/${id}/jokerUsed`] = false;
-      });
-      await update(ref(db, 'rooms/' + code), updates);
-    }
-
-    window.firebaseApi = { db, ref, get, onValue, off, update, runTransaction, createUniqueRoom, joinRoom, addLocalPlayerToRoom, startRoundInDb, submitVoteToDb, setRevealInDb, setPhase, endGameInDb, resetRoom };
+    };
   </script>
 
   <script>
-    function $(sel){ return document.querySelector(sel); }
-    function $all(sel){ return Array.prototype.slice.call(document.querySelectorAll(sel)); }
+    // UTILITAIRES
+    const $ = sel => document.querySelector(sel);
+    const $all = sel => Array.from(document.querySelectorAll(sel));
+    const vibrate = (pattern) => { if(navigator.vibrate) navigator.vibrate(pattern); };
 
-    var MODES = {
-      Chill: { bg:'var(--chill-bg)', main:'var(--chill-main)', soft:'var(--chill-soft)', label:'Chill' },
-      Spicy: { bg:'var(--spicy-bg)', main:'var(--spicy-main)', soft:'var(--spicy-soft)', label:'Spicy' },
-      Hardcore: { bg:'var(--hard-bg)', main:'var(--hard-main)', soft:'var(--hard-soft)', label:'Hardcore' }
+    // CONFIGURATION
+    const MODES = {
+      Chill: { subtitle: 'Tranquille sur le canap' },
+      Spicy: { subtitle: 'Les secrets tombent' },
+      Hardcore: { subtitle: 'Préparez vos foies' }
     };
 
-    var QUESTION_BANK = {
-      Chill: [
-        'Quel pourcentage de {name} est susceptible de s’endormir devant un film avant le générique ?',
-        'Quel pourcentage de {name} a le pire sens de l’orientation du groupe ?',
-        'Quel pourcentage de {name} répondrait à un message avec 3 jours de retard ?'
-      ],
-      Spicy: [
-        'Quel pourcentage de {name} a déjà menti pour annuler un plan ?',
-        'Quel pourcentage de {name} flirterait avec un ex après quelques verres ?',
-        'Quel pourcentage de {name} embrasserait quelqu’un du groupe ce soir ?'
-      ],
-      Hardcore: [
-        'Quel pourcentage de {name} trahirait le groupe pour de l’argent ?',
-        'Quel pourcentage de {name} cacherait un corps sans poser de questions ?',
-        'Quel pourcentage de {name} survivrait le plus longtemps dans un chaos total ?'
-      ]
+    const QUESTIONS = {
+      Chill: ["Quel % de chances que {name} s'endorme en premier ?", "Quel % de chances que {name} ait le pire sens de l'orientation ?"],
+      Spicy: ["Quel % de chances que {name} mente pour annuler une soirée ?", "Quel % de chances que {name} stalke son ex ?"],
+      Hardcore: ["Quel % de chances que {name} trahisse le groupe pour 1000€ ?", "Quel % de chances que {name} finisse en garde à vue ce soir ?"]
     };
 
-    var JOKERS = [
-      { key:'SHIELD', label:'Bouclier', desc:'Annule tes gorgées une fois.' },
-      { key:'MIRROR', label:'Miroir', desc:'Envoie tes gorgées à quelqu’un d’autre.' }
-    ];
+    const WHEEL_GAGES = ["CUL SEC !", "DISTRIBUE 4 GORGÉES", "BOIS 3 GORGÉES", "VÉRITÉ OU BOIS", "INVENTE UNE RÈGLE"];
 
-    var state = {
-      role: null,
-      mode: 'Chill',
-      roomCode: null,
-      hostId: null,
-      playerId: null,
-      players: [],
-      roomData: null,
-      round: 0,
-      currentQuestion: null,
-      currentTargetId: null,
-      currentVotes: {},
-      currentResult: null,
-      unsubRoom: null,
-      localVoteSubmitted: false,
-      timerId: null,
-      timeLeft: 15,
-      lastPhase: null
+    // ETAT GLOBAL
+    let state = {
+      role: null, mode: 'Chill', roomCode: null, playerId: null, players: [],
+      roomData: null, currentVotes: {}, timerInterval: null, revealInterval: null
     };
-    window.state = state;
 
-    function stringReplaceAll(str, search, replacement){ return str.split(search).join(replacement); }
-    function randomItem(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
-    function uid(){ return Math.random().toString(36).slice(2,9); }
-
-    function applyMode(mode){
+    // UI ET THEMES
+    function applyMode(mode) {
       state.mode = mode;
-      var m = MODES[mode] || MODES.Chill;
-      var root = document.documentElement;
-      function resolveVar(v){ var name = v.replace('var(','').replace(')',''); return getComputedStyle(root).getPropertyValue(name).trim(); }
-      var bgVal = resolveVar(m.bg) || '#020617';
-      var mainVal = resolveVar(m.main) || '#c259ff';
-      var softVal = resolveVar(m.soft) || '#030712';
-      root.style.setProperty('--mode-bg', bgVal);
-      root.style.setProperty('--mode-main', mainVal);
-      root.style.setProperty('--mode-soft', softVal);
-      document.body.style.background = 'radial-gradient(circle at top, #020617, '+bgVal+')';
-      $('main').style.background = 'radial-gradient(circle at top, #020617, '+softVal+')';
-      $all('.mode-btn').forEach(function(b){ b.classList.toggle('active', b.getAttribute('data-mode') === mode); });
-      var label = $('#modeLabel'); if(label){ label.textContent = 'Mode '+m.label; }
-      var brandIcon = $('#brandIcon');
-      if(brandIcon){ brandIcon.classList.remove('bump'); void brandIcon.offsetWidth; brandIcon.classList.add('bump'); setTimeout(function(){ brandIcon.classList.remove('bump'); },250); }
+      document.body.className = 'theme-' + mode.toLowerCase();
+      $('.subtitle').textContent = MODES[mode].subtitle;
+      $all('.mode-btn').forEach(b => b.classList.toggle('active', b.getAttribute('data-mode') === mode));
     }
 
-    function updateStepper(step){ $all('#stepper .step-pill').forEach(function(p){ p.classList.toggle('active', p.getAttribute('data-step') === step); }); }
-    function showScreen(id){
-      var target = document.getElementById(id); var step = 'lobby';
-      if(target && target.getAttribute('data-step')) step = target.getAttribute('data-step');
-      $all('.screen').forEach(function(s){ s.classList.remove('active'); });
+    function showScreen(stepId) {
+      $all('.screen').forEach(s => s.classList.remove('active'));
+      const target = document.getElementById(stepId);
       if(target) target.classList.add('active');
-      updateStepper(step);
+      const step = target ? target.getAttribute('data-step') : 'lobby';
+      $all('.step-pill').forEach(p => p.classList.toggle('active', p.getAttribute('data-step') === step));
     }
 
-    function renderPlayers(){
-      var containers = [$('#playersList'), $('#playersListPlayer')];
-      containers.forEach(function(container){
-        if(!container) return;
-        container.innerHTML = '';
-        state.players.forEach(function(p){
-          var span = document.createElement('span');
-          span.className = 'pill' + (p.isHost ? ' host' : '') + (p.id === state.playerId ? ' me' : '');
-          span.textContent = p.name + (p.isHost ? ' 👑' : '') + (p.id === state.playerId ? ' • toi' : '');
-          container.appendChild(span);
-        });
-      });
-      var hostNote = $('#hostLobbyNote');
-      if(hostNote) hostNote.textContent = state.players.length + ' joueur' + (state.players.length>1?'s':'') + ' dans le salon.';
-      var playerNote = $('#playerLobbyNote');
-      if(playerNote) playerNote.textContent = 'Tu es connecté' + (state.roomCode ? ' au salon ' + state.roomCode : '') + '.';
+    // THERMOMETRE DYNAMIQUE
+    function getThermoColor(val) {
+      const hue = Math.max(0, 200 - (val * 2)); // Blue to Red
+      return `hsl(${hue}, 100%, 50%)`;
+    }
+    
+    function updateThermoUI(val) {
+      const mercury = $('#thermoReveal');
+      const bulb = $('#thermoBulbReveal');
+      mercury.style.height = `${Math.max(10, val)}%`;
+      mercury.style.background = getThermoColor(val);
+      bulb.style.background = getThermoColor(val);
     }
 
-    function thermometerGradient(value){ var v = Math.max(0, Math.min(100, value)); var hue = 190 - v * 1.2; var h2 = hue - 40; return 'linear-gradient(180deg, hsl('+hue+',85%,55%), hsl('+h2+',90%,45%))'; }
-    function setThermo(el, value){ var v = Math.max(0, Math.min(100, value)); var h = 15 + v * 0.7; el.style.height = h + '%'; el.style.background = thermometerGradient(v); }
+    // LOBBY & REJOINDRE
+    $('#roleHostBtn').onclick = () => showScreen('screen-host-setup');
+    $('#rolePlayerBtn').onclick = () => showScreen('screen-player-join');
+    $all('.mode-btn').forEach(b => b.onclick = () => applyMode(b.getAttribute('data-mode')));
 
-    function assignJoker(){ return Math.random() > 0.5 ? 'SHIELD' : 'MIRROR'; }
-    function cleanName(name){ return (name || '').trim().slice(0,20); }
-    function getPlayerById(id){ return state.players.find(function(p){ return p.id === id; }); }
+    $('#createRoomBtn').onclick = async () => {
+      const name = $('#hostName').value.trim();
+      if(!name) return;
+      const res = await window.firebaseApi.createRoom(name, state.mode);
+      state.role = 'HOST'; state.roomCode = res.code; state.playerId = res.hostId;
+      $('#roomCodeHost').textContent = res.code;
+      attachSync(res.code);
+      showScreen('screen-host-lobby');
+    };
 
-    function buildQuestionPayload(){
-      var target = randomItem(state.players);
-      var qTemplate = randomItem(QUESTION_BANK[state.mode] || QUESTION_BANK.Chill);
-      return {
-        id: 'round_' + Date.now(),
-        round: state.round,
-        targetId: target.id,
-        targetName: target.name,
-        question: stringReplaceAll(qTemplate, '{name}', target.name),
-        cardType: 'PERCENT',
-        votes: {},
-        startedAt: Date.now()
-      };
-    }
-
-    function countVotes(){ return Object.keys(state.currentVotes || {}).length; }
-    function allVotesIn(){ return state.players.length > 0 && countVotes() >= state.players.length; }
-
-    async function createHost(){
-      var name = cleanName($('#hostName').value);
-      if (!name) return alert('Entre ton prénom.');
+    $('#joinRoomBtn').onclick = async () => {
+      const code = $('#joinCode').value.trim().toUpperCase();
+      const name = $('#joinName').value.trim();
+      if(!code || !name) return;
       try {
-        var info = await window.firebaseApi.createUniqueRoom(name, state.mode || 'Chill');
-        state.role = 'HOST';
-        state.roomCode = info.code;
-        state.hostId = info.hostId;
-        state.playerId = info.hostId;
-        $('#roomCodeHost').textContent = info.code;
-        $('#roomCodePlayer').textContent = info.code;
-        attachRoomListener(info.code);
-        showScreen('screen-host-lobby');
-      } catch (err) {
-        console.error(err);
-        alert('Erreur Firebase lors de la création du salon. Vérifie aussi les rules Realtime Database.');
-      }
-    }
-
-    async function addPlayerFromLobby(){
-      var name = cleanName($('#newPlayerName').value);
-      if(!name) return alert('Entre un prénom.');
-      if(!state.roomCode) return alert('Crée d’abord un salon.');
-      try {
-        await window.firebaseApi.addLocalPlayerToRoom(state.roomCode, name);
-        $('#newPlayerName').value = '';
-      } catch (err) {
-        console.error(err);
-        alert(err.message || 'Impossible d’ajouter ce joueur.');
-      }
-    }
-
-    async function joinRoomPrototype(){
-      var code = ($('#joinCode').value || '').trim().toUpperCase();
-      var name = cleanName($('#joinName').value);
-      if (!code || !name) return alert('Entre le code et ton prénom.');
-      try {
-        var info = await window.firebaseApi.joinRoom(code, name);
-        state.role = 'PLAYER';
-        state.roomCode = code;
-        state.playerId = info.playerId;
+        const res = await window.firebaseApi.joinRoom(code, name);
+        state.role = 'PLAYER'; state.roomCode = code; state.playerId = res.playerId;
         $('#roomCodePlayer').textContent = code;
-        attachRoomListener(code);
+        attachSync(code);
         showScreen('screen-player-lobby');
-      } catch (err) {
-        console.error(err);
-        alert(err.message || 'Salon introuvable ou erreur Firebase.');
+      } catch(e) { alert(e.message); }
+    };
+
+    // DOSSIERS
+    async function submitCustom(inputEl) {
+      const q = inputEl.value.trim();
+      if(!q || !state.roomCode) return;
+      await window.firebaseApi.addCustomQuestion(state.roomCode, q);
+      inputEl.value = '';
+      inputEl.placeholder = 'Dossier envoyé ! Un autre ?';
+    }
+    $('#submitCustomHostBtn').onclick = () => submitCustom($('#customQuestionHost'));
+    $('#submitCustomPlayerBtn').onclick = () => submitCustom($('#customQuestionPlayer'));
+
+    // GESTION DU VOTE
+    $('#voteSlider').oninput = (e) => {
+      $('#sliderValue').textContent = e.target.value;
+      vibrate(20);
+    };
+
+    $('#submitVoteBtn').onclick = async () => {
+      if(!state.roomData?.currentRound?.id) return;
+      const val = Number($('#voteSlider').value);
+      await window.firebaseApi.submitVote(state.roomCode, state.roomData.currentRound.id, state.playerId, val);
+      $('#submitVoteBtn').disabled = true;
+      $('#submitVoteBtn').textContent = 'Vote enregistré';
+      vibrate([50, 50]);
+    };
+
+    // JOKERS
+    $('#btnOpenJoker').onclick = () => {
+      const me = state.players.find(p => p.id === state.playerId);
+      if(!me || me.jokerUsed) return;
+      
+      $('#jokerModalTitle').textContent = `Joker : ${JOKER_LABELS[me.joker]}`;
+      const targetSelect = $('#jokerTargetSelectContainer');
+      const select = $('#jokerTargetSelect');
+      
+      if(me.joker === 'DICTATOR') {
+        $('#jokerModalDesc').textContent = "Choisis secrètement qui boira toutes les gorgées de cette manche. Ton nom ne sera pas affiché.";
+        targetSelect.classList.remove('hidden');
+        select.innerHTML = state.players.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+      } else if (me.joker === 'SHIELD') {
+        $('#jokerModalDesc').textContent = "Annule tes gorgées pour cette manche.";
+        targetSelect.classList.add('hidden');
+      } else if (me.joker === 'AMNESIAC') {
+        $('#jokerModalDesc').textContent = "Annule la manche pour tout le monde.";
+        targetSelect.classList.add('hidden');
       }
-    }
+      $('#jokerModal').classList.add('active');
+    };
 
-    async function startGame(){
-      if(state.role !== 'HOST') return;
-      if(state.players.length < 2) return alert('Il faut au moins 2 joueurs dans le salon.');
-      state.round = (state.roomData?.round || 0) + 1;
-      var payload = buildQuestionPayload();
-      try {
-        await window.firebaseApi.startRoundInDb(state.roomCode, payload);
-      } catch (err) {
-        console.error(err);
-        alert('Impossible de lancer la partie.');
+    $('#cancelJokerBtn').onclick = () => $('#jokerModal').classList.remove('active');
+    
+    $('#confirmJokerBtn').onclick = async () => {
+      const me = state.players.find(p => p.id === state.playerId);
+      let event = { type: me.joker, sourceId: state.playerId };
+      
+      if(me.joker === 'DICTATOR') {
+        event.targetId = $('#jokerTargetSelect').value;
+        event.targetName = state.players.find(p => p.id === event.targetId).name;
       }
+      
+      await window.firebaseApi.useJoker(state.roomCode, state.playerId, state.roomData.currentRound.id, event);
+      $('#jokerModal').classList.remove('active');
+      $('#btnOpenJoker').classList.add('hidden');
+    };
+
+    // ANIMATION ROULETTE
+    async function spinRoulette() {
+      const el = $('#rouletteText');
+      $('#rouletteContainer').classList.remove('hidden');
+      el.classList.add('spin');
+      
+      return new Promise(resolve => {
+        let spins = 0;
+        const iv = setInterval(() => {
+          el.textContent = WHEEL_GAGES[Math.floor(Math.random() * WHEEL_GAGES.length)];
+          spins++;
+          vibrate(50);
+          if(spins > 20) {
+            clearInterval(iv);
+            el.classList.remove('spin');
+            const finalGage = WHEEL_GAGES[Math.floor(Math.random() * WHEEL_GAGES.length)];
+            el.textContent = finalGage;
+            vibrate([100, 50, 100]);
+            resolve(finalGage);
+          }
+        }, 100);
+      });
     }
 
-    async function nextRound(){
-      if(state.role !== 'HOST') return;
-      state.round = (state.roomData?.round || 0) + 1;
-      var payload = buildQuestionPayload();
-      try { await window.firebaseApi.startRoundInDb(state.roomCode, payload); }
-      catch (err) { console.error(err); alert('Impossible de lancer la manche suivante.'); }
+    // MOTEUR DU JEU (HÔTE UNIQUEMENT)
+    $('#startGameBtn').onclick = () => startNextRound();
+    $('#nextRoundBtn').onclick = () => startNextRound();
+    $('#endGameBtn').onclick = () => window.firebaseApi.endGame(state.roomCode);
+    $('#restartBtn').onclick = () => window.firebaseApi.resetRoom(state.roomCode);
+
+    async function startNextRound() {
+      const roundNum = (state.roomData.round || 0) + 1;
+      const target = state.players[Math.floor(Math.random() * state.players.length)];
+      
+      // Mix custom questions
+      let qList = [...QUESTIONS[state.mode]];
+      if(state.roomData.customQuestions) {
+        const customs = Object.values(state.roomData.customQuestions);
+        if(customs.length > 0) qList = qList.concat(customs);
+      }
+      
+      let qText = qList[Math.floor(Math.random() * qList.length)];
+      qText = qText.replace('{name}', target.name);
+
+      await window.firebaseApi.startRound(state.roomCode, {
+        id: 'R_' + Date.now(), round: roundNum,
+        targetId: target.id, targetName: target.name,
+        question: qText, startedAt: Date.now()
+      });
     }
 
-    function showVoteScreenFromRoom(room){
-      var cr = room.currentRound || {};
-      state.currentVotes = {};
-      Object.keys(cr.votes || {}).forEach(function(id){ state.currentVotes[id] = Number((cr.votes[id] || {}).value || 0); });
-      state.localVoteSubmitted = !!(cr.votes && cr.votes[state.playerId]);
-      $('#questionTag').textContent = 'Manche ' + (room.round || 1) + ' • Cible : ' + (cr.targetName || '---');
-      $('#questionText').textContent = cr.question || 'Question…';
-      $('#modeLabel').textContent = 'Mode ' + (MODES[state.mode]?.label || state.mode);
-      var slider = $('#voteSlider');
-      var myVote = cr.votes && cr.votes[state.playerId] ? Number(cr.votes[state.playerId].value) : 50;
-      slider.value = myVote;
-      $('#sliderValue').textContent = myVote;
-      setThermo($('#thermoVote'), myVote);
-      $('#submitVoteBtn').disabled = state.localVoteSubmitted;
-      $('#voteStatus').textContent = state.localVoteSubmitted
-        ? 'Vote envoyé. En attente des autres joueurs (' + countVotes() + '/' + state.players.length + ').'
-        : 'Votes reçus : ' + countVotes() + '/' + state.players.length;
-      $('#autoVoteBtn').style.display = state.role === 'HOST' ? 'inline-flex' : 'none';
+    async function forceReveal() {
+      if(state.role !== 'HOST' || state.roomData.phase !== 'VOTE') return;
+      const cr = state.roomData.currentRound;
+      
+      // Auto-vote for late players
+      for(let p of state.players) {
+        if(!cr.votes || !cr.votes[p.id]) {
+          await window.firebaseApi.submitVote(state.roomCode, cr.id, p.id, 100); // Penalty for late
+        }
+      }
+
+      // Re-fetch to ensure we have all votes
+      const snap = await window.firebaseApi.get(window.firebaseApi.ref(window.firebaseApi.db, `rooms/${state.roomCode}/currentRound/votes`));
+      const votesMap = snap.val() || {};
+      
+      const values = Object.values(votesMap).map(v => Number(v.value));
+      const average = Math.round(values.reduce((a,b)=>a+b,0) / values.length);
+      const targetVote = votesMap[cr.targetId] ? Number(votesMap[cr.targetId].value) : 50;
+      const diff = Math.abs(targetVote - average);
+
+      await window.firebaseApi.setReveal(state.roomCode, {
+        roundId: cr.id, average, targetId: cr.targetId, targetName: cr.targetName, diff
+      });
+    }
+
+    // SYNCHRONISATION FIREBASE REALTIME
+    function attachSync(code) {
+      window.firebaseApi.onValue(window.firebaseApi.ref(window.firebaseApi.db, 'rooms/' + code), (snap) => {
+        const data = snap.val();
+        if(!data) return;
+        state.roomData = data;
+        
+        if(data.mode !== state.mode) applyMode(data.mode);
+        
+        state.players = Object.entries(data.players || {}).map(([id, p]) => ({ id, ...p }));
+        $('#hostPlayerCount').textContent = state.players.length;
+        
+        const renderPill = p => `<span class="pill ${p.isHost?'host':''} ${p.id===state.playerId?'me':''}">${p.name} ${p.isHost?'👑':''}</span>`;
+        $('#playersList').innerHTML = state.players.map(renderPill).join('');
+        $('#playersListPlayer').innerHTML = state.players.map(renderPill).join('');
+
+        if(data.phase === 'LOBBY') {
+          showScreen(state.role === 'HOST' ? 'screen-host-lobby' : 'screen-player-lobby');
+        } 
+        else if (data.phase === 'VOTE') {
+          handleVotePhase(data);
+        }
+        else if (data.phase === 'REVEAL') {
+          handleRevealPhase(data);
+        }
+        else if (data.phase === 'STATS') {
+          handleStatsPhase(data);
+        }
+      });
+    }
+
+    function handleVotePhase(data) {
       showScreen('screen-vote');
-    }
+      clearInterval(state.timerInterval);
+      
+      const cr = data.currentRound;
+      $('#questionTag').textContent = `Manche ${data.round} • Cible : ${cr.targetName}`;
+      $('#questionText').textContent = cr.question;
+      
+      const myVote = cr.votes?.[state.playerId];
+      $('#submitVoteBtn').disabled = !!myVote;
+      $('#submitVoteBtn').textContent = myVote ? 'Vote enregistré' : 'Je valide';
+      
+      const votesCount = Object.keys(cr.votes || {}).length;
+      $('#voteStatus').textContent = `${votesCount} / ${state.players.length} votes`;
 
-    function handleSliderInput(e){ var v = Number(e.target.value); $('#sliderValue').textContent = v; setThermo($('#thermoVote'), v); }
+      // Timer Logic
+      const timeLimit = Math.max(5, 15 - data.round); // S'accélère !
+      const elapsed = (Date.now() - cr.startedAt) / 1000;
+      let timeLeft = timeLimit - elapsed;
 
-    async function submitVote(auto){
-      if (!state.roomCode || !state.playerId) return;
-      var room = state.roomData || {};
-      var cr = room.currentRound || {};
-      if (!cr.id) return;
-      var value = auto ? Math.floor(Math.random()*101) : Number($('#voteSlider').value);
-      try {
-        await window.firebaseApi.submitVoteToDb(state.roomCode, cr.id, state.playerId, value);
-        $('#submitVoteBtn').disabled = true;
-      } catch (err) {
-        console.error(err);
-        alert('Impossible d’envoyer le vote.');
-      }
-    }
-
-    async function autoVoteAll(){
-      if (state.role !== 'HOST') return;
-      var room = state.roomData || {};
-      var cr = room.currentRound || {};
-      if (!cr.id) return;
-      try {
-        var promises = state.players.map(function(p){
-          if (cr.votes && cr.votes[p.id]) return Promise.resolve();
-          return window.firebaseApi.submitVoteToDb(state.roomCode, cr.id, p.id, Math.floor(Math.random()*101));
-        });
-        await Promise.all(promises);
-      } catch (err) {
-        console.error(err);
-        alert('Impossible de compléter les votes auto.');
-      }
-    }
-
-    function computeReveal(room){
-      var cr = room.currentRound || {};
-      var votesMap = cr.votes || {};
-      var values = Object.keys(votesMap).map(function(id){ return Number((votesMap[id] || {}).value || 0); });
-      var average = Math.round(values.reduce(function(a,b){ return a+b; }, 0) / values.length);
-      var targetId = cr.targetId;
-      var target = getPlayerById(targetId);
-      var targetVote = votesMap[targetId] ? Number(votesMap[targetId].value) : 50;
-      var diff = Math.abs(targetVote - average);
-      var sips = 1;
-      if(diff > 20) sips = 2;
-      if(diff > 40) sips = 4;
-      if(room.mode === 'Hardcore') sips += 1;
-      var close = diff <= 15;
-      var verdict = close
-        ? 'Bien deviné : la moyenne est à ' + average + ' %. Tout le monde boit 1 gorgée.'
-        : (target ? target.name : 'La cible') + ' boit ' + sips + ' gorgée' + (sips>1?'s':'') + ' à cause de ses ' + diff + ' points d’écart avec la moyenne (' + average + ' %).';
-
-      var playerScoreUpdates = {};
-      var streakUpdates = {};
-      state.players.forEach(function(p){
-        var prevScore = Number((room.players && room.players[p.id] && room.players[p.id].score) || 0);
-        var prevStreak = Number((room.players && room.players[p.id] && room.players[p.id].streak) || 0);
-        var add = 0;
-        var nextStreak = 0;
-        if (close) {
-          add = 1;
-          nextStreak = 0;
-        } else if (p.id === targetId) {
-          add = sips;
-          nextStreak = 0;
-        } else {
-          var ownVote = votesMap[p.id] ? Number(votesMap[p.id].value) : average;
-          var ownDiff = Math.abs(ownVote - average);
-          if (ownDiff <= 10) { nextStreak = prevStreak + 1; }
-          else { nextStreak = 0; }
+      state.timerInterval = setInterval(() => {
+        timeLeft -= 0.1;
+        const pct = Math.max(0, (timeLeft / timeLimit) * 100);
+        const bar = $('#voteTimerBar');
+        bar.style.width = pct + '%';
+        bar.className = 'timer-bar ' + (pct < 30 ? 'danger' : (pct < 60 ? 'warning' : ''));
+        
+        if(timeLeft <= 3 && Math.floor(timeLeft*10)%10 === 0) vibrate(50); // Heartbeat
+        
+        if(timeLeft <= 0) {
+          clearInterval(state.timerInterval);
+          if(state.role === 'HOST' && votesCount < state.players.length) forceReveal();
         }
-        playerScoreUpdates[p.id] = prevScore + add;
-        streakUpdates[p.id] = nextStreak;
-      });
+      }, 100);
 
-      return {
-        average: average,
-        verdict: verdict,
-        close: close,
-        targetId: targetId,
-        targetName: target ? target.name : '---',
-        sips: sips,
-        diff: diff,
-        round: room.round || 1,
-        question: cr.question || 'Question…',
-        roundData: cr,
-        playerScoreUpdates: playerScoreUpdates,
-        streakUpdates: streakUpdates
-      };
-    }
-
-    async function maybeRevealAsHost(room){
-      if (state.role !== 'HOST') return;
-      if (room.phase !== 'VOTE') return;
-      var cr = room.currentRound || {};
-      if (!cr.id || !allVotesIn()) return;
-      if (room.result && room.result.roundId === cr.id) return;
-      try {
-        var computed = computeReveal(room);
-        var result = {
-          roundId: cr.id,
-          average: computed.average,
-          verdict: computed.verdict,
-          close: computed.close,
-          targetId: computed.targetId,
-          targetName: computed.targetName,
-          sips: computed.sips,
-          diff: computed.diff,
-          round: computed.round,
-          question: computed.question,
-          generatedAt: Date.now(),
-          roundData: cr
-        };
-        await window.firebaseApi.setRevealInDb(state.roomCode, result, computed.playerScoreUpdates, computed.streakUpdates);
-      } catch (err) {
-        console.error(err);
+      // Auto reveal if everyone voted
+      if(state.role === 'HOST' && votesCount >= state.players.length && !data.result) {
+        clearInterval(state.timerInterval);
+        forceReveal();
       }
     }
 
-    function showReveal(room){
-      var result = room.result || {};
-      $('#revealTag').textContent = 'Manche ' + (result.round || room.round || 1);
-      $('#revealQuestion').textContent = result.question || 'Question…';
-      $('#averageValue').textContent = String(result.average || 0) + '%';
-      setThermo($('#thermoReveal'), Number(result.average || 0));
-      $('#verdictText').textContent = result.verdict || '';
-      var me = getPlayerById(state.playerId);
-      var jokerText = me && me.jokerUsed ? 'Joker déjà utilisé.' : 'Joker disponible : ' + ((me && me.joker === 'MIRROR') ? 'Miroir' : 'Bouclier');
-      $('#jokerInfo').textContent = jokerText;
-      $('#useJokerBtn').style.display = me && !me.jokerUsed ? 'inline-flex' : 'none';
-      $('#nextRoundBtn').style.display = state.role === 'HOST' ? 'inline-flex' : 'none';
-      $('#endGameBtn').style.display = state.role === 'HOST' ? 'inline-flex' : 'none';
+    async function handleRevealPhase(data) {
       showScreen('screen-reveal');
-      if (result.close) launchConfetti();
+      clearInterval(state.timerInterval);
+      clearInterval(state.revealInterval);
+      
+      const res = data.result;
+      const cr = data.currentRound;
+      $('#revealQuestion').textContent = cr.question;
+      $('#rouletteContainer').classList.add('hidden');
+      $('#jokerAlertContainer').classList.add('hidden');
+      $('#verdictText').innerHTML = '';
+      
+      // Check Joker Usage
+      const jokerEvent = cr.jokerEvent;
+      let isAmnesia = false;
+      let actualTargetId = res.targetId;
+      let actualTargetName = res.targetName;
+
+      if(jokerEvent) {
+        const alertBox = $('#jokerAlertContainer');
+        alertBox.classList.remove('hidden');
+        if(jokerEvent.type === 'AMNESIAC') {
+          isAmnesia = true;
+          alertBox.innerHTML = `<div class="joker-alert">L'Amnésique a frappé ! Manche annulée !</div>`;
+        } else if (jokerEvent.type === 'DICTATOR') {
+          actualTargetId = jokerEvent.targetId;
+          actualTargetName = jokerEvent.targetName;
+          alertBox.innerHTML = `<div class="joker-alert">Un Dictateur a sévi !<br/>${actualTargetName} prend tout !</div>`;
+        } else if (jokerEvent.type === 'SHIELD' && jokerEvent.sourceId === res.targetId) {
+          alertBox.innerHTML = `<div class="joker-alert">${res.targetName} a utilisé un Bouclier ! 0 Gorgée !</div>`;
+        }
+      }
+
+      // Animation du Thermomètre
+      $('#averageValue').textContent = '0%';
+      updateThermoUI(0);
+      
+      let currentAvg = 0;
+      state.revealInterval = setInterval(async () => {
+        currentAvg += 2;
+        if(currentAvg >= res.average) {
+          currentAvg = res.average;
+          clearInterval(state.revealInterval);
+          vibrate([100, 50, 100]);
+        }
+        $('#averageValue').textContent = currentAvg + '%';
+        updateThermoUI(currentAvg);
+
+        // Une fois l'animation finie, on affiche le verdict
+        if(currentAvg === res.average && !isAmnesia) {
+          let sips = 1;
+          if(res.diff > 20) sips = 2;
+          if(data.mode === 'Hardcore') sips++;
+
+          let text = '';
+          if(res.diff <= 15) {
+            text = `🔥 Bien visé ! ${res.targetName} est sauvé(e). Tout le monde boit 1 gorgée.`;
+          } else {
+            if(res.diff > 40) {
+              const gage = await spinRoulette();
+              text = `💥 CRITIQUE (${res.diff}% d'écart) !<br/>${actualTargetName} : ${gage}`;
+              sips = 4; // Arbitrary score penalty
+            } else {
+              text = `💥 ${res.diff}% d'écart.<br/>${actualTargetName} boit ${sips} gorgées.`;
+            }
+          }
+          
+          if(jokerEvent?.type === 'SHIELD' && jokerEvent.sourceId === actualTargetId) {
+             text = `🛡️ Sauvé par le bouclier ! Personne ne boit.`;
+             sips = 0;
+          }
+
+          $('#verdictText').innerHTML = text;
+
+          // Mise à jour des scores (seulement l'hôte le fait pour éviter les doublons)
+          if(state.role === 'HOST' && !data.currentRound.scoresUpdated) {
+            const scoreUpdates = {};
+            state.players.forEach(p => {
+              let add = 0;
+              if (res.diff <= 15) add = 1;
+              else if (p.id === actualTargetId) add = sips;
+              scoreUpdates[p.id] = p.score + add;
+            });
+            await window.firebaseApi.updateScores(state.roomCode, scoreUpdates);
+            await window.firebaseApi.update(window.firebaseApi.ref(window.firebaseApi.db, `rooms/${state.roomCode}/currentRound`), { scoresUpdated: true });
+          }
+        }
+      }, 30);
+
+      // UI Joker personnel
+      const me = state.players.find(p => p.id === state.playerId);
+      if(me && !me.jokerUsed && !jokerEvent) {
+        $('#btnOpenJoker').classList.remove('hidden');
+        $('#myJokerName').textContent = JOKER_LABELS[me.joker];
+      } else {
+        $('#btnOpenJoker').classList.add('hidden');
+      }
+
+      if(state.role === 'HOST') {
+        setTimeout(() => {
+          $('#nextRoundBtn').classList.remove('hidden');
+          $('#endGameBtn').classList.remove('hidden');
+        }, 2000);
+      }
     }
 
-    function buildStatsFromRoom(room){
-      var entries = state.players.map(function(p){
-        return {
-          id: p.id,
-          name: p.name,
-          score: Number((room.players && room.players[p.id] && room.players[p.id].score) || 0),
-          streak: Number((room.players && room.players[p.id] && room.players[p.id].streak) || 0)
-        };
-      });
-      entries.sort(function(a,b){ return a.score - b.score; });
-      return entries;
-    }
-
-    function showStats(room){
-      var entries = buildStatsFromRoom(room);
-      var list = $('#statsList');
-      list.innerHTML = '';
-      if(!entries.length) return;
-      var bestScore = entries[0].score;
-      var worstScore = entries[entries.length - 1].score;
-      var bestStreak = 0;
-      var bestStreakId = null;
-      entries.forEach(function(p){ if (p.streak > bestStreak) { bestStreak = p.streak; bestStreakId = p.id; } });
-      entries.forEach(function(p, idx){
-        var title = 'Le caméléon';
-        var power = 'Distribue 1 gorgée à qui il veut.';
-        if(p.score === worstScore && entries.length > 1){ title = 'Le pire'; power = 'Boit 3 gorgées supplémentaires.'; }
-        else if(p.score === bestScore){ title = 'Le sniper'; power = 'Distribue 3 gorgées comme il veut.'; }
-        else if(p.id === bestStreakId && bestStreak >= 2){ title = 'Le métronome'; power = 'Peut annuler 2 gorgées.'; }
-        var row = document.createElement('div');
-        row.className = 'stats-line';
-        row.innerHTML =
-          '<div class="stats-header">'+
-            '<span class="stats-name">'+(idx+1)+'. '+p.name+'</span>'+
-            '<span class="stats-score">'+p.score+' pts</span>'+
-          '</div>'+
-          '<div class="player-title">'+title+'</div>'+
-          '<div class="player-power">'+power+'</div>';
-        list.appendChild(row);
-      });
-      $('#restartBtn').style.display = state.role === 'HOST' ? 'inline-flex' : 'none';
+    function handleStatsPhase(data) {
       showScreen('screen-stats');
+      const list = $('#statsList');
+      list.innerHTML = '';
+      
+      const sorted = [...state.players].sort((a,b) => b.score - a.score);
+      
+      sorted.forEach((p, idx) => {
+        let desc = "Rien de spécial, bois ton eau.";
+        if(idx === 0) desc = "A pris le plus cher. Cul sec !";
+        if(idx === sorted.length - 1 && sorted.length > 1) desc = "A esquivé les balles. Distribue 3 gorgées.";
+        
+        list.innerHTML += `
+          <div class="stats-line">
+            <div>
+              <div class="stats-name">${idx+1}. ${p.name}</div>
+              <div class="stats-desc">${desc}</div>
+            </div>
+            <div class="stats-score">${p.score} pts</div>
+          </div>
+        `;
+      });
+
+      $('#restartBtn').style.display = state.role === 'HOST' ? 'block' : 'none';
     }
-
-    async function endGame(){
-      if (state.role !== 'HOST') return;
-      try { await window.firebaseApi.endGameInDb(state.roomCode); }
-      catch (err) { console.error(err); alert('Impossible de terminer la partie.'); }
-    }
-
-    async function restart(){
-      if (state.role !== 'HOST') return;
-      try { await window.firebaseApi.resetRoom(state.roomCode, state.mode); }
-      catch (err) { console.error(err); alert('Impossible de réinitialiser le salon.'); }
-    }
-
-    async function useJoker(){
-      var me = getPlayerById(state.playerId);
-      if (!me || me.jokerUsed || !state.roomCode) return;
-      try {
-        await window.firebaseApi.update(window.firebaseApi.ref(window.firebaseApi.db, 'rooms/' + state.roomCode + '/players/' + state.playerId), { jokerUsed: true });
-        $('#jokerInfo').textContent = 'Joker utilisé.';
-        $('#useJokerBtn').style.display = 'none';
-      } catch (err) {
-        console.error(err);
-        alert('Impossible d’utiliser le joker.');
-      }
-    }
-
-    function attachRoomListener(code){
-      if (state.unsubRoom) state.unsubRoom();
-      var roomRef = window.firebaseApi.ref(window.firebaseApi.db, 'rooms/' + code);
-      var cb = function(snap){
-        var room = snap.val();
-        if (!room) return;
-        state.roomData = room;
-        state.mode = room.mode || state.mode;
-        applyMode(state.mode);
-        state.round = room.round || 0;
-        state.players = Object.keys(room.players || {}).map(function(id){
-          var p = room.players[id] || {};
-          return {
-            id: id,
-            name: p.name || '?',
-            score: Number(p.score || 0),
-            joker: p.joker || 'SHIELD',
-            jokerUsed: !!p.jokerUsed,
-            isHost: !!p.isHost,
-            streak: Number(p.streak || 0)
-          };
-        }).sort(function(a,b){ return (a.isHost === b.isHost) ? a.name.localeCompare(b.name) : (a.isHost ? -1 : 1); });
-        renderPlayers();
-        if (state.role === 'HOST') {
-          $('#roomCodeHost').textContent = code;
-        } else {
-          $('#roomCodePlayer').textContent = code;
-        }
-
-        if (room.phase === 'LOBBY') {
-          if (state.role === 'HOST') showScreen('screen-host-lobby');
-          else showScreen('screen-player-lobby');
-        } else if (room.phase === 'VOTE') {
-          showVoteScreenFromRoom(room);
-          maybeRevealAsHost(room);
-        } else if (room.phase === 'REVEAL') {
-          showReveal(room);
-        } else if (room.phase === 'STATS') {
-          showStats(room);
-        }
-        state.lastPhase = room.phase;
-      };
-      window.firebaseApi.onValue(roomRef, cb);
-      state.unsubRoom = function(){ window.firebaseApi.off(roomRef, 'value', cb); };
-    }
-
-    function launchConfetti(){
-      var root = $('#confettiRoot');
-      root.innerHTML = '';
-      var colors = ['#34d5ff','#ff7a3c','#c259ff','#facc15','#22c55e','#f43f5e'];
-      for (var i = 0; i < 36; i++) {
-        var piece = document.createElement('div');
-        piece.className = 'confetti-piece';
-        piece.style.left = (Math.random() * 100) + 'vw';
-        piece.style.background = colors[Math.floor(Math.random() * colors.length)];
-        piece.style.setProperty('--x', (Math.random() * 40 - 20) + 'px');
-        piece.style.setProperty('--x-end', (Math.random() * 260 - 130) + 'px');
-        piece.style.animationDuration = (1.8 + Math.random() * 1.8) + 's';
-        root.appendChild(piece);
-      }
-      setTimeout(function(){ root.innerHTML = ''; }, 4200);
-    }
-
-    document.addEventListener('DOMContentLoaded', function(){
-      $('#roleHostBtn').addEventListener('click', function(){ state.role = 'HOST'; showScreen('screen-host-setup'); });
-      $('#rolePlayerBtn').addEventListener('click', function(){ state.role = 'PLAYER'; showScreen('screen-player-join'); });
-      $all('.mode-btn').forEach(function(btn){ btn.addEventListener('click', function(){ applyMode(btn.getAttribute('data-mode')); }); });
-      $('#createRoomBtn').addEventListener('click', createHost);
-      $('#addPlayerBtn').addEventListener('click', addPlayerFromLobby);
-      $('#newPlayerName').addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); addPlayerFromLobby(); }});
-      $('#joinRoomBtn').addEventListener('click', joinRoomPrototype);
-      $('#startGameBtn').addEventListener('click', startGame);
-      $('#voteSlider').addEventListener('input', handleSliderInput);
-      $('#submitVoteBtn').addEventListener('click', function(){ submitVote(false); });
-      $('#autoVoteBtn').addEventListener('click', autoVoteAll);
-      $('#useJokerBtn').addEventListener('click', useJoker);
-      $('#nextRoundBtn').addEventListener('click', nextRound);
-      $('#endGameBtn').addEventListener('click', endGame);
-      $('#restartBtn').addEventListener('click', restart);
-      applyMode('Hardcore');
-      updateStepper('lobby');
-      setThermo($('#thermoVote'), 50);
-      setThermo($('#thermoReveal'), 50);
-    });
   </script>
 </body>
 </html>
