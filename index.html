@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>le-thermometre-webapp</title>
-  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&f[]=boska@400,700&display=swap" rel="stylesheet">
+  <title>Le Thermomètre – Party Game</title>
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&display=swap" rel="stylesheet">
   <style>
     :root {
       --text-xs: clamp(0.75rem, 0.7rem + 0.25vw, 0.875rem);
@@ -12,1042 +12,1061 @@
       --text-base: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
       --text-lg: clamp(1.125rem, 1rem + 0.75vw, 1.5rem);
       --text-xl: clamp(1.5rem, 1.2rem + 1.25vw, 2rem);
-      --space-1: .25rem; --space-2: .5rem; --space-3: .75rem; --space-4: 1rem; --space-5: 1.25rem; --space-6: 1.5rem; --space-8: 2rem; --space-10: 2.5rem; --space-12: 3rem; --space-16: 4rem;
-      --radius-sm: .5rem; --radius-md: .875rem; --radius-lg: 1.25rem; --radius-xl: 1.75rem; --radius-full: 9999px;
-      --font-display: 'Boska', Georgia, serif;
-      --font-body: 'Satoshi', Inter, sans-serif;
-      --color-bg: #05060a;
-      --color-surface: #0c1018;
-      --color-surface-2: #141926;
-      --color-border: rgba(255,255,255,.12);
-      --color-text: #fdfcff;
-      --color-text-muted: #a1a5b8;
-      --color-text-faint: #6b6f84;
-      --shadow-sm: 0 1px 3px rgba(0,0,0,.34);
-      --shadow-md: 0 18px 50px rgba(0,0,0,.6);
-      --content: 1120px;
+      --space-1: .25rem; --space-2: .5rem; --space-3: .75rem; --space-4: 1rem;
+      --space-5: 1.25rem; --space-6: 1.5rem; --space-8: 2rem; --space-10: 2.5rem;
+      --radius-sm: .75rem; --radius-md: 1.25rem; --radius-lg: 1.75rem; --radius-xl: 2.25rem; --radius-full: 999px;
 
-      --chill-main: #39d5ff;
-      --chill-1: #00e5ff; --chill-2: #2f6bff;
-      --spicy-main: #ff7a2b;
-      --spicy-1: #ff8a00; --spicy-2: #ff2f54;
-      --hard-main: #d33bff;
-      --hard-1: #c300ff; --hard-2: #ff003c;
+      --chill-main: #34d5ff;
+      --chill-bg: #bfefff;
+      --chill-soft: #e5f8ff;
+
+      --spicy-main: #ff7a3c;
+      --spicy-bg: #ffe0c7;
+      --spicy-soft: #fff1e4;
+
+      --hard-main: #c259ff;
+      --hard-bg: #f0dcff;
+      --hard-soft: #f7ecff;
 
       --mode-main: var(--chill-main);
-      --mode-a: var(--chill-1);
-      --mode-b: var(--chill-2);
-      --mode-bg: #07101c;
+      --mode-bg: var(--chill-bg);
+      --mode-soft: var(--chill-soft);
     }
 
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-    html{-webkit-font-smoothing:antialiased;scroll-behavior:smooth}
-    body{min-height:100dvh;font-family:var(--font-body);font-size:var(--text-base);background:radial-gradient(circle at top,#151a26 0,#05060a 55%);color:var(--color-text);line-height:1.55;overflow:hidden}
-    button,input,select,textarea{font:inherit;color:inherit}
-    button{border:none;cursor:pointer;background:none}
-    img,svg{display:block;max-width:100%}
-    :focus-visible{outline:2px solid var(--mode-main);outline-offset:3px;border-radius:var(--radius-sm)}
+    html{-webkit-font-smoothing:antialiased;text-size-adjust:none}
+    body{
+      min-height:100dvh;
+      font-family:'Satoshi',system-ui,-apple-system,BlinkMacSystemFont,sans-serif;
+      font-size:var(--text-base);
+      background:radial-gradient(circle at top, rgba(255,255,255,0.9), var(--mode-bg));
+      display:flex;
+      justify-content:center;
+      align-items:stretch;
+      padding:var(--space-4);
+      transition:background .35s ease;
+    }
+    @media (max-width: 600px){body{padding:0;}}
 
-    .skip{position:absolute;left:-9999px;top:auto}
-    .skip:focus{left:var(--space-4);top:var(--space-4);z-index:1000;background:var(--mode-main);color:#1b1405;padding:var(--space-3) var(--space-4);border-radius:var(--radius-full)}
+    .app{
+      width:100%;
+      max-width:480px;
+      min-height:100%;
+      background:#fff;
+      color:#0f172a;
+      border-radius:2.25rem;
+      box-shadow:0 24px 60px rgba(15,23,42,.45);
+      display:flex;
+      flex-direction:column;
+      overflow:hidden;
+      transition:transform .2s ease, box-shadow .2s ease, background .35s ease;
+    }
+    @media (max-width:600px){.app{border-radius:0;}}
 
-    .app{display:grid;grid-template-columns: 1.15fr .85fr;min-height:100dvh;position:relative;overflow:hidden}
-    .panel{position:relative;padding:var(--space-6);overflow:auto}
+    .app:active{transform:scale(.995);box-shadow:0 14px 40px rgba(15,23,42,.5);}
 
-    .panel--play{
-      background:
-        radial-gradient(120% 160% at 10% 0%, color-mix(in oklab, var(--mode-a) 44%, transparent), transparent 55%),
-        radial-gradient(120% 180% at 110% -10%, color-mix(in oklab, var(--mode-b) 52%, transparent), transparent 60%),
-        radial-gradient(120% 180% at 50% 140%, rgba(0,0,0,.75), #05060a 80%);
+    header{
+      padding:var(--space-4) var(--space-5) var(--space-3);
+      display:flex;
+      flex-direction:column;
+      gap:var(--space-3);
+      background:conic-gradient(from 210deg at 0% 0%, var(--mode-main), #0f172a, var(--mode-main));
       color:white;
-      isolation:isolate;
+      transition:background .35s ease;
     }
 
-    .panel--play::before,
-    .panel--play::after{
-      content:"";position:absolute;inset:-30%;background:
-        radial-gradient(circle at 0% 0%, rgba(255,255,255,.12), transparent 60%),
-        radial-gradient(circle at 100% 80%, rgba(0,0,0,.65), transparent 60%);
-      mix-blend-mode:soft-light;opacity:.45;z-index:-2;pointer-events:none;
-      animation:floatGlow 28s ease-in-out infinite alternate;
+    .brand-row{display:flex;align-items:center;justify-content:space-between;gap:var(--space-3);}
+
+    .brand{display:flex;align-items:center;gap:var(--space-3);}
+    .brand-icon{
+      width:46px;height:46px;border-radius:1.4rem;
+      background:radial-gradient(circle at 30% 0,#fff,rgba(255,255,255,0.4));
+      border:2px solid rgba(255,255,255,0.9);
+      box-shadow:0 10px 24px rgba(15,23,42,.45);
+      display:flex;align-items:center;justify-content:center;
+      font-size:1.6rem;
+      transform-origin:center;
+      transition:transform .25s ease;
     }
-    .panel--play::after{animation-duration:34s;animation-direction:alternate-reverse;opacity:.32}
+    .brand-icon.bump{transform:scale(1.1) rotate(-6deg);}
 
-    .panel--builder{background:radial-gradient(circle at top,#141824,#05060a);border-left:1px solid rgba(255,255,255,.15)}
+    h1{font-size:var(--text-lg);font-weight:900;letter-spacing:.04em;text-transform:uppercase;}
+    .subtitle{font-size:var(--text-xs);opacity:.9;font-weight:600;text-transform:uppercase;letter-spacing:.16em;}
 
-    .shell{max-width:var(--content);margin:0 auto}
-
-    .glass{
-      background:color-mix(in oklab, #05060a 40%, rgba(9,11,23,.7));
-      backdrop-filter:blur(22px) saturate(145%);
-      border:1px solid rgba(255,255,255,.16);
-      box-shadow:var(--shadow-md);
-      border-radius:var(--radius-xl);
+    .stepper{
+      display:flex;
+      gap:.35rem;
+      font-size:var(--text-xs);
+      text-transform:uppercase;
+      letter-spacing:.14em;
+      opacity:.9;
     }
-
-    .topbar{display:flex;justify-content:space-between;align-items:center;gap:var(--space-4);margin-bottom:var(--space-6)}
-    .brand{display:flex;align-items:center;gap:var(--space-3)}
-    .brand svg{width:2.6rem;height:2.6rem;filter:drop-shadow(0 0 18px rgba(255,255,255,.4))}
-    .brand__text{display:flex;flex-direction:column}
-    .eyebrow{font-size:var(--text-xs);letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.7);font-weight:700}
-    h1,h2,h3{line-height:1.1}
-    .brand__title,.hero__title{font-family:var(--font-display)}
-    .brand__title{font-size:var(--text-lg);letter-spacing:.06em;text-transform:uppercase}
-
-    .hero{padding:var(--space-6);display:grid;gap:var(--space-5);margin-bottom:var(--space-6);position:relative;overflow:hidden}
-    .hero::before{
-      content:"";position:absolute;inset:-30%;background:
-        radial-gradient(circle at 10% -10%, rgba(255,255,255,.12), transparent 55%),
-        radial-gradient(circle at 120% 40%, rgba(0,0,0,.8), transparent 55%);
-      mix-blend-mode:soft-light;opacity:.7;pointer-events:none;z-index:-1;
+    .step-pill{
+      flex:1;
+      padding:.25rem .5rem;
+      border-radius:999px;
+      background:rgba(15,23,42,.18);
+      text-align:center;
+      color:rgba(249,250,251,.8);
     }
-    .hero__kicker{display:inline-flex;align-items:center;gap:var(--space-2);padding:var(--space-2) var(--space-3);border-radius:var(--radius-full);
-      font-size:var(--text-xs);font-weight:700;letter-spacing:.12em;text-transform:uppercase;
-      background:linear-gradient(90deg,rgba(0,0,0,.8),rgba(255,255,255,.05));
-      border:1px solid rgba(255,255,255,.2);backdrop-filter:blur(16px)}
-    .hero__title{font-size:clamp(2.4rem, 3.2vw + 1.2rem, 4.8rem);max-width:11ch;text-shadow:0 18px 45px rgba(0,0,0,.8)}
-    .hero__text{max-width:56ch;color:rgba(255,255,255,.86)}
-
-    .hero__actions,.cluster{display:flex;flex-wrap:wrap;gap:var(--space-3)}
-    .btn{min-height:52px;padding:0 var(--space-5);border-radius:var(--radius-full);font-weight:800;letter-spacing:.04em;text-transform:uppercase;font-size:var(--text-sm);
-      transition:transform .18s ease,background .18s ease,border-color .18s ease,box-shadow .18s ease}
-    .btn:hover{transform:translateY(-1px);box-shadow:0 10px 30px rgba(0,0,0,.7)}
-    .btn:active{transform:translateY(1px);box-shadow:0 2px 10px rgba(0,0,0,.8)}
-    .btn--primary{background:linear-gradient(135deg,var(--mode-main),#ffeaa0);color:#1b1405;box-shadow:0 10px 35px rgba(0,0,0,.85)}
-    .btn--secondary{background:rgba(8,12,24,.85);color:white;border:1px solid rgba(255,255,255,.18)}
-
-    .stage{padding:var(--space-5);position:relative}
-    .stage::before{
-      content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
-      background:radial-gradient(circle at 50% -20%,rgba(255,255,255,.2),transparent 55%);
-      opacity:.7;mix-blend-mode:soft-light;z-index:-1}
-
-    .screen{display:none;gap:var(--space-5)}
-    .screen.active{display:grid}
-
-    .card{background:rgba(5,8,20,.88);border-radius:var(--radius-lg);padding:var(--space-5);border:1px solid rgba(255,255,255,.14);box-shadow:0 18px 40px rgba(0,0,0,.8)}
-    .card--soft{background:rgba(10,12,25,.85)}
-
-    .room-code{font-size:clamp(2.1rem, 3vw, 3.7rem);letter-spacing:.26em;font-weight:900;text-align:center;text-shadow:0 10px 30px rgba(0,0,0,.8)}
-
-    .grid{display:grid;gap:var(--space-4)}
-    .grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
-    .grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}
-
-    .muted{color:var(--color-text-muted)}
-    .play-muted{color:rgba(210,214,239,.76)}
-    .mini{font-size:var(--text-sm)}
-
-    .input,.select,textarea{width:100%;min-height:52px;border-radius:var(--radius-md);border:1px solid rgba(255,255,255,.16);padding:0 var(--space-4);
-      background:rgba(7,10,22,.92);color:#fdfcff;box-shadow:0 0 0 1px rgba(0,0,0,.7)}
-    textarea{padding:var(--space-4);min-height:110px;resize:vertical}
-
-    .play-input{background:rgba(2,6,22,.7)}
-
-    label{font-size:var(--text-sm);font-weight:600;color:rgba(230,235,255,.86)}
-
-    .modes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--space-3)}
-    .mode{padding:var(--space-4);border-radius:var(--radius-lg);border:1px solid rgba(255,255,255,.18);
-      background:radial-gradient(circle at 0 0,rgba(255,255,255,.16),transparent 55%);
-      text-align:left;position:relative;overflow:hidden}
-    .mode strong{display:flex;align-items:center;gap:.4rem}
-    .mode small{display:block;color:rgba(228,231,255,.82);margin-top:var(--space-1);font-size:var(--text-xs)}
-    .mode::after{content:"";position:absolute;inset:0;border-radius:inherit;mix-blend-mode:soft-light;opacity:.4;
-      background:radial-gradient(circle at 120% 0,rgba(0,0,0,.95),transparent 55%)}
-    .mode.active{border-color:rgba(255,255,255,.55);box-shadow:0 18px 45px rgba(0,0,0,.85);
-      background:linear-gradient(135deg, color-mix(in oklab, var(--mode-a) 68%, rgba(0,0,0,.9)), color-mix(in oklab, var(--mode-b) 72%, rgba(0,0,0,.9)))}
-
-    .players{display:grid;gap:var(--space-3);max-height:260px;overflow:auto;padding-right:.25rem}
-    .player{display:flex;align-items:center;justify-content:space-between;gap:var(--space-3);padding:var(--space-3);
-      border-radius:var(--radius-md);background:linear-gradient(120deg,rgba(10,14,30,.95),rgba(7,9,20,.96));
-      border:1px solid rgba(255,255,255,.12);box-shadow:0 10px 30px rgba(0,0,0,.72);
-      transition:transform .16s ease, box-shadow .16s ease, border-color .16s ease}
-    .player:hover{transform:translateY(-2px);border-color:rgba(255,255,255,.5);box-shadow:0 16px 40px rgba(0,0,0,.9)}
-
-    .avatar{width:2.8rem;height:2.8rem;border-radius:50%;display:grid;place-items:center;font-weight:900;font-size:var(--text-lg);
-      background:radial-gradient(circle at 30% 0,var(--mode-a),var(--mode-b));color:white;box-shadow:0 0 0 3px rgba(0,0,0,.8),0 0 24px rgba(255,255,255,.35)}
-
-    .badge{display:inline-flex;align-items:center;gap:var(--space-2);padding:.35rem .7rem;border-radius:var(--radius-full);font-size:var(--text-xs);
-      font-weight:800;background:rgba(6,10,25,.9);border:1px solid rgba(255,255,255,.18);text-transform:uppercase;letter-spacing:.12em}
-    .play-badge{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.2);color:white}
-
-    .question{font-size:var(--text-lg);font-weight:800}
-
-    .vote-layout{display:grid;grid-template-columns: minmax(0, 1.2fr) minmax(0, .95fr);gap:var(--space-5);align-items:stretch}
-
-    .slider-wrap{display:grid;gap:var(--space-3)}
-    .slider-row{display:flex;justify-content:space-between;align-items:flex-end}
-    .slider-value{font-size:clamp(2.1rem,4vw,3.1rem);font-weight:900;font-variant-numeric:tabular-nums lining-nums}
-
-    input[type=range]{width:100%;accent-color:#fff;height:46px;background:transparent}
-
-    .meter{height:14px;border-radius:999px;background:rgba(255,255,255,.1);overflow:hidden;border:1px solid rgba(255,255,255,.12)}
-    .meter>span{display:block;height:100%;width:50%;background:linear-gradient(90deg,var(--mode-a),var(--mode-b));transition:width .2s ease-out}
-
-    .thermo-wrapper{display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:var(--space-3)}
-    .thermo-label{font-size:var(--text-xs);text-transform:uppercase;letter-spacing:.16em;color:rgba(223,229,255,.8)}
-    .thermo{
-      width:72px;height:210px;border-radius:999px;background:radial-gradient(circle at 50% 0,rgba(255,255,255,.24),rgba(0,0,0,.9));
-      padding:var(--space-2);display:flex;flex-direction:column;align-items:center;justify-content:flex-end;
-      box-shadow:0 14px 40px rgba(0,0,0,.9),0 0 0 1px rgba(255,255,255,.12);
-      position:relative;overflow:hidden
-    }
-    .thermo-inner{width:26px;flex:1;border-radius:999px;background:linear-gradient(180deg,rgba(0,0,0,.7),rgba(0,0,0,.95));
-      padding:3px;display:flex;align-items:flex-end;justify-content:center}
-    .thermo-mercury{width:100%;border-radius:999px;background:linear-gradient(180deg,var(--mode-a),var(--mode-b));
-      height:50%;box-shadow:0 0 18px rgba(255,255,255,.45);transition:height .35s cubic-bezier(.16,1,.3,1),background .25s ease-out}
-    .thermo-bulb{width:38px;height:38px;border-radius:999px;margin-top:var(--space-2);
-      background:radial-gradient(circle at 30% 0,var(--mode-a),var(--mode-b));
-      box-shadow:0 0 0 4px rgba(0,0,0,.9),0 0 28px rgba(255,255,255,.5)}
-
-    .big-number{font-size:clamp(4rem,10vw,6.5rem);font-weight:900;text-align:center;
-      text-shadow:0 18px 50px rgba(0,0,0,.9);font-variant-numeric:tabular-nums lining-nums}
-
-    .ranking{display:grid;gap:var(--space-3)}
-    .row{display:flex;align-items:center;justify-content:space-between;gap:var(--space-3)}
-
-    .pill{padding:.35rem .7rem;border-radius:var(--radius-full);background:rgba(9,12,25,.92);border:1px solid rgba(255,255,255,.18);font-size:var(--text-xs);text-transform:uppercase;letter-spacing:.14em}
-
-    .builder{display:grid;gap:var(--space-5)}
-    .builder h2{font-size:var(--text-xl)}
-    .builder .section{display:grid;gap:var(--space-4)}
-
-    .codebox{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.85rem;white-space:pre-wrap;
-      background:rgba(3,5,16,.96);border:1px solid rgba(255,255,255,.18);padding:var(--space-4);border-radius:var(--radius-md);
-      max-height:220px;overflow:auto}
-
-    .export{display:grid;gap:var(--space-3)}
-
-    .stat-grid{display:grid;grid-template-columns: minmax(0, 1.3fr) minmax(0, .9fr);gap:var(--space-5)}
-    .winner-card{border-radius:var(--radius-xl);padding:var(--space-5);
-      background:radial-gradient(circle at -10% -10%,rgba(255,255,255,.25),transparent 55%),
-                 radial-gradient(circle at 110% 10%,rgba(255,220,130,.4),transparent 60%),
-                 linear-gradient(135deg,#2a2110,#141011);
-      border:1px solid rgba(255,221,139,.7);
-      box-shadow:0 22px 70px rgba(0,0,0,.9)}
-    .loser-card{border-radius:var(--radius-xl);padding:var(--space-5);
-      background:radial-gradient(circle at -10% -10%,rgba(255,255,255,.16),transparent 55%),
-                 radial-gradient(circle at 110% 20%,rgba(255,80,120,.4),transparent 60%),
-                 linear-gradient(135deg,#240614,#12040b);
-      border:1px solid rgba(255,96,140,.7);
-      box-shadow:0 18px 60px rgba(0,0,0,.9)}
-
-    .summary-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--space-3);margin-top:var(--space-4)}
-    .summary-item{border-radius:var(--radius-lg);padding:var(--space-3);
-      background:rgba(8,12,26,.95);border:1px solid rgba(255,255,255,.12);text-align:left}
-
-    .badge-soft{background:rgba(117,168,255,.12);border-color:rgba(146,188,255,.7);color:#dbebff}
-    .badge-hot{background:rgba(255,129,106,.16);border-color:rgba(255,150,130,.7);color:#ffe1d8}
-
-    .range-row{display:flex;align-items:center;gap:var(--space-3)}
-    .range-row input[type=range]{flex:1}
-
-    .toggle-row{display:flex;align-items:center;justify-content:space-between;gap:var(--space-3)}
-
-    .toggle{width:46px;height:26px;border-radius:999px;background:rgba(8,12,24,.9);border:1px solid rgba(255,255,255,.24);
-      display:flex;align-items:center;padding:3px;cursor:pointer;position:relative}
-    .toggle-knob{width:18px;height:18px;border-radius:999px;background:white;box-shadow:0 4px 8px rgba(0,0,0,.6);transform:translateX(0);transition:transform .18s ease}
-    .toggle.on .toggle-knob{transform:translateX(18px)}
-
-    @keyframes floatGlow{
-      0%{transform:translate3d(-12px,0,0) scale(1)}
-      50%{transform:translate3d(12px,-10px,0) scale(1.03)}
-      100%{transform:translate3d(-6px,-4px,0) scale(1.02)}
+    .step-pill.active{
+      background:#f9fafb;
+      color:#0f172a;
+      font-weight:800;
     }
 
-    @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-4px)}40%{transform:translateX(4px)}60%{transform:translateX(-3px)}80%{transform:translateX(3px)}}
-
-    .shake{animation:shake .6s cubic-bezier(.36,.07,.19,.97)}
-
-    @media (max-width: 980px){
-      body{overflow:auto}
-      .app{grid-template-columns:1fr}
-      .panel{min-height:auto}
-      .grid-2,.grid-3,.vote-layout,.stat-grid{grid-template-columns:1fr}
-      .hero{padding:var(--space-5)}
-      .hero__title{max-width:unset}
+    main{
+      flex:1;display:flex;flex-direction:column;gap:var(--space-3);
+      padding:var(--space-4) var(--space-5) var(--space-5);
+      background:radial-gradient(circle at top, #ffffff, var(--mode-soft));
+      transition:background .35s ease;
     }
 
-    @media (prefers-reduced-motion: reduce){
-      *,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+    .screen{
+      display:none;
+      flex-direction:column;
+      gap:var(--space-4);
+      height:100%;
+      opacity:0;
+      transform:translateY(12px) scale(.99);
+      transition:opacity .25s ease, transform .25s ease;
+    }
+    .screen.active{
+      display:flex;
+      opacity:1;
+      transform:translateY(0) scale(1);
+    }
+
+    .card{
+      background:#f9fafb;
+      border-radius:1.75rem;
+      padding:var(--space-5);
+      box-shadow:0 16px 46px rgba(15,23,42,.18);
+      border:1px solid rgba(15,23,42,.04);
+    }
+
+    .question-card-wrapper{perspective:1200px;}
+    .question-card{
+      background:linear-gradient(135deg, color-mix(in oklab, var(--mode-main) 70%, #0f172a), #0f172a);
+      color:white;
+      text-align:center;
+      padding:var(--space-6) var(--space-5);
+      border-radius:1.9rem;
+      box-shadow:0 22px 60px rgba(15,23,42,.55);
+      transition:background .35s ease, transform .45s cubic-bezier(.2,.7,.2,1), box-shadow .3s ease;
+      transform-style:preserve-3d;
+    }
+    .question-card.flip{
+      transform:rotateY(180deg);
+      box-shadow:0 28px 70px rgba(15,23,42,.7);
+    }
+    .question-tag{
+      font-size:var(--text-xs);
+      text-transform:uppercase;
+      letter-spacing:.16em;
+      font-weight:800;
+      color:rgba(249,250,251,.9);
+      margin-bottom:var(--space-3);
+    }
+    .question-text{font-size:var(--text-xl);font-weight:800;line-height:1.2;margin-bottom:var(--space-4);}
+
+    .players-list{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:var(--space-3);}
+    .pill{
+      padding:.35rem .9rem;
+      border-radius:999px;
+      background:#e5e7eb;
+      font-size:var(--text-xs);
+      font-weight:600;
+      display:inline-flex;
+      align-items:center;
+      gap:.25rem;
+    }
+
+    label{display:block;font-size:var(--text-sm);font-weight:600;margin-bottom:.2rem;}
+    .input, .select{
+      width:100%;
+      min-height:46px;
+      border-radius:999px;
+      border:1px solid #d1d5db;
+      padding:0 var(--space-4);
+      font-size:var(--text-sm);
+      background:white;
+    }
+
+    .modes{display:flex;gap:.5rem;margin-top:.75rem;}
+    .mode-btn{
+      flex:1;
+      border-radius:999px;
+      border:none;
+      padding:.55rem .9rem;
+      font-size:var(--text-xs);
+      font-weight:800;
+      text-transform:uppercase;
+      letter-spacing:.12em;
+      color:#0f172a;
+      background:rgba(15,23,42,.06);
+      transition:background .18s ease,color .18s ease,box-shadow .18s ease,transform .12s ease;
+    }
+    .mode-btn.active{
+      background:#0f172a;
+      color:#f9fafb;
+      box-shadow:0 8px 24px rgba(15,23,42,.4);
+      transform:translateY(-1px);
+    }
+
+    .role-row{display:flex;gap:.75rem;margin-top:var(--space-3);}
+    .role-btn{
+      flex:1;
+      border-radius:1.4rem;
+      padding:var(--space-3);
+      border:1px solid rgba(15,23,42,.06);
+      background:rgba(255,255,255,.92);
+      font-size:var(--text-sm);
+      font-weight:700;
+      display:flex;flex-direction:column;gap:.35rem;
+      text-align:left;
+      box-shadow:0 10px 26px rgba(15,23,42,.1);
+      transition:transform .12s ease, box-shadow .12s ease;
+    }
+    .role-btn span{font-size:var(--text-xs);color:#6b7280;font-weight:500;}
+    .role-btn:active{transform:translateY(1px);box-shadow:0 4px 14px rgba(15,23,42,.16);}
+
+    .btn{
+      border-radius:999px;
+      border:none;
+      padding:.9rem 1.4rem;
+      font-size:var(--text-sm);
+      font-weight:800;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      cursor:pointer;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:.4rem;
+      transition:transform .12s ease, box-shadow .12s ease, background .12s.ease, color .12s ease;
+    }
+    .btn-primary{
+      background:var(--mode-main);
+      color:white;
+      box-shadow:0 10px 30px rgba(15,23,42,.35);
+      width:100%;
+    }
+    .btn-primary:active{transform:translateY(1px) scale(.98);box-shadow:0 4px 16px rgba(15,23,42,.4);}
+    .btn-ghost{background:transparent;border:1px solid #d1d5db;color:#0f172a;}
+    .btn-ghost:active{transform:translateY(1px) scale(.99);}
+
+    .slider-wrap{margin-top:var(--space-3);}
+    .slider-label{font-size:var(--text-xs);text-align:center;color:#6b7280;margin-bottom:var(--space-2);}
+
+    .slider-value-bubble{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-width:3rem;
+      padding:.3rem .7rem;
+      border-radius:999px;
+      background:#0f172a;
+      color:#f9fafb;
+      font-size:var(--text-sm);
+      font-weight:800;
+      box-shadow:0 8px 22px rgba(15,23,42,.5);
+      margin:0 auto .4rem;
+    }
+
+    .slider-row{position:relative;margin-bottom:var(--space-2);}
+
+    input[type=range]{
+      width:100%;
+      -webkit-appearance:none;
+      background:transparent;
+    }
+    input[type=range]::-webkit-slider-runnable-track{
+      height:10px;border-radius:999px;
+      background:linear-gradient(90deg, rgba(15,23,42,.12), rgba(15,23,42,.06));
+    }
+    input[type=range]::-webkit-slider-thumb{
+      -webkit-appearance:none;
+      width:24px;height:24px;border-radius:50%;
+      background:#fff;border:3px solid var(--mode-main);
+      box-shadow:0 0 0 4px rgba(15,23,42,.12);
+      margin-top:-7px;
+      transition:transform .12s ease, box-shadow .12s ease, border-color .2s ease;
+    }
+    input[type=range]:active::-webkit-slider-thumb{
+      transform:scale(1.05);
+      box-shadow:0 0 0 6px rgba(15,23,42,.18);
+    }
+    input[type=range]::-moz-range-track{
+      height:10px;border-radius:999px;
+      background:linear-gradient(90deg, rgba(15,23,42,.12), rgba(15,23,42,.06));
+    }
+    input[type=range]::-moz-range-thumb{
+      width:22px;height:22px;border-radius:50%;
+      background:#fff;border:3px solid var(--mode-main);
+      box-shadow:0 0 0 4px rgba(15,23,42,.12);
+    }
+
+    .timer{
+      margin-top:.6rem;
+      font-size:var(--text-xs);
+      text-align:center;
+      color:#6b7280;
+      transition:color .2s ease, transform .2s ease;
+    }
+    .timer.urgent{color:#ef4444;animation:pulse 0.7s ease-in-out infinite alternate;}
+
+    @keyframes pulse{
+      from{transform:scale(1);} to{transform:scale(1.05);}
+    }
+
+    .thermo-wrap{display:flex;flex-direction:column;align-items:center;gap:.5rem;margin-top:var(--space-4);}
+    .thermo-shell{display:flex;flex-direction:column;align-items:center;gap:.4rem;}
+    .thermo-bar{
+      width:48px;height:170px;border-radius:999px;
+      background:#e5e7eb;
+      padding:4px;
+      display:flex;align-items:flex-end;justify-content:center;
+    }
+    .thermo-mercury{
+      width:100%;
+      border-radius:999px;
+      height:50%;
+      background:linear-gradient(180deg,#22c55e,#ef4444);
+      transition:height .25s ease, background .22s ease;
+    }
+    .thermo-bulb{
+      width:34px;height:34px;border-radius:999px;background:var(--mode-main);margin-top:.15rem;box-shadow:0 4px 12px rgba(15,23,42,.35);}
+    .thermo-label{font-size:var(--text-xs);color:#6b7280;text-transform:uppercase;letter-spacing:.12em;}
+
+    .big-number{font-size:3rem;font-weight:900;text-align:center;margin-bottom:.3rem;}
+
+    .center{display:flex;flex-direction:column;gap:var(--space-3);align-items:stretch;}
+
+    .stats-line{display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem;font-size:var(--text-sm);}
+    .streak-badge{font-size:var(--text-xs);color:#f97316;margin-left:.4rem;}
+
+    footer{padding:0 var(--space-5) var(--space-4);font-size:var(--text-xs);color:#6b7280;text-align:center;background:#f9fafb;}
+
+    .confetti{
+      position:fixed;
+      top:0;left:0;width:100%;height:0;pointer-events:none;overflow:visible;
+    }
+    .confetti-piece{
+      position:absolute;width:8px;height:14px;border-radius:2px;
+      animation:confetti-fall linear forwards;
+    }
+    @keyframes confetti-fall{
+      0%{transform:translate3d(var(--x,0),-10%,0) rotateZ(0);opacity:1;}
+      100%{transform:translate3d(var(--x-end,0),110vh,0) rotateZ(360deg);opacity:0;}
     }
   </style>
 </head>
 <body>
-  <a class="skip" href="#main">Aller au contenu</a>
-  <div class="app" id="appRoot">
-    <section class="panel panel--play" id="playPanel" aria-label="Jeu">
-      <div class="shell">
-        <header class="topbar">
-          <div class="brand" aria-label="Le Thermomètre">
-            <svg viewBox="0 0 64 64" fill="none" aria-hidden="true">
-              <defs>
-                <linearGradient id="gStem" x1="0" x2="1" y1="0" y2="1">
-                  <stop offset="0%" stop-color="#ffffff" stop-opacity="0.85" />
-                  <stop offset="40%" stop-color="#ffeaa0" stop-opacity="0.4" />
-                  <stop offset="100%" stop-color="#f5b14a" stop-opacity="0.9" />
-                </linearGradient>
-                <linearGradient id="gMercury" x1="0" x2="0" y1="0" y2="1">
-                  <stop offset="0%" stop-color="#fffbde" />
-                  <stop offset="40%" stop-color="#ffb347" />
-                  <stop offset="100%" stop-color="#ff2f54" />
-                </linearGradient>
-              </defs>
-              <circle cx="26" cy="46" r="12" fill="url(#gMercury)" stroke="#1b1306" stroke-width="3" />
-              <rect x="24" y="10" width="8" height="30" rx="4" fill="#05060a" stroke="url(#gStem)" stroke-width="3" />
-              <rect x="26" y="14" width="4" height="22" rx="2" fill="url(#gMercury)" />
-              <path d="M40 14c7 1.5 12 7.5 12 14.5C52 37 46 44 36 47" stroke="url(#gStem)" stroke-width="3.2" stroke-linecap="round" />
-              <path d="M16 14c-6 1.5-10 7-10 13.5C6 36 10 42 18 45" stroke="rgba(255,255,255,0.5)" stroke-width="2" stroke-linecap="round" />
-            </svg>
-            <div class="brand__text">
-              <span class="eyebrow">Party game</span>
-              <strong class="brand__title">Le Thermomètre</strong>
-            </div>
-          </div>
-        </header>
-
-        <main id="main">
-          <section class="hero glass">
-            <span class="hero__kicker">Multijoueur local • fichier HTML unique</span>
-            <h1 class="hero__title">Ton intuition décide qui boit.</h1>
-            <p class="hero__text">Crée un salon, choisissez une ambiance Chill, Spicy ou Hardcore, puis essayez de deviner la moyenne du groupe. Plus tu es loin, plus tu bois. Avec jokers, roasts et stats de fin de partie.</p>
-            <div class="hero__actions">
-              <button class="btn btn--primary" id="quickStart">Créer une partie instantanément</button>
-              <button class="btn btn--secondary" id="demoFill">Remplir avec des joueurs démo</button>
-            </div>
-          </section>
-
-          <section class="stage glass" aria-live="polite">
-            <div class="screen active" id="screen-home">
-              <div class="grid grid-2">
-                <div class="card card--soft">
-                  <div class="grid">
-                    <label for="playerName">Ton prénom</label>
-                    <input id="playerName" class="input play-input" maxlength="20" placeholder="Ex. Alex" />
-                    <label>Ambiance</label>
-                    <div class="modes" id="homeModes"></div>
-                    <div class="cluster">
-                      <button class="btn btn--primary" id="createRoomBtn">Créer une partie</button>
-                      <button class="btn btn--secondary" id="joinRoomBtn">Rejoindre une partie</button>
-                    </div>
-                  </div>
-                </div>
-                <div class="card card--soft">
-                  <div class="grid">
-                    <label for="joinCode">Code salon</label>
-                    <input id="joinCode" class="input play-input" maxlength="4" placeholder="AB12" />
-                    <label for="joinAs">Ajouter un joueur au salon courant</label>
-                    <input id="joinAs" class="input play-input" maxlength="20" placeholder="Ex. Sam" />
-                    <p class="play-muted mini">Dans ce prototype tout tourne sur un seul appareil. Plus tard, tu pourras brancher un backend temps réel et laisser chaque joueur répondre depuis son téléphone.</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="screen" id="screen-room">
-              <div class="grid grid-2">
-                <div class="card">
-                  <div class="grid">
-                    <span class="eyebrow">Code de partie</span>
-                    <div class="room-code" id="roomCodeView">----</div>
-                    <div class="row"><span class="play-muted mini">Mode</span><span class="pill" id="roomModeView">Chill</span></div>
-                    <div class="row"><span class="play-muted mini">Manche</span><span class="pill" id="roundView">0</span></div>
-                    <div class="row"><span class="play-muted mini">Niveau de piment</span><span class="pill" id="heatView">1 / 3</span></div>
-                  </div>
-                </div>
-                <div class="card">
-                  <div class="grid">
-                    <div class="row"><h2>Joueurs</h2><span class="play-muted mini" id="playerCount">0</span></div>
-                    <div class="players" id="playerList"></div>
-                    <div class="cluster">
-                      <button class="btn btn--primary" id="startRoundBtn">Lancer la partie</button>
-                      <button class="btn btn--secondary" id="endGameBtn">Fin de partie</button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="screen" id="screen-vote">
-              <div class="vote-layout">
-                <div class="card">
-                  <div class="grid">
-                    <div class="row" style="justify-content:space-between;align-items:center">
-                      <span class="play-badge badge" id="targetBadge">Cible</span>
-                      <span class="pill" id="roundSmallView">Manche 1</span>
-                    </div>
-                    <p class="question" id="questionText"></p>
-                  </div>
-                </div>
-                <div class="card">
-                  <div class="grid" style="grid-template-columns:minmax(0,1.4fr) minmax(0,.9fr);align-items:stretch;gap:var(--space-4)">
-                    <div class="slider-wrap">
-                      <div class="slider-row"><span>Ton estimation</span><strong class="slider-value" id="sliderValue">50</strong></div>
-                      <div class="meter"><span id="meterFill"></span></div>
-                      <input type="range" id="voteSlider" min="0" max="100" value="50" />
-                      <div class="cluster">
-                        <button class="btn btn--primary" id="submitVoteBtn">Valider mon vote</button>
-                        <button class="btn btn--secondary" id="autoVotesBtn">Auto-votes IA</button>
-                      </div>
-                    </div>
-                    <div class="thermo-wrapper">
-                      <span class="thermo-label">Température du groupe</span>
-                      <div class="thermo" id="thermo">
-                        <div class="thermo-inner"><div class="thermo-mercury" id="thermoMercury"></div></div>
-                        <div class="thermo-bulb"></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="screen" id="screen-reveal">
-              <div class="grid">
-                <div class="card">
-                  <div class="grid grid-2" style="align-items:center;gap:var(--space-5)">
-                    <div class="grid">
-                      <span class="eyebrow">Moyenne du groupe</span>
-                      <div class="big-number" id="averageValue">50 %</div>
-                    </div>
-                    <div class="thermo-wrapper">
-                      <span class="thermo-label">Résultat</span>
-                      <div class="thermo" id="thermoReveal">
-                        <div class="thermo-inner"><div class="thermo-mercury" id="thermoMercuryReveal"></div></div>
-                        <div class="thermo-bulb"></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div class="card">
-                  <p class="question" id="verdictText"></p>
-                  <div class="cluster" style="margin-top:var(--space-4)">
-                    <button class="btn btn--secondary" id="jokerBtn">Utiliser mon joker</button>
-                    <button class="btn btn--primary" id="nextBtn">Manche suivante</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="screen" id="screen-stats">
-              <div class="stat-grid">
-                <div class="winner-card">
-                  <span class="eyebrow">Le Visionnaire</span>
-                  <h2 id="winnerName" style="margin-top:var(--space-3)">-</h2>
-                  <p class="mini muted" id="winnerScore">0 pts</p>
-                  <div class="summary-grid">
-                    <div class="summary-item">
-                      <div class="mini muted">Manches jouées</div>
-                      <div id="summaryRounds" style="font-weight:800;margin-top:.25rem">0</div>
-                    </div>
-                    <div class="summary-item">
-                      <div class="mini muted">Meilleur guess</div>
-                      <div id="summaryBest" style="font-weight:800;margin-top:.25rem">-</div>
-                    </div>
-                    <div class="summary-item">
-                      <div class="summary-item-text">
-                        <div class="mini muted">Pire crash</div>
-                        <div id="summaryWorst" style="font-weight:800;margin-top:.25rem">-</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div class="loser-card">
-                  <span class="eyebrow">Le Boulet</span>
-                  <h2 id="loserName" style="margin-top:var(--space-3)">-</h2>
-                  <p class="mini muted" id="loserScore">0 pts</p>
-                  <p id="roastText" class="mini" style="margin-top:var(--space-3)"></p>
-                  <button class="btn btn--primary" id="restartBtn" style="margin-top:var(--space-4)">Rejouer</button>
-                </div>
-              </div>
-              <div class="card" style="margin-top:var(--space-5)">
-                <h3 style="margin-bottom:var(--space-3)">Classement complet</h3>
-                <div class="ranking" id="rankingList"></div>
-              </div>
-            </div>
-          </section>
-        </main>
-      </div>
-    </section>
-
-    <aside class="panel panel--builder" aria-label="Constructeur HTML">
-      <div class="shell builder">
-        <section class="section">
+  <div class="app">
+    <header>
+      <div class="brand-row">
+        <div class="brand">
+          <div class="brand-icon" id="brandIcon">🌡️</div>
           <div>
-            <span class="eyebrow">Constructeur</span>
-            <h2>Peaufine ton Thermomètre</h2>
+            <h1>Le Thermomètre</h1>
+            <div class="subtitle">Jeu à boire</div>
           </div>
-          <p class="muted">Tout tient dans ce fichier HTML: UI complète, salons locaux, modes, jokers et roasts. Cette colonne sert à tuner les questions, le niveau de piment et à exporter l’état pour brancher ensuite un backend temps réel (Cloudflare, Firebase, Supabase…).</p>
-        </section>
-
-        <section class="section glass" style="padding:var(--space-5)">
-          <h3 style="margin-bottom:var(--space-3)">Niveau de piment & mode famille</h3>
-          <div class="grid">
-            <div>
-              <div class="range-row">
-                <label for="heatSlider">Niveau global</label>
-                <span class="pill badge-hot" id="heatLabel">1 / 3 • Chill</span>
-              </div>
-              <input id="heatSlider" type="range" min="1" max="3" value="1" />
-            </div>
-            <div class="toggle-row">
-              <div>
-                <div class="mini">Mode famille (safe)</div>
-                <div class="muted mini">Forcer des questions soft même en Spicy/Hardcore.</div>
-              </div>
-              <div class="toggle" id="familyToggle" role="switch" aria-checked="false">
-                <div class="toggle-knob"></div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section class="section glass" style="padding:var(--space-5)">
-          <label for="questionBankInput">Questions personnalisées (mode courant), une par ligne</label>
-          <textarea id="questionBankInput" class="input" placeholder="Quel pourcentage de {name} arriverait en retard à son propre mariage ?"></textarea>
-          <div class="cluster" style="margin-top:var(--space-3)">
-            <button class="btn" style="background:var(--mode-main);color:#1b1405" id="applyQuestionsBtn">Appliquer au mode</button>
-            <button class="btn" style="background:rgba(8,12,24,.9);border:1px solid rgba(255,255,255,.22)" id="loadDefaultsBtn">Recharger les questions par défaut</button>
-          </div>
-        </section>
-
-        <section class="section glass" style="padding:var(--space-5)">
-          <h3>État courant</h3>
-          <div class="codebox" id="stateBox"></div>
-        </section>
-
-        <section class="section glass" style="padding:var(--space-5)">
-          <h3>Export</h3>
-          <div class="export">
-            <button class="btn" style="background:var(--mode-main);color:#1b1405" id="downloadStateBtn">Télécharger l’état JSON</button>
-            <button class="btn" style="background:rgba(8,12,24,.9);border:1px solid rgba(255,255,255,.2)" id="downloadQuestionsBtn">Télécharger les questions</button>
-          </div>
-        </section>
-
-        <section class="section glass" style="padding:var(--space-5)">
-          <h3>Ce que fait ce fichier</h3>
-          <div class="grid mini muted">
-            <p>- UI complète en un seul HTML, CSS et JS embarqués.</p>
-            <p>- Salons locaux, modes Chill / Spicy / Hardcore, jokers (Bouclier, Miroir, Double ou rien, Swap), roasts et stats de partie.</p>
-            <p>- Architecture d’état prête à être remplacée par un WebSocket / Firestore pour un vrai multijoueur en ligne.</p>
-          </div>
-        </section>
+        </div>
       </div>
-    </aside>
+      <div class="stepper" id="stepper">
+        <div class="step-pill" data-step="lobby">Salon</div>
+        <div class="step-pill" data-step="vote">Vote</div>
+        <div class="step-pill" data-step="reveal">Résultat</div>
+        <div class="step-pill" data-step="stats">Classement</div>
+      </div>
+    </header>
+
+    <main>
+      <!-- Écran rôle: créateur vs joueur -->
+      <section class="screen active" id="screen-role" data-step="lobby">
+        <div class="card">
+          <h2 style="font-size:var(--text-lg);font-weight:800;margin-bottom:var(--space-3);">Qui es-tu ?</h2>
+          <p style="font-size:var(--text-sm);color:#4b5563;margin-bottom:var(--space-3);">Choisis ton rôle pour cette partie.</p>
+          <div class="role-row">
+            <button type="button" class="role-btn" id="roleHostBtn">
+              <strong>Créateur du salon</strong>
+              <span>Crée le code, ajoute les joueurs, lance les manches et gère les jokers.</span>
+            </button>
+            <button type="button" class="role-btn" id="rolePlayerBtn">
+              <strong>Joueur</strong>
+              <span>Entre un code de salon et joue depuis ton téléphone.</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Écran host: création de salon -->
+      <section class="screen" id="screen-host-setup" data-step="lobby">
+        <div class="card">
+          <h2 style="font-size:var(--text-lg);font-weight:800;margin-bottom:var(--space-3);">Créer un salon</h2>
+          <div style="display:flex;flex-direction:column;gap:var(--space-3);">
+            <div>
+              <label for="hostName">Ton prénom</label>
+              <input id="hostName" class="input" placeholder="Ex. Alex" maxlength="20" />
+            </div>
+            <div>
+              <span style="font-size:var(--text-sm);font-weight:600;">Mode</span>
+              <div class="modes">
+                <button type="button" class="mode-btn active" data-mode="Chill">Chill</button>
+                <button type="button" class="mode-btn" data-mode="Spicy">Spicy</button>
+                <button type="button" class="mode-btn" data-mode="Hardcore">Hardcore</button>
+              </div>
+            </div>
+            <button class="btn btn-primary" id="createRoomBtn">Créer le salon</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Écran host: lobby salon -->
+      <section class="screen" id="screen-host-lobby" data-step="lobby">
+        <div class="card">
+          <h2 style="font-size:var(--text-lg);font-weight:800;margin-bottom:var(--space-2);">Salon <span id="roomCodeHost"></span></h2>
+          <p style="font-size:var(--text-xs);color:#6b7280;margin-bottom:var(--space-3);">Partage ce code aux autres. Ils choisissent « Joueur » et le saisissent sur leur téléphone.</p>
+          <div style="display:flex;flex-direction:column;gap:var(--space-3);">
+            <div>
+              <label for="newPlayerName">Ajouter un joueur</label>
+              <input id="newPlayerName" class="input" placeholder="Ex. Sam" maxlength="20" />
+            </div>
+            <button class="btn btn-ghost" id="addPlayerBtn">Ajouter</button>
+            <div>
+              <span style="font-size:var(--text-sm);font-weight:600;">Joueurs</span>
+              <div class="players-list" id="playersList"></div>
+            </div>
+            <button class="btn btn-primary" id="startGameBtn">Lancer la partie</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Écran player: rejoindre (prototype) -->
+      <section class="screen" id="screen-player-join" data-step="lobby">
+        <div class="card">
+          <h2 style="font-size:var(--text-lg);font-weight:800;margin-bottom:var(--space-3);">Rejoindre un salon</h2>
+          <div style="display:flex;flex-direction:column;gap:var(--space-3);">
+            <div>
+              <label for="joinCode">Code de salon</label>
+              <input id="joinCode" class="input" placeholder="ABCD" maxlength="4" />
+            </div>
+            <div>
+              <label for="joinName">Ton prénom</label>
+              <input id="joinName" class="input" placeholder="Ex. Sam" maxlength="20" />
+            </div>
+            <button class="btn btn-primary" id="joinRoomBtn">Rejoindre (prototype local)</button>
+            <p style="font-size:var(--text-xs);color:#6b7280;">Dans cette version HTML, tout tourne encore sur un seul appareil. Le code et le rôle servent à préparer le vrai multijoueur (backend temps réel).</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Écran votes -->
+      <section class="screen" id="screen-vote" data-step="vote">
+        <div class="question-card-wrapper">
+          <div class="question-card" id="questionCardFront">
+            <div class="question-tag" id="questionTag">Manche 1 • Cible : Alex</div>
+            <div class="question-text" id="questionText">Question…</div>
+            <div style="font-size:var(--text-xs);color:rgba(249,250,251,.9);" id="modeLabel"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="center">
+            <div class="slider-wrap">
+              <div class="slider-value-bubble"><span id="sliderValue">50</span>&nbsp;%</div>
+              <div class="slider-label">Ton estimation en pourcentage</div>
+              <div class="slider-row">
+                <input type="range" id="voteSlider" min="0" max="100" value="50" />
+              </div>
+            </div>
+            <div class="timer" id="timerLabel">15 s restantes</div>
+            <div class="thermo-wrap">
+              <div class="thermo-shell">
+                <div class="thermo-bar"><div class="thermo-mercury" id="thermoVote"></div></div>
+                <div class="thermo-bulb"></div>
+              </div>
+              <div class="thermo-label">Température de ton vote</div>
+            </div>
+            <button class="btn btn-primary" id="submitVoteBtn">Valider pour ce joueur</button>
+            <button class="btn btn-ghost" id="autoVoteBtn">Auto pour tout le monde</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Écran reveal / résultat -->
+      <section class="screen" id="screen-reveal" data-step="reveal">
+        <div class="question-card-wrapper">
+          <div class="question-card" id="questionCardBack">
+            <div class="question-tag" id="revealTag">Résultat</div>
+            <div class="question-text" id="revealQuestion">Question…</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="center">
+            <div>
+              <div style="font-size:var(--text-xs);text-transform:uppercase;letter-spacing:.16em;color:#6b7280;text-align:center;margin-bottom:.25rem;">Moyenne du groupe</div>
+              <div class="big-number" id="averageValue">50%</div>
+            </div>
+            <div class="thermo-wrap">
+              <div class="thermo-shell">
+                <div class="thermo-bar"><div class="thermo-mercury" id="thermoReveal"></div></div>
+                <div class="thermo-bulb"></div>
+              </div>
+              <div class="thermo-label">Résultat global</div>
+            </div>
+            <p id="verdictText" style="text-align:center;font-size:var(--text-sm);"></p>
+            <div id="jokerInfo" style="text-align:center;font-size:var(--text-xs);color:#6b7280;"></div>
+            <button class="btn btn-primary" id="useJokerBtn">Utiliser mon joker</button>
+            <button class="btn btn-ghost" id="nextRoundBtn">Manche suivante</button>
+            <button class="btn btn-ghost" id="endGameBtn">Fin de partie</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Écran stats -->
+      <section class="screen" id="screen-stats" data-step="stats">
+        <div class="card">
+          <h2 style="font-size:var(--text-lg);font-weight:800;margin-bottom:var(--space-3);">Classement</h2>
+          <div id="statsList"></div>
+        </div>
+        <button class="btn btn-primary" id="restartBtn">Rejouer avec le même salon</button>
+      </section>
+    </main>
+
+    <footer>
+      Inspiré des apps type Picolo. Multijoueur temps réel prêt à brancher sur un backend.
+    </footer>
   </div>
 
+  <div class="confetti" id="confettiRoot"></div>
+
   <script>
-    const THEMES = {
-      Chill: {emoji:'❄️', label:'Chill', main:'var(--chill-main)', a:'var(--chill-1)', b:'var(--chill-2)', bg:'#07101c', desc:'Fun, léger, bon enfant.'},
-      Spicy: {emoji:'🔥', label:'Spicy', main:'var(--spicy-main)', a:'var(--spicy-1)', b:'var(--spicy-2)', bg:'#1a0907', desc:'Osé, gênant, un peu coquin.'},
-      Hardcore: {emoji:'💀', label:'Hardcore', main:'var(--hard-main)', a:'var(--hard-1)', b:'var(--hard-2)', bg:'#120312', desc:'Trash, noir et sans filtre.'}
+    const MODES = {
+      Chill: { bg:'var(--chill-bg)', main:'var(--chill-main)', soft:'var(--chill-soft)', label:'Chill' },
+      Spicy: { bg:'var(--spicy-bg)', main:'var(--spicy-main)', soft:'var(--spicy-soft)', label:'Spicy' },
+      Hardcore: { bg:'var(--hard-bg)', main:'var(--hard-main)', soft:'var(--hard-soft)', label:'Hardcore' }
     };
 
     const QUESTION_BANK = {
       Chill: [
-        { level:1, text:'Quel pourcentage de {name} est susceptible de s’endormir devant un film avant le générique ?' },
-        { level:1, text:'Quel pourcentage de {name} a le pire sens de l’orientation du groupe ?' },
-        { level:1, text:'Quel pourcentage de {name} chante faux sous la douche ?' },
-        { level:1, text:'Quel pourcentage de {name} oublie les anniversaires de ses proches ?' },
-        { level:1, text:'Quel pourcentage de {name} pleure devant un film d’animation ?' }
+        'Quel pourcentage de {name} est susceptible de s’endormir devant un film avant le générique ?',
+        'Quel pourcentage de {name} a le pire sens de l’orientation du groupe ?',
+        'Quel pourcentage de {name} chante faux sous la douche ?',
+        'Quel pourcentage de {name} oublie les anniversaires de ses proches ?',
+        'Quel pourcentage de {name} pleure devant un film d’animation ?'
       ],
       Spicy: [
-        { level:2, text:'Quel pourcentage de {name} a déjà menti pour annuler un plan ?' },
-        { level:2, text:'Quel pourcentage de {name} a déjà envoyé un texto qu’il ou elle regrette ?' },
-        { level:2, text:'Quel pourcentage de {name} flirterait avec un ex après quelques verres ?' },
-        { level:3, text:'Quel pourcentage de {name} embrasserait un inconnu ce soir ?' },
-        { level:2, text:'Quel pourcentage de {name} regarde encore le profil de son ex ?' }
+        'Quel pourcentage de {name} a déjà menti pour annuler un plan ?',
+        'Quel pourcentage de {name} a déjà envoyé un texto qu’il ou elle regrette ?',
+        'Quel pourcentage de {name} flirterait avec un ex après quelques verres ?',
+        'Quel pourcentage de {name} embrasserait un inconnu ce soir ?',
+        'Quel pourcentage de {name} regarde encore le profil de son ex ?'
       ],
       Hardcore: [
-        { level:3, text:'Quel pourcentage de {name} trahirait le groupe pour de l’argent ?' },
-        { level:3, text:'Quel pourcentage de {name} finirait en prison avant 40 ans ?' },
-        { level:3, text:'Quel pourcentage de {name} rirait secrètement à un enterrement ?' },
-        { level:3, text:'Quel pourcentage de {name} balancerait un secret pour sauver sa peau ?' },
-        { level:3, text:'Quel pourcentage de {name} cacherait un corps sans poser de questions ?' }
+        'Quel pourcentage de {name} trahirait le groupe pour de l’argent ?',
+        'Quel pourcentage de {name} finirait en prison avant 40 ans ?',
+        'Quel pourcentage de {name} rirait secrètement à un enterrement ?',
+        'Quel pourcentage de {name} balancerait un secret pour sauver sa peau ?',
+        'Quel pourcentage de {name} cacherait un corps sans poser de questions ?'
       ]
     };
 
-    const ROASTS = [
-      '{name}, avec {score} points d’écart, même une boule de cristal cassée aurait fait mieux. Bois et réfléchis.',
-      '{name}, ton intuition sociale est aussi précise qu’une fléchette lancée les yeux fermés. {score} points, c’est brutal.',
-      '{name}, {score} points d’écart. Ce n’est pas une estimation, c’est une œuvre abstraite.'
-    ];
-
-    const JOKERS = {
-      SHIELD: {name:'Bouclier', desc:'Annule tes gorgées une fois.'},
-      MIRROR: {name:'Miroir', desc:'Envoie tes gorgées à quelqu’un d’autre.'},
-      DOUBLE: {name:'Double ou rien', desc:'Soit zéro gorgée, soit le double.'},
-      SWAP: {name:'Swap', desc:'Échange ton score avec un autre joueur.'}
+    const ACTION_CARDS = {
+      Chill: [
+        'Carte action : tout le monde sauf {name} boit 2 gorgées.',
+        'Carte action : {name} choisit quelqu’un qui boit 3 gorgées.'
+      ],
+      Spicy: [
+        'Carte action : {name} doit raconter un secret ou boire 3 gorgées.',
+        'Carte action : tout le monde pointe du doigt le plus drama du groupe : il ou elle boit 4 gorgées.'
+      ],
+      Hardcore: [
+        'Carte action : {name} distribue 5 gorgées comme il ou elle veut.',
+        'Carte action : tout le monde boit 2 gorgées sauf la personne avec le plus gros score.'
+      ]
     };
 
-    const JOKER_KEYS = Object.keys(JOKERS);
+    const JOKERS = [
+      { key:'SHIELD', label:'Bouclier', desc:'Annule tes gorgées une fois.' },
+      { key:'MIRROR', label:'Miroir', desc:'Envoie tes gorgées à quelqu’un d’autre.' },
+      { key:'DOUBLE', label:'Double ou rien', desc:'Tente d’annuler ou de doubler ton malus.' },
+      { key:'SWAP', label:'Swap', desc:'Échange de score avec un autre joueur.' }
+    };
 
     const state = {
+      role: null,
       mode: 'Chill',
-      phase: 'HOME',
       roomCode: null,
-      round: 0,
-      hostId: null,
-      currentPlayerId: null,
       players: [],
+      round: 0,
+      currentQuestion: null,
+      currentTargetId: null,
+      currentCardType: 'PERCENT',
       votes: {},
-      result: null,
-      question: null,
-      heat: 1,
-      familySafe: false,
-      history: [],
-      customQuestions: {
-        Chill: [],
-        Spicy: [],
-        Hardcore: []
-      }
+      scores: {},
+      streaks: {},
+      timerId: null,
+      timeLeft: 15,
+      currentResult: null
     };
 
     const $ = sel => document.querySelector(sel);
     const $$ = sel => Array.from(document.querySelectorAll(sel));
-    const uid = () => Math.random().toString(36).slice(2, 10);
-    const roomCode = () => Array.from({length:4},()=>'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.floor(Math.random()*32)]).join('');
 
-    function applyTheme(mode){
+    function uid(){ return Math.random().toString(36).slice(2,9); }
+
+    function applyMode(mode){
       state.mode = mode;
-      const meta = THEMES[mode];
+      const m = MODES[mode];
       const root = document.documentElement;
-      const main = getComputedStyle(root).getPropertyValue(meta.main.replace('var(','').replace(')','')).trim() || '#ffd86b';
-      const a = getComputedStyle(root).getPropertyValue(meta.a.replace('var(','').replace(')','')).trim() || '#00e5ff';
-      const b = getComputedStyle(root).getPropertyValue(meta.b.replace('var(','').replace(')','')).trim() || '#2f6bff';
-      root.style.setProperty('--mode-main', main);
-      root.style.setProperty('--mode-a', a);
-      root.style.setProperty('--mode-b', b);
-      root.style.setProperty('--mode-bg', meta.bg);
-      document.querySelector('.panel--play').style.background =
-        `radial-gradient(120% 160% at 10% 0%, color-mix(in oklab, var(--mode-a) 44%, transparent), transparent 55%),`+
-        `radial-gradient(120% 180% at 110% -10%, color-mix(in oklab, var(--mode-b) 52%, transparent), transparent 60%),`+
-        `radial-gradient(120% 180% at 50% 140%, rgba(0,0,0,.75), #05060a 80%)`;
-      $('#roomModeView').textContent = meta.label;
-      $('#heatView').textContent = `${state.heat} / 3`;
-      $('#heatLabel').textContent = `${state.heat} / 3 • ${heatLabelText()}`;
-      renderModes();
-      syncState();
-      $('#questionBankInput').value = (state.customQuestions[state.mode] || []).join('\n') || QUESTION_BANK[state.mode].map(q => q.text).join('\n');
+      const bgVal = getComputedStyle(root).getPropertyValue(m.bg.replace('var(','').replace(')','')).trim() || '#c7f3ff';
+      const mainVal = getComputedStyle(root).getPropertyValue(m.main.replace('var(','').replace(')','')).trim() || '#36d9ff';
+      const softVal = getComputedStyle(root).getPropertyValue(m.soft.replace('var(','').replace(')','')).trim() || '#e5f8ff';
+      root.style.setProperty('--mode-bg', bgVal);
+      root.style.setProperty('--mode-main', mainVal);
+      root.style.setProperty('--mode-soft', softVal);
+      document.body.style.background = `radial-gradient(circle at top, rgba(255,255,255,0.9), ${bgVal})`;
+      $('main').style.background = `radial-gradient(circle at top, #ffffff, ${softVal})`;
+      $$('.mode-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+      const label = $('#modeLabel');
+      if(label) label.textContent = `Mode ${m.label}`;
+      const brandIcon = $('#brandIcon');
+      if(brandIcon){
+        brandIcon.classList.remove('bump');
+        void brandIcon.offsetWidth;
+        brandIcon.classList.add('bump');
+        setTimeout(()=>brandIcon.classList.remove('bump'),250);
+      }
     }
 
-    function heatLabelText(){
-      if(state.heat === 1) return 'Chill';
-      if(state.heat === 2) return 'Relevé';
-      return 'Cauchemar';
-    }
-
-    function renderModes(){
-      const wrap = $('#homeModes');
-      wrap.innerHTML = '';
-      Object.entries(THEMES).forEach(([name, meta]) => {
-        const b = document.createElement('button');
-        b.type = 'button';
-        b.className = 'mode' + (state.mode===name ? ' active' : '');
-        b.innerHTML = `<strong>${meta.emoji} ${meta.label}</strong><small>${meta.desc}</small>`;
-        b.addEventListener('click', ()=> applyTheme(name));
-        wrap.appendChild(b);
+    function updateStepper(step){
+      $$('#stepper .step-pill').forEach(p => {
+        const s = p.dataset.step;
+        p.classList.toggle('active', s === step);
       });
     }
 
-    function show(screen){
-      $$('.screen').forEach(el => el.classList.remove('active'));
-      $('#screen-' + screen).classList.add('active');
-      state.phase = screen.toUpperCase();
-      syncState();
+    function showScreen(id){
+      const target = $('#'+id);
+      const step = target?.dataset.step || 'lobby';
+      $$('.screen').forEach(s => s.classList.remove('active'));
+      if(target){
+        target.classList.add('active');
+      }
+      updateStepper(step);
     }
 
-    function randomJoker(){
-      return JOKER_KEYS[Math.floor(Math.random()*JOKER_KEYS.length)];
-    }
-
-    function addPlayer(name, isHost=false){
-      const clean = name.trim().slice(0,20);
-      if(!clean) return null;
-      const player = {
-        id: uid(),
-        name: clean,
-        score: 0,
-        joker: randomJoker(),
-        jokerUsed:false,
-        hasVoted:false
-      };
-      state.players.push(player);
-      if(isHost){ state.hostId = player.id; state.currentPlayerId = player.id; }
-      renderPlayers();
-      syncState();
-      return player;
+    function roomCode(){
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      let code='';
+      for(let i=0;i<4;i++) code += chars[Math.floor(Math.random()*chars.length)];
+      return code;
     }
 
     function renderPlayers(){
-      const list = $('#playerList');
-      list.innerHTML = '';
-      $('#playerCount').textContent = `${state.players.length} joueur${state.players.length>1?'s':''}`;
+      const container = $('#playersList');
+      if(!container) return;
+      container.innerHTML = '';
       state.players.forEach(p => {
-        const row = document.createElement('div');
-        row.className = 'player';
-        const isYou = p.id === state.currentPlayerId;
-        const isHost = p.id === state.hostId;
-        const status = p.hasVoted ? 'Voté' : 'En attente';
-        const joker = JOKERS[p.joker];
-        row.innerHTML = `
-          <div class="row" style="justify-content:flex-start;gap:var(--space-3)">
-            <div class="avatar">${p.name.charAt(0).toUpperCase()}</div>
-            <div>
-              <div><strong>${p.name}</strong> ${isYou?'<span class="mini play-muted">(toi)</span>':''} ${isHost?'<span class="mini play-muted">👑</span>':''}</div>
-              <div class="mini play-muted">${joker.name}${p.jokerUsed?' • utilisé':''} • ${p.score} pts</div>
-            </div>
-          </div>
-          <span class="badge play-badge">${status}</span>`;
-        row.addEventListener('click', ()=>{ state.currentPlayerId = p.id; renderPlayers(); syncState(); });
-        list.appendChild(row);
+        const span = document.createElement('span');
+        span.className = 'pill';
+        const streak = state.streaks[p.id] || 0;
+        span.textContent = p.name;
+        if(streak >= 2){
+          const b = document.createElement('span');
+          b.className = 'streak-badge';
+          b.textContent = `🔥 x${streak}`;
+          span.appendChild(b);
+        }
+        container.appendChild(span);
       });
     }
 
-    function createRoom(){
-      const name = $('#playerName').value.trim();
-      if(!name) return alertInline('Entre un prénom pour créer la partie.');
-      state.players = []; state.votes = {}; state.result = null; state.round = 0; state.question = null; state.history = [];
-      const host = addPlayer(name, true);
+    function assignJoker(){
+      const j = JOKERS[Math.floor(Math.random()*JOKERS.length)];
+      return j.key;
+    }
+
+    function createHost(){
+      const name = $('#hostName').value.trim().slice(0,20);
+      if(!name){ alert('Entre ton prénom.'); return; }
+      state.role = 'HOST';
       state.roomCode = roomCode();
-      $('#roomCodeView').textContent = state.roomCode;
-      $('#joinCode').value = state.roomCode;
-      $('#roundView').textContent = '0';
-      show('room');
+      state.players = [];
+      state.scores = {};
+      state.streaks = {};
+      addPlayerInternal(name, true);
+      $('#roomCodeHost').textContent = state.roomCode;
       renderPlayers();
-      syncState();
-      return host;
+      showScreen('screen-host-lobby');
     }
 
-    function joinRoom(){
+    function addPlayerInternal(name, isHost=false){
+      const clean = name.trim().slice(0,20);
+      if(!clean) return;
+      if(state.players.some(p => p.name.toLowerCase() === clean.toLowerCase())) return;
+      const p = { id: uid(), name: clean, joker: assignJoker(), jokerUsed:false };
+      state.players.push(p);
+      state.scores[p.id] = 0;
+      state.streaks[p.id] = 0;
+      if(isHost) state.hostId = p.id;
+      renderPlayers();
+    }
+
+    function addPlayerFromLobby(){
+      const input = $('#newPlayerName');
+      const name = input.value.trim();
+      if(!name){ alert('Entre un prénom.'); return; }
+      addPlayerInternal(name, false);
+      input.value = '';
+    }
+
+    function joinRoomPrototype(){
+      const code = $('#joinCode').value.trim().toUpperCase();
+      const name = $('#joinName').value.trim().slice(0,20);
+      if(!code || !name){ alert('Entre le code et ton prénom.'); return; }
       if(!state.roomCode){
-        const code = $('#joinCode').value.trim().toUpperCase();
-        if(code.length !== 4) return alertInline('Crée d’abord un salon ou entre un code à 4 caractères.');
         state.roomCode = code;
-        $('#roomCodeView').textContent = code;
-        show('room');
+        $('#roomCodeHost').textContent = code;
       }
-      const name = ($('#joinAs').value || $('#playerName').value).trim();
-      if(!name) return alertInline('Entre un prénom pour rejoindre.');
-      if(state.players.some(p => p.name.toLowerCase() === name.toLowerCase())) return alertInline('Ce prénom est déjà pris.');
-      addPlayer(name, false);
-      $('#joinAs').value = '';
-      show('room');
+      addPlayerInternal(name, false);
+      alert("Dans ce prototype, tout tourne encore sur un seul appareil. Sur un vrai backend, ce bouton connecterait ton téléphone au salon "+code+".");
+      showScreen('screen-host-lobby');
     }
 
-    function effectiveHeat(){
-      return state.familySafe ? 1 : state.heat;
-    }
+    function randomItem(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
 
     function buildQuestion(){
-      const mode = state.mode;
-      const heat = effectiveHeat();
-      const bank = QUESTION_BANK[mode] || [];
-      const pool = bank.filter(q => q.level <= heat);
-      const custom = (state.customQuestions[mode] || []).map(text => ({ level:heat, text }));
-      const usePool = pool.concat(custom);
-      if(!usePool.length){
-        return { text:`Quel pourcentage de {name} gagnerait ce jeu ?`, targetId:null, targetName:'' };
+      const target = randomItem(state.players);
+      state.currentTargetId = target.id;
+      const roll = Math.random();
+      if(roll < 0.2){
+        const actionTemplate = randomItem(ACTION_CARDS[state.mode] || []);
+        state.currentCardType = 'ACTION';
+        state.currentQuestion = actionTemplate.replaceAll('{name}', target.name);
+      } else {
+        const qTemplate = randomItem(QUESTION_BANK[state.mode] || []);
+        state.currentCardType = 'PERCENT';
+        state.currentQuestion = qTemplate.replaceAll('{name}', target.name);
       }
-      const target = state.players[Math.floor(Math.random()*state.players.length)];
-      const chosen = usePool[Math.floor(Math.random()*usePool.length)];
-      const text = chosen.text.replaceAll('{name}', target.name);
-      const q = { text, targetId: target.id, targetName: target.name };
-      state.question = q;
-      return q;
     }
 
-    function thermometerGradient(v){
-      const val = Math.max(0, Math.min(100, v));
-      const hue = 190 - val * 1.5;
-      const h2 = hue - 20;
-      return `linear-gradient(180deg, hsl(${hue}, 84%, 60%), hsl(${h2}, 90%, 45%))`;
+    function thermometerGradient(value){
+      const v = Math.max(0, Math.min(100, value));
+      const hue = 190 - v * 1.2;
+      const h2 = hue - 40;
+      return `linear-gradient(180deg, hsl(${hue},85%,55%), hsl(${h2},90%,45%))`;
     }
 
-    function setThermoValue(el, value){
-      const mercury = el.querySelector('.thermo-mercury');
-      if(!mercury) return;
-      const clamped = Math.max(0, Math.min(100, value));
-      const h = 20 + (clamped * 0.7);
-      mercury.style.height = h + '%';
-      mercury.style.background = thermometerGradient(clamped);
+    function setThermo(el, value){
+      const v = Math.max(0, Math.min(100, value));
+      const h = 15 + v * 0.7;
+      el.style.height = h + '%';
+      el.style.background = thermometerGradient(v);
+    }
+
+    function startGame(){
+      if(state.players.length < 2){ alert('Il faut au moins 2 joueurs.'); return; }
+      state.round = 1;
+      startRound();
     }
 
     function startRound(){
-      if(state.players.length < 2) return alertInline('Il faut au moins 2 joueurs.');
-      state.round += 1; state.votes = {}; state.result = null;
-      state.players.forEach(p => p.hasVoted = false);
-      const q = buildQuestion();
-      $('#questionText').textContent = q.text;
-      $('#targetBadge').textContent = `Cible • ${q.targetName}`;
-      $('#roundView').textContent = state.round;
-      $('#roundSmallView').textContent = `Manche ${state.round}`;
-      const slider = $('#voteSlider');
-      slider.value = 50;
-      $('#sliderValue').textContent = slider.value;
-      $('#meterFill').style.width = slider.value + '%';
-      setThermoValue($('#thermo'), Number(slider.value));
-      renderPlayers();
-      show('vote');
+      state.votes = {};
+      state.currentResult = null;
+      buildQuestion();
+      if(state.currentCardType === 'ACTION'){
+        showActionCard();
+      } else {
+        showVoteScreen();
+      }
     }
 
-    function currentPlayer(){
-      return state.players.find(p => p.id === state.currentPlayerId) || state.players[0];
+    function showVoteScreen(){
+      const target = state.players.find(p => p.id === state.currentTargetId);
+      $('#questionTag').textContent = `Manche ${state.round} • Cible : ${target.name}`;
+      $('#questionText').textContent = state.currentQuestion;
+      $('#modeLabel').textContent = `Mode ${MODES[state.mode].label}`;
+      const slider = $('#voteSlider');
+      const startVal = 50;
+      slider.value = startVal;
+      $('#sliderValue').textContent = startVal;
+      setThermo($('#thermoVote'), startVal);
+      startTimer();
+      flipToFront();
+      showScreen('screen-vote');
+    }
+
+    function showActionCard(){
+      $('#revealTag').textContent = `Manche ${state.round} • Carte action`;
+      $('#revealQuestion').textContent = state.currentQuestion;
+      $('#averageValue').textContent = '--';
+      setThermo($('#thermoReveal'), 50);
+      $('#verdictText').textContent = 'Applique la carte comme indiqué (pas de votes pour cette manche).';
+      $('#jokerInfo').textContent = '';
+      state.currentResult = null;
+      $('#useJokerBtn').style.display = 'none';
+      flipToBack();
+      showScreen('screen-reveal');
+    }
+
+    function startTimer(){
+      clearInterval(state.timerId);
+      state.timeLeft = 15;
+      const label = $('#timerLabel');
+      label.classList.remove('urgent');
+      label.textContent = '15 s restantes';
+      state.timerId = setInterval(() => {
+        state.timeLeft -= 1;
+        if(state.timeLeft <= 0){
+          clearInterval(state.timerId);
+          label.classList.remove('urgent');
+          label.textContent = "Temps écoulé, vote auto.";
+          if(Object.keys(state.votes).length < state.players.length){
+            submitVote(true);
+          }
+        } else {
+          label.textContent = state.timeLeft + ' s restantes';
+          if(state.timeLeft <= 3){
+            label.classList.add('urgent');
+          }
+        }
+      }, 1000);
+    }
+
+    function handleSliderInput(e){
+      const v = Number(e.target.value);
+      $('#sliderValue').textContent = v;
+      setThermo($('#thermoVote'), v);
     }
 
     function submitVote(auto=false){
-      const player = currentPlayer();
-      if(!player) return;
       const slider = $('#voteSlider');
-      const val = auto ? Math.floor(Math.random()*101) : Number(slider.value);
-      state.votes[player.id] = val;
-      player.hasVoted = true;
-      renderPlayers();
-      syncState();
-      if(Object.keys(state.votes).length === state.players.length) reveal();
+      let value = Number(slider.value);
+      if(auto){ value = Math.floor(Math.random()*101); }
+      const everyone = state.players;
+      everyone.forEach(p => {
+        if(state.votes[p.id] == null){ state.votes[p.id] = auto ? Math.floor(Math.random()*101) : value; }
+      });
+      clearInterval(state.timerId);
+      reveal();
     }
 
-    function autoFillVotes(){
-      state.players.forEach(p => {
-        if(!p.hasVoted){
-          state.currentPlayerId = p.id;
-          submitVote(true);
-        }
-      });
-      renderPlayers();
+    function autoVoteAll(){
+      const everyone = state.players;
+      everyone.forEach(p => { state.votes[p.id] = Math.floor(Math.random()*101); });
+      clearInterval(state.timerId);
+      reveal();
     }
 
     function reveal(){
-      const q = state.question;
-      if(!q) return;
-      const targetVote = state.votes[q.targetId] ?? 50;
-      const others = Object.entries(state.votes).filter(([id]) => id !== String(q.targetId)).map(([,v]) => v);
-      const pool = others.length ? others : Object.values(state.votes);
-      const average = Math.round(pool.reduce((a,b)=>a+b,0) / Math.max(pool.length,1));
+      const votes = Object.values(state.votes);
+      const avg = Math.round(votes.reduce((a,b)=>a+b,0)/votes.length);
+      const average = avg;
+      const target = state.players.find(p => p.id === state.currentTargetId);
+      const targetVote = state.votes[target.id] ?? 50;
       const diff = Math.abs(targetVote - average);
-      const isClose = diff <= 15;
+
       let sips = 1;
       if(diff > 20) sips = 2;
       if(diff > 40) sips = 4;
       if(state.mode === 'Hardcore') sips += 1;
-      let drinker = null;
-      let drinkerName = 'Tout le monde';
-      if(!isClose){drinker = q.targetId; drinkerName = q.targetName;}
-      if(drinker){
-        const p = state.players.find(x=>x.id===drinker); if(p) p.score += diff;
-      }
-      state.result = {average,targetVote,diff,isClose,sips,drinker,drinkerName,targetName:q.targetName,targetId:q.targetId,jokerUsed:null};
-      state.history.push({round:state.round, average, targetVote, diff, targetId:q.targetId, targetName:q.targetName});
 
-      $('#averageValue').textContent = average + ' %';
-      const verdictEl = $('#verdictText');
-      if(isClose){
-        verdictEl.textContent = `Bien deviné : la moyenne est à ${average} %. Tout le monde boit 1 gorgée.`;
+      state.scores[target.id] = (state.scores[target.id] || 0) + diff;
+
+      Object.entries(state.votes).forEach(([id,val]) => {
+        const d = Math.abs(val - average);
+        if(d <= 10){ state.streaks[id] = (state.streaks[id] || 0) + 1; }
+        else { state.streaks[id] = 0; }
+      });
+
+      state.currentResult = {
+        average,
+        diff,
+        sips,
+        targetId: target.id,
+        targetName: target.name,
+        jokerApplied:false
+      };
+
+      $('#revealTag').textContent = `Manche ${state.round}`;
+      $('#revealQuestion').textContent = state.currentQuestion;
+      $('#averageValue').textContent = average + '%';
+      setThermo($('#thermoReveal'), average);
+
+      const close = diff <= 15;
+      if(close){
+        $('#verdictText').textContent = `Bien deviné : la moyenne est à ${average} %. Tout le monde boit 1 gorgée.`;
       } else {
-        verdictEl.textContent = `${drinkerName} boit ${sips} gorgée${sips>1?'s':''} à cause de ses ${diff} points d'écart avec la moyenne (${average} %).`;
+        $('#verdictText').textContent = `${target.name} boit ${sips} gorgée${sips>1?'s':''} à cause de ses ${diff} points d'écart avec la moyenne (${average} %).`;
       }
 
-      setThermoValue($('#thermoReveal'), average);
-      const thermoR = $('#thermoReveal');
-      thermoR.classList.remove('shake');
-      if(diff > 30){
-        void thermoR.offsetWidth;
-        thermoR.classList.add('shake');
-      }
+      const player = target;
+      const joker = JOKERS.find(j => j.key === player.joker) || JOKERS[0];
+      $('#jokerInfo').textContent = player.jokerUsed ? 'Joker déjà utilisé.' : `Joker de ${player.name} : ${joker.label} – ${joker.desc}`;
+      $('#useJokerBtn').style.display = player.jokerUsed || sips === 0 ? 'none' : 'inline-flex';
 
       renderPlayers();
-      show('reveal');
+      if(state.round === 1){
+        fireConfetti();
+      }
+      flipToBack();
+      showScreen('screen-reveal');
     }
 
     function useJoker(){
-      const me = currentPlayer();
-      const r = state.result;
-      if(!me || !r || r.isClose || me.jokerUsed || r.drinker !== me.id) return alertInline('Le joker ne peut pas être utilisé maintenant.');
-      const joker = me.joker;
-      if(joker === 'SHIELD'){
-        r.jokerUsed = 'SHIELD';
-        r.drinker = null; r.drinkerName = 'Personne';
-        $('#verdictText').textContent = `${me.name} utilise son Bouclier. Personne ne boit.`;
-      } else if(joker === 'MIRROR'){
-        const others = state.players.filter(p => p.id !== me.id);
-        const victim = others[Math.floor(Math.random()*others.length)];
-        if(!victim) return;
-        r.jokerUsed = 'MIRROR'; r.drinker = victim.id; r.drinkerName = victim.name;
-        $('#verdictText').textContent = `Miroir. ${victim.name} boit ${r.sips} gorgée${r.sips>1?'s':''} à la place.`;
-      } else if(joker === 'DOUBLE'){
+      const r = state.currentResult;
+      if(!r || r.jokerApplied) return;
+      const target = state.players.find(p => p.id === r.targetId);
+      const joker = JOKERS.find(j => j.key === target.joker);
+      if(target.jokerUsed || !joker) return;
+
+      if(joker.key === 'SHIELD'){
+        state.scores[target.id] -= r.diff;
+        r.sips = 0; r.diff = 0;
+        $('#verdictText').textContent = `${target.name} utilise Bouclier : aucune gorgée, aucun malus.`;
+      } else if(joker.key === 'MIRROR'){
+        const others = state.players.filter(p => p.id !== target.id);
+        const victim = others[Math.floor(Math.random()*others.length)] || target;
+        state.scores[target.id] -= r.diff;
+        state.scores[victim.id] = (state.scores[victim.id] || 0) + r.diff;
+        $('#verdictText').textContent = `${target.name} utilise Miroir : ${victim.name} prend ${r.sips} gorgée${r.sips>1?'s':''} et le malus à sa place.`;
+      } else if(joker.key === 'DOUBLE'){
         if(r.diff <= 10){
-          const delta = r.diff;
-          const p = state.players.find(p => p.id === me.id);
-          if(p) p.score -= delta;
+          state.scores[target.id] -= r.diff;
           r.diff = 0; r.sips = 0;
-          $('#verdictText').textContent = `${me.name} tente le Double ou rien et tombe juste : zéro gorgée, zéro malus.`;
+          $('#verdictText').textContent = `${target.name} tente Double ou rien et tombe juste : zéro gorgée, zéro malus.`;
         } else {
-          r.sips *= 2;
-          const delta = r.diff;
-          const p = state.players.find(p => p.id === me.id);
-          if(p) p.score += delta;
-          $('#verdictText').textContent = `${me.name} tente le Double ou rien et se plante : ${r.sips} gorgées et un malus doublé.`;
+          state.scores[target.id] += r.diff;
+          r.diff *= 2; r.sips *= 2;
+          $('#verdictText').textContent = `${target.name} tente Double ou rien et se plante : malus et gorgées doublés.`;
         }
-      } else if(joker === 'SWAP'){
-        const others = state.players.filter(p => p.id !== me.id);
-        const victim = others[Math.floor(Math.random()*others.length)];
-        if(!victim) return;
-        const tmp = me.score; me.score = victim.score; victim.score = tmp;
-        r.jokerUsed = 'SWAP';
-        $('#verdictText').textContent = `${me.name} échange son score avec ${victim.name}. Le classement va faire mal.`;
+      } else if(joker.key === 'SWAP'){
+        const others = state.players.filter(p => p.id !== target.id);
+        const victim = others[Math.floor(Math.random()*others.length)] || target;
+        const tmp = state.scores[target.id];
+        state.scores[target.id] = state.scores[victim.id] || 0;
+        state.scores[victim.id] = tmp;
+        $('#verdictText').textContent = `${target.name} utilise Swap et échange son score avec ${victim.name}.`;
       }
-      me.jokerUsed = true;
+
+      target.jokerUsed = true;
+      r.jokerApplied = true;
+      $('#useJokerBtn').style.display = 'none';
+      $('#jokerInfo').textContent = 'Joker utilisé.';
       renderPlayers();
-      syncState();
+    }
+
+    function nextRound(){
+      state.round += 1;
+      startRound();
     }
 
     function endGame(){
-      const ranked = [...state.players].sort((a,b)=>a.score-b.score);
-      const winner = ranked[0];
-      const loser = ranked[ranked.length-1];
-      $('#winnerName').textContent = winner ? winner.name : '-';
-      $('#winnerScore').textContent = winner ? `${winner.score} pts` : '';
-      $('#loserName').textContent = loser ? loser.name : '-';
-      $('#loserScore').textContent = loser ? `${loser.score} pts` : '';
-
-      const roundsPlayed = state.history.length;
-      $('#summaryRounds').textContent = roundsPlayed;
-      if(roundsPlayed){
-        const best = state.history.reduce((acc,h)=> h.diff < acc.diff ? h : acc, state.history[0]);
-        const worst = state.history.reduce((acc,h)=> h.diff > acc.diff ? h : acc, state.history[0]);
-        $('#summaryBest').textContent = `${best.targetName} à ${best.diff} pts de la moyenne`;
-        $('#summaryWorst').textContent = `${worst.targetName} à ${worst.diff} pts de la moyenne`;
-      } else {
-        $('#summaryBest').textContent = '-';
-        $('#summaryWorst').textContent = '-';
-      }
-
-      $('#rankingList').innerHTML = ranked.map((p,i)=>`
-        <div class="player">
-          <div>
-            <strong>${i+1}. ${p.name}</strong>
-            <div class="mini muted">${JOKERS[p.joker].name}${p.jokerUsed?' • utilisé':''}</div>
-          </div>
-          <strong>${p.score} pts</strong>
-        </div>`).join('');
-
-      const roastTarget = loser || winner;
-      $('#roastText').textContent = roastTarget
-        ? ROASTS[Math.floor(Math.random()*ROASTS.length)].replace('{name}', roastTarget.name).replace('{score}', roastTarget.score)
-        : 'Pas assez de joueurs pour un roast.';
-
-      show('stats');
+      const entries = Object.entries(state.scores);
+      const list = $('#statsList');
+      list.innerHTML = '';
+      const sorted = entries.map(([id,score]) => ({ id, score, name: state.players.find(p => p.id===id)?.name || '?', streak: state.streaks[id] || 0 }))
+        .sort((a,b)=>a.score-b.score);
+      sorted.forEach((p,i) => {
+        const row = document.createElement('div');
+        row.className = 'stats-line';
+        const streakText = p.streak >= 2 ? `🔥 Streak x${p.streak}` : '';
+        row.innerHTML = `<span>${i+1}. ${p.name} ${streakText}</span><span>${p.score} pts</span>`;
+        list.appendChild(row);
+      });
+      showScreen('screen-stats');
     }
 
     function restart(){
-      state.round = 0; state.votes = {}; state.result = null; state.question = null; state.history = [];
-      state.players.forEach(p => {p.score = 0; p.jokerUsed = false; p.hasVoted = false;});
-      $('#roundView').textContent = '0';
+      state.round = 0;
+      state.votes = {};
+      state.currentQuestion = null;
+      state.currentTargetId = null;
+      state.currentCardType = 'PERCENT';
+      state.currentResult = null;
+      Object.keys(state.scores).forEach(id => state.scores[id] = 0);
+      Object.keys(state.streaks).forEach(id => state.streaks[id] = 0);
       renderPlayers();
-      show('room');
+      showScreen('screen-host-lobby');
     }
 
-    function alertInline(msg){
-      const box = document.createElement('div');
-      box.className = 'glass';
-      box.style.position = 'fixed'; box.style.left='50%'; box.style.bottom='24px'; box.style.transform='translateX(-50%)';
-      box.style.padding='12px 16px'; box.style.zIndex='9999'; box.style.background='rgba(8,10,22,.96)';
-      box.style.borderRadius='999px'; box.style.border='1px solid rgba(255,255,255,.3)';
-      box.textContent = msg;
-      document.body.appendChild(box);
-      setTimeout(()=> box.remove(), 1900);
+    function loadExternalQuestions(){
+      try {
+        fetch('./questions.json').then(r => {
+          if(!r.ok) return;
+          return r.json();
+        }).then(data => {
+          if(!data) return;
+          Object.assign(QUESTION_BANK, data);
+        }).catch(()=>{});
+      } catch(e){}
     }
 
-    function syncState(){
-      $('#stateBox').textContent = JSON.stringify({
-        mode: state.mode,
-        phase: state.phase,
-        roomCode: state.roomCode,
-        round: state.round,
-        currentPlayerId: state.currentPlayerId,
-        heat: state.heat,
-        familySafe: state.familySafe,
-        players: state.players,
-        question: state.question,
-        result: state.result
-      }, null, 2);
-      if(state.roomCode) $('#roomCodeView').textContent = state.roomCode;
-      $('#heatView').textContent = `${state.heat} / 3`;
+    function fireConfetti(){
+      const root = $('#confettiRoot');
+      if(!root) return;
+      root.innerHTML = '';
+      const colors = ['#facc15','#fb7185','#34d399','#38bdf8','#a855f7'];
+      const pieces = 40;
+      for(let i=0;i<pieces;i++){
+        const div = document.createElement('div');
+        div.className = 'confetti-piece';
+        const x = Math.random()*100;
+        const xEnd = x + (Math.random()*20-10);
+        const dur = 1.8 + Math.random()*0.7;
+        const delay = Math.random()*0.3;
+        div.style.left = x+'vw';
+        div.style.setProperty('--x', x+'vw');
+        div.style.setProperty('--x-end', xEnd+'vw');
+        div.style.backgroundColor = colors[i % colors.length];
+        div.style.animationDuration = dur+'s';
+        div.style.animationDelay = delay+'s';
+        root.appendChild(div);
+      }
+      setTimeout(()=>{ root.innerHTML=''; }, 2600);
     }
 
-    function download(filename, content, type='application/json'){
-      const blob = new Blob([content], {type});
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = filename;
-      a.click();
-      setTimeout(()=>URL.revokeObjectURL(a.href), 1000);
+    function flipToFront(){
+      const front = $('#questionCardFront');
+      const back = $('#questionCardBack');
+      if(front){ front.classList.remove('flip'); }
+      if(back){ back.classList.add('flip'); }
     }
 
-    $('#createRoomBtn').addEventListener('click', createRoom);
-    $('#joinRoomBtn').addEventListener('click', joinRoom);
-    $('#startRoundBtn').addEventListener('click', startRound);
-    $('#submitVoteBtn').addEventListener('click', ()=>submitVote(false));
-    $('#autoVotesBtn').addEventListener('click', autoFillVotes);
-    $('#nextBtn').addEventListener('click', startRound);
+    function flipToBack(){
+      const front = $('#questionCardFront');
+      const back = $('#questionCardBack');
+      if(front){ front.classList.add('flip'); }
+      if(back){ back.classList.remove('flip'); }
+    }
+
+    $('#roleHostBtn').addEventListener('click', () => { state.role = 'HOST'; showScreen('screen-host-setup'); });
+    $('#rolePlayerBtn').addEventListener('click', () => { state.role = 'PLAYER'; showScreen('screen-player-join'); });
+
+    $$('.mode-btn').forEach(btn => btn.addEventListener('click', () => applyMode(btn.dataset.mode)));
+
+    $('#createRoomBtn').addEventListener('click', createHost);
+    $('#addPlayerBtn').addEventListener('click', addPlayerFromLobby);
+    $('#newPlayerName').addEventListener('keydown', e => { if(e.key==='Enter'){ e.preventDefault(); addPlayerFromLobby(); }});
+
+    $('#joinRoomBtn').addEventListener('click', joinRoomPrototype);
+
+    $('#startGameBtn').addEventListener('click', startGame);
+
+    $('#voteSlider').addEventListener('input', handleSliderInput);
+    $('#submitVoteBtn').addEventListener('click', () => submitVote(false));
+    $('#autoVoteBtn').addEventListener('click', autoVoteAll);
+
+    $('#useJokerBtn').addEventListener('click', useJoker);
+    $('#nextRoundBtn').addEventListener('click', nextRound);
     $('#endGameBtn').addEventListener('click', endGame);
     $('#restartBtn').addEventListener('click', restart);
-    $('#jokerBtn').addEventListener('click', useJoker);
 
-    $('#voteSlider').addEventListener('input', e => {
-      const v = Number(e.target.value);
-      $('#sliderValue').textContent = v;
-      $('#meterFill').style.width = v + '%';
-      setThermoValue($('#thermo'), v);
-    });
-
-    $('#quickStart').addEventListener('click', () => {
-      if(!$('#playerName').value.trim()) $('#playerName').value = 'Alex';
-      createRoom();
-    });
-
-    $('#demoFill').addEventListener('click', () => {
-      if(!state.roomCode) { if(!$('#playerName').value.trim()) $('#playerName').value = 'Alex'; createRoom(); }
-      ['Sam','Lina','Noé'].forEach(n => { if(!state.players.some(p=>p.name===n)) addPlayer(n); });
-      show('room');
-    });
-
-    $('#applyQuestionsBtn').addEventListener('click', () => {
-      const lines = $('#questionBankInput').value.split('\n').map(x=>x.trim()).filter(Boolean);
-      if(!lines.length) return alertInline('Ajoute au moins une question.');
-      state.customQuestions[state.mode] = lines;
-      syncState();
-      alertInline('Questions personnalisées enregistrées pour le mode ' + state.mode + '.');
-    });
-
-    $('#loadDefaultsBtn').addEventListener('click', () => {
-      $('#questionBankInput').value = QUESTION_BANK[state.mode].map(q => q.text).join('\n');
-    });
-
-    $('#downloadStateBtn').addEventListener('click', () => download('le-thermometre-state.json', JSON.stringify(state, null, 2)));
-    $('#downloadQuestionsBtn').addEventListener('click', () => {
-      const all = QUESTION_BANK[state.mode].map(q => q.text).concat(state.customQuestions[state.mode] || []);
-      download(`questions-${state.mode.toLowerCase()}.txt`, all.join('\n'), 'text/plain');
-    });
-
-    $('#heatSlider').addEventListener('input', e => {
-      state.heat = Number(e.target.value);
-      $('#heatLabel').textContent = `${state.heat} / 3 • ${heatLabelText()}`;
-      syncState();
-    });
-
-    $('#familyToggle').addEventListener('click', () => {
-      state.familySafe = !state.familySafe;
-      const t = $('#familyToggle');
-      t.classList.toggle('on', state.familySafe);
-      t.setAttribute('aria-checked', state.familySafe ? 'true' : 'false');
-      syncState();
-    });
-
-    renderModes();
-    applyTheme('Chill');
-    $('#questionBankInput').value = QUESTION_BANK[state.mode].map(q => q.text).join('\n');
-    syncState();
+    applyMode('Chill');
+    updateStepper('lobby');
+    loadExternalQuestions();
   </script>
 </body>
 </html>
