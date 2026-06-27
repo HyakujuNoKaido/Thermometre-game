@@ -17,16 +17,16 @@
       --radius-sm: .75rem; --radius-md: 1.25rem; --radius-lg: 1.75rem; --radius-xl: 2.25rem; --radius-full: 999px;
 
       --chill-main: #34d5ff;
-      --chill-bg: #bfefff;
-      --chill-soft: #e5f8ff;
+      --chill-bg: #0f172a;
+      --chill-soft: #111827;
 
       --spicy-main: #ff7a3c;
-      --spicy-bg: #ffe0c7;
-      --spicy-soft: #fff1e4;
+      --spicy-bg: #111827;
+      --spicy-soft: #1f2933;
 
       --hard-main: #c259ff;
-      --hard-bg: #f0dcff;
-      --hard-soft: #f7ecff;
+      --hard-bg: #020617;
+      --hard-soft: #030712;
 
       --mode-main: var(--chill-main);
       --mode-bg: var(--chill-bg);
@@ -39,12 +39,13 @@
       min-height:100dvh;
       font-family:'Satoshi',system-ui,-apple-system,BlinkMacSystemFont,sans-serif;
       font-size:var(--text-base);
-      background:radial-gradient(circle at top, rgba(255,255,255,0.9), var(--mode-bg));
+      background:radial-gradient(circle at top, #020617, var(--mode-bg));
       display:flex;
       justify-content:center;
       align-items:stretch;
       padding:var(--space-4);
       transition:background .35s ease;
+      color:#e5e7eb;
     }
     @media (max-width: 600px){body{padding:0;}}
 
@@ -52,10 +53,10 @@
       width:100%;
       max-width:480px;
       min-height:100%;
-      background:#fff;
-      color:#0f172a;
+      background:#020617;
+      color:#e5e7eb;
       border-radius:2.25rem;
-      box-shadow:0 24px 60px rgba(15,23,42,.45);
+      box-shadow:0 30px 80px rgba(0,0,0,.9);
       display:flex;
       flex-direction:column;
       overflow:hidden;
@@ -63,14 +64,14 @@
     }
     @media (max-width:600px){.app{border-radius:0;}}
 
-    .app:active{transform:scale(.995);box-shadow:0 14px 40px rgba(15,23,42,.5);}
+    .app:active{transform:scale(.995);box-shadow:0 18px 50px rgba(0,0,0,.9);}
 
     header{
       padding:var(--space-4) var(--space-5) var(--space-3);
       display:flex;
       flex-direction:column;
       gap:var(--space-3);
-      background:conic-gradient(from 210deg at 0% 0%, var(--mode-main), #0f172a, var(--mode-main));
+      background:conic-gradient(from 220deg at 0% 0%, var(--mode-main), #020617, var(--mode-main));
       color:white;
       transition:background .35s ease;
     }
@@ -80,9 +81,9 @@
     .brand{display:flex;align-items:center;gap:var(--space-3);}
     .brand-icon{
       width:46px;height:46px;border-radius:1.4rem;
-      background:radial-gradient(circle at 30% 0,#fff,rgba(255,255,255,0.4));
-      border:2px solid rgba(255,255,255,0.9);
-      box-shadow:0 10px 24px rgba(15,23,42,.45);
+      background:radial-gradient(circle at 30% 0,#fff,rgba(255,255,255,0.1));
+      border:2px solid rgba(255,255,255,0.8);
+      box-shadow:0 10px 24px rgba(0,0,0,.8);
       display:flex;align-items:center;justify-content:center;
       font-size:1.6rem;
       transform-origin:center;
@@ -105,20 +106,20 @@
       flex:1;
       padding:.25rem .5rem;
       border-radius:999px;
-      background:rgba(15,23,42,.18);
+      background:rgba(15,23,42,.8);
       text-align:center;
-      color:rgba(249,250,251,.8);
+      color:rgba(249,250,251,.7);
     }
     .step-pill.active{
       background:#f9fafb;
-      color:#0f172a;
+      color:#020617;
       font-weight:800;
     }
 
     main{
       flex:1;display:flex;flex-direction:column;gap:var(--space-3);
       padding:var(--space-4) var(--space-5) var(--space-5);
-      background:radial-gradient(circle at top, #ffffff, var(--mode-soft));
+      background:radial-gradient(circle at top, #020617, var(--mode-soft));
       transition:background .35s ease;
     }
 
@@ -138,27 +139,27 @@
     }
 
     .card{
-      background:#f9fafb;
+      background:#020617;
       border-radius:1.75rem;
       padding:var(--space-5);
-      box-shadow:0 16px 46px rgba(15,23,42,.18);
-      border:1px solid rgba(15,23,42,.04);
+      box-shadow:0 18px 50px rgba(0,0,0,.9);
+      border:1px solid rgba(148,163,184,.35);
     }
 
     .question-card-wrapper{perspective:1200px;}
     .question-card{
-      background:linear-gradient(135deg, color-mix(in oklab, var(--mode-main) 70%, #0f172a), #0f172a);
+      background:linear-gradient(135deg, color-mix(in oklab, var(--mode-main) 70%, #020617), #020617);
       color:white;
       text-align:center;
       padding:var(--space-6) var(--space-5);
       border-radius:1.9rem;
-      box-shadow:0 22px 60px rgba(15,23,42,.55);
+      box-shadow:0 26px 70px rgba(0,0,0,.95);
       transition:background .35s ease, transform .45s cubic-bezier(.2,.7,.2,1), box-shadow .3s ease;
       transform-style:preserve-3d;
     }
     .question-card.flip{
       transform:rotateY(180deg);
-      box-shadow:0 28px 70px rgba(15,23,42,.7);
+      box-shadow:0 30px 80px rgba(0,0,0,1);
     }
     .question-tag{
       font-size:var(--text-xs);
@@ -174,23 +175,25 @@
     .pill{
       padding:.35rem .9rem;
       border-radius:999px;
-      background:#e5e7eb;
+      background:#111827;
       font-size:var(--text-xs);
       font-weight:600;
       display:inline-flex;
       align-items:center;
       gap:.25rem;
+      color:#e5e7eb;
     }
 
     label{display:block;font-size:var(--text-sm);font-weight:600;margin-bottom:.2rem;}
-    .input, .select{
+    .input{
       width:100%;
       min-height:46px;
       border-radius:999px;
-      border:1px solid #d1d5db;
+      border:1px solid #4b5563;
       padding:0 var(--space-4);
       font-size:var(--text-sm);
-      background:white;
+      background:#020617;
+      color:#e5e7eb;
     }
 
     .modes{display:flex;gap:.5rem;margin-top:.75rem;}
@@ -203,14 +206,14 @@
       font-weight:800;
       text-transform:uppercase;
       letter-spacing:.12em;
-      color:#0f172a;
-      background:rgba(15,23,42,.06);
-      transition:background .18s ease,color .18s ease,box-shadow .18s.ease,transform .12s ease;
+      color:#e5e7eb;
+      background:rgba(15,23,42,.8);
+      transition:background .18s ease,color .18s ease,box-shadow .18s ease,transform .12s ease;
     }
     .mode-btn.active{
-      background:#0f172a;
-      color:#f9fafb;
-      box-shadow:0 8px 24px rgba(15,23,42,.4);
+      background:#f9fafb;
+      color:#020617;
+      box-shadow:0 8px 24px rgba(0,0,0,.9);
       transform:translateY(-1px);
     }
 
@@ -219,17 +222,17 @@
       flex:1;
       border-radius:1.4rem;
       padding:var(--space-3);
-      border:1px solid rgba(15,23,42,.06);
-      background:rgba(255,255,255,.92);
+      border:1px solid rgba(148,163,184,.5);
+      background:rgba(15,23,42,.9);
       font-size:var(--text-sm);
       font-weight:700;
       display:flex;flex-direction:column;gap:.35rem;
       text-align:left;
-      box-shadow:0 10px 26px rgba(15,23,42,.1);
+      box-shadow:0 10px 28px rgba(0,0,0,.9);
       transition:transform .12s ease, box-shadow .12s ease;
     }
-    .role-btn span{font-size:var(--text-xs);color:#6b7280;font-weight:500;}
-    .role-btn:active{transform:translateY(1px);box-shadow:0 4px 14px rgba(15,23,42,.16);}
+    .role-btn span{font-size:var(--text-xs);color:#9ca3af;font-weight:500;}
+    .role-btn:active{transform:translateY(1px);box-shadow:0 4px 16px rgba(0,0,0,.95);}
 
     .btn{
       border-radius:999px;
@@ -244,20 +247,20 @@
       align-items:center;
       justify-content:center;
       gap:.4rem;
-      transition:transform .12s ease, box-shadow .12s ease, background .12s ease, color .12s ease;
+      transition:transform .12s.ease, box-shadow .12s.ease, background .12s ease, color .12s ease;
     }
     .btn-primary{
       background:var(--mode-main);
       color:white;
-      box-shadow:0 10px 30px rgba(15,23,42,.35);
+      box-shadow:0 12px 34px rgba(0,0,0,.95);
       width:100%;
     }
-    .btn-primary:active{transform:translateY(1px) scale(.98);box-shadow:0 4px 16px rgba(15,23,42,.4);}
-    .btn-ghost{background:transparent;border:1px solid #d1d5db;color:#0f172a;}
+    .btn-primary:active{transform:translateY(1px) scale(.98);box-shadow:0 4px 18px rgba(0,0,0,1);}
+    .btn-ghost{background:transparent;border:1px solid #4b5563;color:#e5e7eb;}
     .btn-ghost:active{transform:translateY(1px) scale(.99);}
 
     .slider-wrap{margin-top:var(--space-3);}
-    .slider-label{font-size:var(--text-xs);text-align:center;color:#6b7280;margin-bottom:var(--space-2);}
+    .slider-label{font-size:var(--text-xs);text-align:center;color:#9ca3af;margin-bottom:var(--space-2);}
 
     .slider-value-bubble{
       display:inline-flex;
@@ -266,11 +269,11 @@
       min-width:3rem;
       padding:.3rem .7rem;
       border-radius:999px;
-      background:#0f172a;
-      color:#f9fafb;
+      background:#f9fafb;
+      color:#020617;
       font-size:var(--text-sm);
       font-weight:800;
-      box-shadow:0 8px 22px rgba(15,23,42,.5);
+      box-shadow:0 8px 22px rgba(0,0,0,.9);
       margin:0 auto .4rem;
     }
 
@@ -283,38 +286,38 @@
     }
     input[type=range]::-webkit-slider-runnable-track{
       height:10px;border-radius:999px;
-      background:linear-gradient(90deg, rgba(15,23,42,.12), rgba(15,23,42,.06));
+      background:linear-gradient(90deg, rgba(148,163,184,.5), rgba(55,65,81,.6));
     }
     input[type=range]::-webkit-slider-thumb{
       -webkit-appearance:none;
       width:24px;height:24px;border-radius:50%;
-      background:#fff;border:3px solid var(--mode-main);
-      box-shadow:0 0 0 4px rgba(15,23,42,.12);
+      background:#f9fafb;border:3px solid var(--mode-main);
+      box-shadow:0 0 0 4px rgba(0,0,0,.8);
       margin-top:-7px;
-      transition:transform .12s ease, box-shadow .12s ease, border-color .2s ease;
+      transition:transform .12s ease, box-shadow .12s.ease, border-color .2s ease;
     }
     input[type=range]:active::-webkit-slider-thumb{
       transform:scale(1.05);
-      box-shadow:0 0 0 6px rgba(15,23,42,.18);
+      box-shadow:0 0 0 6px rgba(0,0,0,1);
     }
     input[type=range]::-moz-range-track{
       height:10px;border-radius:999px;
-      background:linear-gradient(90deg, rgba(15,23,42,.12), rgba(15,23,42,.06));
+      background:linear-gradient(90deg, rgba(148,163,184,.5), rgba(55,65,81,.6));
     }
     input[type=range]::-moz-range-thumb{
       width:22px;height:22px;border-radius:50%;
-      background:#fff;border:3px solid var(--mode-main);
-      box-shadow:0 0 0 4px rgba(15,23,42,.12);
+      background:#f9fafb;border:3px solid var(--mode-main);
+      box-shadow:0 0 0 4px rgba(0,0,0,.9);
     }
 
     .timer{
       margin-top:.6rem;
       font-size:var(--text-xs);
       text-align:center;
-      color:#6b7280;
-      transition:color .2s ease, transform .2s ease;
+      color:#9ca3af;
+      transition:color .2s ease, transform .2s.ease;
     }
-    .timer.urgent{color:#ef4444;animation:pulse 0.7s ease-in-out infinite alternate;}
+    .timer.urgent{color:#f97316;animation:pulse 0.7s ease-in-out infinite alternate;}
 
     @keyframes pulse{
       from{transform:scale(1);} to{transform:scale(1.05);}
@@ -324,7 +327,7 @@
     .thermo-shell{display:flex;flex-direction:column;align-items:center;gap:.4rem;}
     .thermo-bar{
       width:48px;height:170px;border-radius:999px;
-      background:#e5e7eb;
+      background:#111827;
       padding:4px;
       display:flex;align-items:flex-end;justify-content:center;
     }
@@ -336,17 +339,21 @@
       transition:height .25s ease, background .22s ease;
     }
     .thermo-bulb{
-      width:34px;height:34px;border-radius:999px;background:var(--mode-main);margin-top:.15rem;box-shadow:0 4px 12px rgba(15,23,42,.35);}
-    .thermo-label{font-size:var(--text-xs);color:#6b7280;text-transform:uppercase;letter-spacing:.12em;}
+      width:34px;height:34px;border-radius:999px;background:var(--mode-main);margin-top:.15rem;box-shadow:0 4px 12px rgba(0,0,0,.9);}
+    .thermo-label{font-size:var(--text-xs);color:#9ca3af;text-transform:uppercase;letter-spacing:.12em;}
 
     .big-number{font-size:3rem;font-weight:900;text-align:center;margin-bottom:.3rem;}
 
     .center{display:flex;flex-direction:column;gap:var(--space-3);align-items:stretch;}
 
-    .stats-line{display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem;font-size:var(--text-sm);}
-    .streak-badge{font-size:var(--text-xs);color:#f97316;margin-left:.4rem;}
+    .stats-line{display:flex;flex-direction:column;gap:.15rem;padding:.4rem 0;border-bottom:1px solid rgba(148,163,184,.25);}
+    .stats-header{display:flex;justify-content:space-between;align-items:center;}
+    .stats-name{font-size:var(--text-sm);font-weight:700;}
+    .stats-score{font-size:var(--text-sm);color:#e5e7eb;}
+    .player-title{font-size:var(--text-xs);color:#f97316;font-weight:700;}
+    .player-power{font-size:var(--text-xs);color:#9ca3af;}
 
-    footer{padding:0 var(--space-5) var(--space-4);font-size:var(--text-xs);color:#6b7280;text-align:center;background:#f9fafb;}
+    footer{padding:0 var(--space-5) var(--space-4);font-size:var(--text-xs);color:#6b7280;text-align:center;background:#020617;}
 
     .confetti{
       position:fixed;
@@ -383,11 +390,11 @@
     </header>
 
     <main>
-      <!-- Écran rôle: créateur vs joueur -->
+      <!-- Écran rôle -->
       <section class="screen active" id="screen-role" data-step="lobby">
         <div class="card">
           <h2 style="font-size:var(--text-lg);font-weight:800;margin-bottom:var(--space-3);">Qui es-tu ?</h2>
-          <p style="font-size:var(--text-sm);color:#4b5563;margin-bottom:var(--space-3);">Choisis ton rôle pour cette partie.</p>
+          <p style="font-size:var(--text-sm);color:#d1d5db;margin-bottom:var(--space-3);">Choisis ton rôle pour cette partie.</p>
           <div class="role-row">
             <button type="button" class="role-btn" id="roleHostBtn">
               <strong>Créateur du salon</strong>
@@ -401,7 +408,7 @@
         </div>
       </section>
 
-      <!-- Écran host: création de salon -->
+      <!-- Écran host: création -->
       <section class="screen" id="screen-host-setup" data-step="lobby">
         <div class="card">
           <h2 style="font-size:var(--text-lg);font-weight:800;margin-bottom:var(--space-3);">Créer un salon</h2>
@@ -423,17 +430,17 @@
         </div>
       </section>
 
-      <!-- Écran host: lobby salon -->
+      <!-- Écran host: lobby -->
       <section class="screen" id="screen-host-lobby" data-step="lobby">
         <div class="card">
           <h2 style="font-size:var(--text-lg);font-weight:800;margin-bottom:var(--space-2);">Salon <span id="roomCodeHost"></span></h2>
-          <p style="font-size:var(--text-xs);color:#6b7280;margin-bottom:var(--space-3);">Partage ce code aux autres. Ils choisissent « Joueur » et le saisissent sur leur téléphone.</p>
+          <p style="font-size:var(--text-xs);color:#9ca3af;margin-bottom:var(--space-3);">Partage ce code aux autres. Ils choisissent « Joueur » et le saisissent sur leur téléphone.</p>
           <div style="display:flex;flex-direction:column;gap:var(--space-3);">
             <div>
-              <label for="newPlayerName">Ajouter un joueur</label>
+              <label for="newPlayerName">Ajouter un joueur (local)</label>
               <input id="newPlayerName" class="input" placeholder="Ex. Sam" maxlength="20" />
             </div>
-            <button class="btn btn-ghost" id="addPlayerBtn">Ajouter</button>
+            <button class="btn btn-ghost" id="addPlayerBtn">Ajouter (sur cet appareil)</button>
             <div>
               <span style="font-size:var(--text-sm);font-weight:600;">Joueurs</span>
               <div class="players-list" id="playersList"></div>
@@ -443,7 +450,7 @@
         </div>
       </section>
 
-      <!-- Écran player: rejoindre (prototype) -->
+      <!-- Écran player: join -->
       <section class="screen" id="screen-player-join" data-step="lobby">
         <div class="card">
           <h2 style="font-size:var(--text-lg);font-weight:800;margin-bottom:var(--space-3);">Rejoindre un salon</h2>
@@ -456,8 +463,8 @@
               <label for="joinName">Ton prénom</label>
               <input id="joinName" class="input" placeholder="Ex. Sam" maxlength="20" />
             </div>
-            <button class="btn btn-primary" id="joinRoomBtn">Rejoindre (prototype local)</button>
-            <p style="font-size:var(--text-xs);color:#6b7280;">Dans cette version HTML, tout tourne encore sur un seul appareil. Le code et le rôle servent à préparer le vrai multijoueur (backend temps réel).</p>
+            <button class="btn btn-primary" id="joinRoomBtn">Rejoindre via Firebase</button>
+            <p style="font-size:var(--text-xs);color:#9ca3af;">Dans cette version, l’hôte gère les manches sur son appareil. Tu rejoins juste le salon pour être dans la liste.</p>
           </div>
         </div>
       </section>
@@ -494,7 +501,7 @@
         </div>
       </section>
 
-      <!-- Écran reveal / résultat -->
+      <!-- Écran reveal -->
       <section class="screen" id="screen-reveal" data-step="reveal">
         <div class="question-card-wrapper">
           <div class="question-card" id="questionCardBack">
@@ -505,7 +512,7 @@
         <div class="card">
           <div class="center">
             <div>
-              <div style="font-size:var(--text-xs);text-transform:uppercase;letter-spacing:.16em;color:#6b7280;text-align:center;margin-bottom:.25rem;">Moyenne du groupe</div>
+              <div style="font-size:var(--text-xs);text-transform:uppercase;letter-spacing:.16em;color:#9ca3af;text-align:center;margin-bottom:.25rem;">Moyenne du groupe</div>
               <div class="big-number" id="averageValue">50%</div>
             </div>
             <div class="thermo-wrap">
@@ -516,7 +523,7 @@
               <div class="thermo-label">Résultat global</div>
             </div>
             <p id="verdictText" style="text-align:center;font-size:var(--text-sm);"></p>
-            <div id="jokerInfo" style="text-align:center;font-size:var(--text-xs);color:#6b7280;"></div>
+            <div id="jokerInfo" style="text-align:center;font-size:var(--text-xs);color:#9ca3af;"></div>
             <button class="btn btn-primary" id="useJokerBtn">Utiliser mon joker</button>
             <button class="btn btn-ghost" id="nextRoundBtn">Manche suivante</button>
             <button class="btn btn-ghost" id="endGameBtn">Fin de partie</button>
@@ -529,18 +536,121 @@
         <div class="card">
           <h2 style="font-size:var(--text-lg);font-weight:800;margin-bottom:var(--space-3);">Classement</h2>
           <div id="statsList"></div>
+          <p style="font-size:var(--text-xs);color:#9ca3af;margin-top:var(--space-3);">Appliquez ces titres et pouvoirs dans la vraie vie pour clôturer la partie.</p>
         </div>
         <button class="btn btn-primary" id="restartBtn">Rejouer avec le même salon</button>
       </section>
     </main>
 
     <footer>
-      Inspiré des apps type Picolo. Multijoueur temps réel prêt à brancher sur un backend.
+      Inspiré des apps type Picolo. Multijoueur prêt à brancher via Firebase.
     </footer>
   </div>
 
   <div class="confetti" id="confettiRoot"></div>
 
+  <!-- Bloc Firebase -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-analytics.js";
+    import { getDatabase, ref, set, get, onValue } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBEwzH6QEPWegpgBmnevtiBX9gqy3V3dcY",
+      authDomain: "le-thermometre.firebaseapp.com",
+      databaseURL: "https://le-thermometre-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "le-thermometre",
+      storageBucket: "le-thermometre.firebasestorage.app",
+      messagingSenderId: "650617838327",
+      appId: "1:650617838327:web:f20b05a54fe85a781011f2",
+      measurementId: "G-L9FLQZ1768"
+    };
+
+    const appFb = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(appFb);
+    const db = getDatabase(appFb);
+
+    function generateCode() {
+      const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+      let code = "";
+      for (let i = 0; i < 4; i++) {
+        code += chars[Math.floor(Math.random() * chars.length)];
+      }
+      return code;
+    }
+
+    function generateId() {
+      return Math.random().toString(36).slice(2, 10);
+    }
+
+    async function createRoomFirebase(hostName, mode) {
+      const code = generateCode();
+      const hostId = generateId();
+      const roomRef = ref(db, "rooms/" + code);
+      const initialData = {
+        mode,
+        phase: "LOBBY",
+        round: 0,
+        question: null,
+        result: null,
+        players: {
+          [hostId]: {
+            name: hostName,
+            score: 0,
+            joker: "SHIELD",
+            jokerUsed: false
+          }
+        }
+      };
+      await set(roomRef, initialData);
+      return { code, hostId };
+    }
+
+    async function joinRoomFirebase(code, playerName) {
+      const roomRef = ref(db, "rooms/" + code);
+      const snap = await get(roomRef);
+      if (!snap.exists()) {
+        throw new Error("Salon introuvable");
+      }
+      const playerId = generateId();
+      const playerRef = ref(db, "rooms/" + code + "/players/" + playerId);
+      await set(playerRef, {
+        name: playerName,
+        score: 0,
+        joker: "SHIELD",
+        jokerUsed: false
+      });
+      return { playerId };
+    }
+
+    function attachRoomListenerFirebase(code) {
+      const roomRef = ref(db, "rooms/" + code);
+      onValue(roomRef, (snap) => {
+        const data = snap.val();
+        if (!data) return;
+        if (window.state) {
+          window.state.mode = data.mode || window.state.mode;
+          window.state.roomCode = code;
+          window.state.players = Object.keys(data.players || {}).map((id) => ({
+            id,
+            name: data.players[id].name,
+            score: data.players[id].score || 0,
+            joker: data.players[id].joker || "SHIELD",
+            jokerUsed: !!data.players[id].jokerUsed
+          }));
+          if (typeof window.renderPlayers === "function") {
+            window.renderPlayers();
+          }
+        }
+      });
+    }
+
+    window.createRoomFirebase = createRoomFirebase;
+    window.joinRoomFirebase = joinRoomFirebase;
+    window.attachRoomListenerFirebase = attachRoomListenerFirebase;
+  </script>
+
+  <!-- Script logique du jeu (local, adapté pour appeler Firebase) -->
   <script>
     function $(sel){ return document.querySelector(sel); }
     function $all(sel){ return Array.prototype.slice.call(document.querySelectorAll(sel)); }
@@ -554,47 +664,21 @@
     var QUESTION_BANK = {
       Chill: [
         'Quel pourcentage de {name} est susceptible de s’endormir devant un film avant le générique ?',
-        'Quel pourcentage de {name} a le pire sens de l’orientation du groupe ?',
-        'Quel pourcentage de {name} chante faux sous la douche ?',
-        'Quel pourcentage de {name} oublie les anniversaires de ses proches ?',
-        'Quel pourcentage de {name} pleure devant un film d’animation ?'
+        'Quel pourcentage de {name} a le pire sens de l’orientation du groupe ?'
       ],
       Spicy: [
         'Quel pourcentage de {name} a déjà menti pour annuler un plan ?',
-        'Quel pourcentage de {name} a déjà envoyé un texto qu’il ou elle regrette ?',
-        'Quel pourcentage de {name} flirterait avec un ex après quelques verres ?',
-        'Quel pourcentage de {name} embrasserait un inconnu ce soir ?',
-        'Quel pourcentage de {name} regarde encore le profil de son ex ?'
+        'Quel pourcentage de {name} flirterait avec un ex après quelques verres ?'
       ],
       Hardcore: [
         'Quel pourcentage de {name} trahirait le groupe pour de l’argent ?',
-        'Quel pourcentage de {name} finirait en prison avant 40 ans ?',
-        'Quel pourcentage de {name} rirait secrètement à un enterrement ?',
-        'Quel pourcentage de {name} balancerait un secret pour sauver sa peau ?',
         'Quel pourcentage de {name} cacherait un corps sans poser de questions ?'
-      ]
-    };
-
-    var ACTION_CARDS = {
-      Chill: [
-        'Carte action : tout le monde sauf {name} boit 2 gorgées.',
-        'Carte action : {name} choisit quelqu’un qui boit 3 gorgées.'
-      ],
-      Spicy: [
-        'Carte action : {name} doit raconter un secret ou boire 3 gorgées.',
-        'Carte action : tout le monde pointe du doigt le plus drama du groupe : il ou elle boit 4 gorgées.'
-      ],
-      Hardcore: [
-        'Carte action : {name} distribue 5 gorgées comme il ou elle veut.',
-        'Carte action : tout le monde boit 2 gorgées sauf la personne avec le plus gros score.'
       ]
     };
 
     var JOKERS = [
       { key:'SHIELD', label:'Bouclier', desc:'Annule tes gorgées une fois.' },
-      { key:'MIRROR', label:'Miroir', desc:'Envoie tes gorgées à quelqu’un d’autre.' },
-      { key:'DOUBLE', label:'Double ou rien', desc:'Tente d’annuler ou de doubler ton malus.' },
-      { key:'SWAP', label:'Swap', desc:'Échange de score avec un autre joueur.' }
+      { key:'MIRROR', label:'Miroir', desc:'Envoie tes gorgées à quelqu’un d’autre.' }
     ];
 
     var state = {
@@ -602,6 +686,8 @@
       mode: 'Chill',
       roomCode: null,
       players: [],
+      hostId: null,
+      playerId: null,
       round: 0,
       currentQuestion: null,
       currentTargetId: null,
@@ -613,6 +699,8 @@
       timeLeft: 15,
       currentResult: null
     };
+
+    window.state = state;
 
     function uid(){ return Math.random().toString(36).slice(2,9); }
 
@@ -628,14 +716,14 @@
         var name = v.replace('var(','').replace(')','');
         return getComputedStyle(root).getPropertyValue(name).trim();
       }
-      var bgVal = resolveVar(m.bg) || '#c7f3ff';
-      var mainVal = resolveVar(m.main) || '#36d9ff';
-      var softVal = resolveVar(m.soft) || '#e5f8ff';
+      var bgVal = resolveVar(m.bg) || '#020617';
+      var mainVal = resolveVar(m.main) || '#c259ff';
+      var softVal = resolveVar(m.soft) || '#030712';
       root.style.setProperty('--mode-bg', bgVal);
       root.style.setProperty('--mode-main', mainVal);
       root.style.setProperty('--mode-soft', softVal);
-      document.body.style.background = 'radial-gradient(circle at top, rgba(255,255,255,0.9), '+bgVal+')';
-      document.querySelector('main').style.background = 'radial-gradient(circle at top, #ffffff, '+softVal+')';
+      document.body.style.background = 'radial-gradient(circle at top, #020617, '+bgVal+')';
+      document.querySelector('main').style.background = 'radial-gradient(circle at top, #020617, '+softVal+')';
       $all('.mode-btn').forEach(function(b){ b.classList.toggle('active', b.getAttribute('data-mode') === mode); });
       var label = $('#modeLabel');
       if(label){ label.textContent = 'Mode '+m.label; }
@@ -666,13 +754,6 @@
       updateStepper(step);
     }
 
-    function roomCode(){
-      var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-      var code='';
-      for(var i=0;i<4;i++) code += chars[Math.floor(Math.random()*chars.length)];
-      return code;
-    }
-
     function renderPlayers(){
       var container = $('#playersList');
       if(!container) return;
@@ -680,17 +761,11 @@
       state.players.forEach(function(p){
         var span = document.createElement('span');
         span.className = 'pill';
-        var streak = state.streaks[p.id] || 0;
-        span.appendChild(document.createTextNode(p.name));
-        if(streak >= 2){
-          var b = document.createElement('span');
-          b.className = 'streak-badge';
-          b.textContent = '🔥 x'+streak;
-          span.appendChild(b);
-        }
+        span.textContent = p.name;
         container.appendChild(span);
       });
     }
+    window.renderPlayers = renderPlayers;
 
     function assignJoker(){
       var j = JOKERS[Math.floor(Math.random()*JOKERS.length)];
@@ -698,52 +773,71 @@
     }
 
     function createHost(){
-      var name = $('#hostName').value.trim().slice(0,20);
-      if(!name){ alert('Entre ton prénom.'); return; }
-      state.role = 'HOST';
-      state.roomCode = roomCode();
-      state.players = [];
-      state.scores = {};
-      state.streaks = {};
-      addPlayerInternal(name, true);
-      $('#roomCodeHost').textContent = state.roomCode;
-      renderPlayers();
-      showScreen('screen-host-lobby');
+      var nameInput = $('#hostName');
+      var name = nameInput.value.trim().slice(0, 20);
+      if (!name) {
+        alert('Entre ton prénom.');
+        return;
+      }
+      var currentMode = state.mode || 'Chill';
+      window.createRoomFirebase(name, currentMode)
+        .then(function(info){
+          state.role = 'HOST';
+          state.roomCode = info.code;
+          state.hostId = info.hostId;
+          $('#roomCodeHost').textContent = info.code;
+          window.attachRoomListenerFirebase(info.code);
+          showScreen('screen-host-lobby');
+        })
+        .catch(function(err){
+          console.error(err);
+          alert('Erreur Firebase lors de la création du salon.');
+        });
     }
 
-    function addPlayerInternal(name, isHost){
-      if(isHost === void 0) isHost = false;
+    function addPlayerInternal(name){
       var clean = name.trim().slice(0,20);
       if(!clean) return;
       var duplicate = state.players.some(function(p){ return p.name.toLowerCase() === clean.toLowerCase(); });
       if(duplicate) return;
       var p = { id: uid(), name: clean, joker: assignJoker(), jokerUsed:false };
       state.players.push(p);
-      state.scores[p.id] = 0;
-      state.streaks[p.id] = 0;
-      if(isHost) state.hostId = p.id;
       renderPlayers();
     }
 
     function addPlayerFromLobby(){
       var input = $('#newPlayerName');
       var name = input.value.trim();
-      if(!name){ alert('Entre un prénom.'); return; }
-      addPlayerInternal(name, false);
+      if(!name){
+        alert('Entre un prénom.');
+        return;
+      }
+      addPlayerInternal(name);
       input.value = '';
     }
 
     function joinRoomPrototype(){
-      var code = $('#joinCode').value.trim().toUpperCase();
-      var name = $('#joinName').value.trim().slice(0,20);
-      if(!code || !name){ alert('Entre le code et ton prénom.'); return; }
-      if(!state.roomCode){
-        state.roomCode = code;
-        $('#roomCodeHost').textContent = code;
+      var codeInput = $('#joinCode');
+      var nameInput = $('#joinName');
+      var code = codeInput.value.trim().toUpperCase();
+      var name = nameInput.value.trim().slice(0, 20);
+      if (!code || !name) {
+        alert('Entre le code et ton prénom.');
+        return;
       }
-      addPlayerInternal(name, false);
-      alert('Dans ce prototype, tout tourne encore sur un seul appareil. Sur un vrai backend, ce bouton connecterait ton téléphone au salon '+code+'.');
-      showScreen('screen-host-lobby');
+      window.joinRoomFirebase(code, name)
+        .then(function(info){
+          state.role = 'PLAYER';
+          state.roomCode = code;
+          state.playerId = info.playerId;
+          window.attachRoomListenerFirebase(code);
+          alert('Salon rejoint. L’hôte contrôle la partie sur son appareil.');
+          showScreen('screen-player-join');
+        })
+        .catch(function(err){
+          console.error(err);
+          alert('Salon introuvable ou erreur Firebase.');
+        });
     }
 
     function randomItem(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
@@ -752,15 +846,9 @@
       var target = randomItem(state.players);
       state.currentTargetId = target.id;
       var roll = Math.random();
-      if(roll < 0.2){
-        var actionTemplate = randomItem(ACTION_CARDS[state.mode] || []);
-        state.currentCardType = 'ACTION';
-        state.currentQuestion = stringReplaceAll(actionTemplate, '{name}', target.name);
-      } else {
-        var qTemplate = randomItem(QUESTION_BANK[state.mode] || []);
-        state.currentCardType = 'PERCENT';
-        state.currentQuestion = stringReplaceAll(qTemplate, '{name}', target.name);
-      }
+      var qTemplate = randomItem(QUESTION_BANK[state.mode] || []);
+      state.currentCardType = 'PERCENT';
+      state.currentQuestion = stringReplaceAll(qTemplate, '{name}', target.name);
     }
 
     function thermometerGradient(value){
@@ -778,7 +866,10 @@
     }
 
     function startGame(){
-      if(state.players.length < 2){ alert('Il faut au moins 2 joueurs.'); return; }
+      if(state.players.length < 2){
+        alert('Il faut au moins 2 joueurs (sur cet appareil). Les autres peuvent juste rejoindre via Firebase.');
+        return;
+      }
       state.round = 1;
       startRound();
     }
@@ -787,63 +878,20 @@
       state.votes = {};
       state.currentResult = null;
       buildQuestion();
-      if(state.currentCardType === 'ACTION'){
-        showActionCard();
-      } else {
-        showVoteScreen();
-      }
+      showVoteScreen();
     }
 
     function showVoteScreen(){
       var target = state.players.filter(function(p){ return p.id === state.currentTargetId; })[0];
-      $('#questionTag').textContent = 'Manche '+state.round+' • Cible : '+target.name;
-      $('#questionText').textContent = state.currentQuestion;
+      $('#questionTag').textContent = 'Manche '+state.round+' • Cible : '+(target ? target.name : '---');
+      $('#questionText').textContent = state.currentQuestion || 'Question…';
       $('#modeLabel').textContent = 'Mode '+MODES[state.mode].label;
       var slider = $('#voteSlider');
       var startVal = 50;
       slider.value = startVal;
       $('#sliderValue').textContent = startVal;
       setThermo($('#thermoVote'), startVal);
-      startTimer();
-      flipToFront();
       showScreen('screen-vote');
-    }
-
-    function showActionCard(){
-      $('#revealTag').textContent = 'Manche '+state.round+' • Carte action';
-      $('#revealQuestion').textContent = state.currentQuestion;
-      $('#averageValue').textContent = '--';
-      setThermo($('#thermoReveal'), 50);
-      $('#verdictText').textContent = 'Applique la carte comme indiqué (pas de votes pour cette manche).';
-      $('#jokerInfo').textContent = '';
-      state.currentResult = null;
-      $('#useJokerBtn').style.display = 'none';
-      flipToBack();
-      showScreen('screen-reveal');
-    }
-
-    function startTimer(){
-      clearInterval(state.timerId);
-      state.timeLeft = 15;
-      var label = $('#timerLabel');
-      label.classList.remove('urgent');
-      label.textContent = '15 s restantes';
-      state.timerId = setInterval(function(){
-        state.timeLeft -= 1;
-        if(state.timeLeft <= 0){
-          clearInterval(state.timerId);
-          label.classList.remove('urgent');
-          label.textContent = 'Temps écoulé, vote auto.';
-          if(Object.keys(state.votes).length < state.players.length){
-            submitVote(true);
-          }
-        } else {
-          label.textContent = state.timeLeft + ' s restantes';
-          if(state.timeLeft <= 3){
-            label.classList.add('urgent');
-          }
-        }
-      }, 1000);
     }
 
     function handleSliderInput(e){
@@ -861,14 +909,12 @@
       everyone.forEach(function(p){
         if(state.votes[p.id] == null){ state.votes[p.id] = auto ? Math.floor(Math.random()*101) : value; }
       });
-      clearInterval(state.timerId);
       reveal();
     }
 
     function autoVoteAll(){
       var everyone = state.players;
       everyone.forEach(function(p){ state.votes[p.id] = Math.floor(Math.random()*101); });
-      clearInterval(state.timerId);
       reveal();
     }
 
@@ -886,26 +932,8 @@
       if(diff > 40) sips = 4;
       if(state.mode === 'Hardcore') sips += 1;
 
-      state.scores[target.id] = (state.scores[target.id] || 0) + diff;
-
-      Object.keys(state.votes).forEach(function(id){
-        var val = state.votes[id];
-        var d = Math.abs(val - average);
-        if(d <= 10){ state.streaks[id] = (state.streaks[id] || 0) + 1; }
-        else { state.streaks[id] = 0; }
-      });
-
-      state.currentResult = {
-        average: average,
-        diff: diff,
-        sips: sips,
-        targetId: target.id,
-        targetName: target.name,
-        jokerApplied:false
-      };
-
       $('#revealTag').textContent = 'Manche '+state.round;
-      $('#revealQuestion').textContent = state.currentQuestion;
+      $('#revealQuestion').textContent = state.currentQuestion || 'Question…';
       $('#averageValue').textContent = average + '%';
       setThermo($('#thermoReveal'), average);
 
@@ -913,63 +941,12 @@
       if(close){
         $('#verdictText').textContent = 'Bien deviné : la moyenne est à '+average+' %. Tout le monde boit 1 gorgée.';
       } else {
-        $('#verdictText').textContent = target.name+' boit '+sips+' gorgée'+(sips>1?'s':'')+' à cause de ses '+diff+' points d ecart avec la moyenne ('+average+' %).';
+        $('#verdictText').textContent = (target ? target.name : 'La cible')+' boit '+sips+' gorgée'+(sips>1?'s':'')+' à cause de ses '+diff+' points d ecart avec la moyenne ('+average+' %).';
       }
 
-      var player = target;
-      var joker = JOKERS.filter(function(j){ return j.key === player.joker; })[0] || JOKERS[0];
-      $('#jokerInfo').textContent = player.jokerUsed ? 'Joker déjà utilisé.' : 'Joker de '+player.name+' : '+joker.label+' – '+joker.desc;
-      $('#useJokerBtn').style.display = (player.jokerUsed || sips === 0) ? 'none' : 'inline-flex';
-
-      renderPlayers();
-      if(state.round === 1){
-        fireConfetti();
-      }
-      flipToBack();
-      showScreen('screen-reveal');
-    }
-
-    function useJoker(){
-      var r = state.currentResult;
-      if(!r || r.jokerApplied) return;
-      var target = state.players.filter(function(p){ return p.id === r.targetId; })[0];
-      var joker = JOKERS.filter(function(j){ return j.key === target.joker; })[0];
-      if(!joker || target.jokerUsed) return;
-
-      if(joker.key === 'SHIELD'){
-        state.scores[target.id] -= r.diff;
-        r.sips = 0; r.diff = 0;
-        $('#verdictText').textContent = target.name+' utilise Bouclier : aucune gorgée, aucun malus.';
-      } else if(joker.key === 'MIRROR'){
-        var others = state.players.filter(function(p){ return p.id !== target.id; });
-        var victim = others.length ? others[Math.floor(Math.random()*others.length)] : target;
-        state.scores[target.id] -= r.diff;
-        state.scores[victim.id] = (state.scores[victim.id] || 0) + r.diff;
-        $('#verdictText').textContent = target.name+' utilise Miroir : '+victim.name+' prend '+r.sips+' gorgée'+(r.sips>1?'s':'')+' et le malus à sa place.';
-      } else if(joker.key === 'DOUBLE'){
-        if(r.diff <= 10){
-          state.scores[target.id] -= r.diff;
-          r.diff = 0; r.sips = 0;
-          $('#verdictText').textContent = target.name+' tente Double ou rien et tombe juste : zéro gorgée, zéro malus.';
-        } else {
-          state.scores[target.id] += r.diff;
-          r.diff *= 2; r.sips *= 2;
-          $('#verdictText').textContent = target.name+' tente Double ou rien et se plante : malus et gorgées doublés.';
-        }
-      } else if(joker.key === 'SWAP'){
-        var others2 = state.players.filter(function(p){ return p.id !== target.id; });
-        var victim2 = others2.length ? others2[Math.floor(Math.random()*others2.length)] : target;
-        var tmp = state.scores[target.id];
-        state.scores[target.id] = state.scores[victim2.id] || 0;
-        state.scores[victim2.id] = tmp;
-        $('#verdictText').textContent = target.name+' utilise Swap et échange son score avec '+victim2.name+'.';
-      }
-
-      target.jokerUsed = true;
-      r.jokerApplied = true;
+      $('#jokerInfo').textContent = '';
       $('#useJokerBtn').style.display = 'none';
-      $('#jokerInfo').textContent = 'Joker utilisé.';
-      renderPlayers();
+      showScreen('screen-reveal');
     }
 
     function nextRound(){
@@ -978,18 +955,44 @@
     }
 
     function endGame(){
-      var entries = Object.keys(state.scores).map(function(id){ return { id:id, score:state.scores[id] }; });
+      var entries = state.players.map(function(p){ return { id:p.id, score:state.scores[p.id] || 0 }; });
       var list = $('#statsList');
       list.innerHTML = '';
+      if(entries.length === 0){ return; }
       entries.sort(function(a,b){ return a.score - b.score; });
+      var bestScore = entries[0].score;
+      var worstScore = entries[entries.length-1].score;
+      var bestStreak = 0;
+      var bestStreakId = null;
+      Object.keys(state.streaks).forEach(function(id){
+        var s = state.streaks[id];
+        if(s > bestStreak){ bestStreak = s; bestStreakId = id; }
+      });
       entries.forEach(function(p, idx){
         var player = state.players.filter(function(pl){ return pl.id === p.id; })[0];
         var name = player ? player.name : '?';
         var streak = state.streaks[p.id] || 0;
+        var title = 'Le caméléon';
+        var power = 'Distribue 1 gorgée à qui il veut.';
+        if(p.score === worstScore){
+          title = 'Le pire';
+          power = 'Boit 3 gorgées supplémentaires.';
+        } else if(p.score === bestScore){
+          title = 'Le sniper';
+          power = 'Distribue 3 gorgées comme il veut.';
+        } else if(p.id === bestStreakId && bestStreak >= 2){
+          title = 'Le métronome';
+          power = 'Peut annuler 2 gorgées (pour lui ou pour quelqu’un d’autre).';
+        }
         var row = document.createElement('div');
         row.className = 'stats-line';
-        var streakText = streak >= 2 ? '🔥 Streak x'+streak : '';
-        row.innerHTML = '<span>'+(idx+1)+'. '+name+' '+streakText+'</span><span>'+p.score+' pts</span>';
+        row.innerHTML =
+          '<div class="stats-header">'+
+            '<span class="stats-name">'+(idx+1)+'. '+name+'</span>'+
+            '<span class="stats-score">'+p.score+' pts</span>'+
+          '</div>'+
+          '<div class="player-title">'+title+'</div>'+
+          '<div class="player-power">'+power+'</div>';
         list.appendChild(row);
       });
       showScreen('screen-stats');
@@ -1002,60 +1005,10 @@
       state.currentTargetId = null;
       state.currentCardType = 'PERCENT';
       state.currentResult = null;
-      Object.keys(state.scores).forEach(function(id){ state.scores[id] = 0; });
-      Object.keys(state.streaks).forEach(function(id){ state.streaks[id] = 0; });
+      state.scores = {};
+      state.streaks = {};
       renderPlayers();
       showScreen('screen-host-lobby');
-    }
-
-    function loadExternalQuestions(){
-      try {
-        fetch('./questions.json').then(function(r){
-          if(!r.ok) return null;
-          return r.json();
-        }).then(function(data){
-          if(!data) return;
-          for(var k in data){ if(data.hasOwnProperty(k)){ QUESTION_BANK[k] = data[k]; } }
-        })['catch'](function(){});
-      } catch(e){}
-    }
-
-    function fireConfetti(){
-      var root = $('#confettiRoot');
-      if(!root) return;
-      root.innerHTML = '';
-      var colors = ['#facc15','#fb7185','#34d399','#38bdf8','#a855f7'];
-      var pieces = 40;
-      for(var i=0;i<pieces;i++){
-        var div = document.createElement('div');
-        div.className = 'confetti-piece';
-        var x = Math.random()*100;
-        var xEnd = x + (Math.random()*20-10);
-        var dur = 1.8 + Math.random()*0.7;
-        var delay = Math.random()*0.3;
-        div.style.left = x+'vw';
-        div.style.setProperty('--x', x+'vw');
-        div.style.setProperty('--x-end', xEnd+'vw');
-        div.style.backgroundColor = colors[i % colors.length];
-        div.style.animationDuration = dur+'s';
-        div.style.animationDelay = delay+'s';
-        root.appendChild(div);
-      }
-      setTimeout(function(){ root.innerHTML=''; }, 2600);
-    }
-
-    function flipToFront(){
-      var front = $('#questionCardFront');
-      var back = $('#questionCardBack');
-      if(front){ front.classList.remove('flip'); }
-      if(back){ back.classList.add('flip'); }
-    }
-
-    function flipToBack(){
-      var front = $('#questionCardFront');
-      var back = $('#questionCardBack');
-      if(front){ front.classList.add('flip'); }
-      if(back){ back.classList.remove('flip'); }
     }
 
     document.addEventListener('DOMContentLoaded', function(){
@@ -1077,14 +1030,13 @@
       $('#submitVoteBtn').addEventListener('click', function(){ submitVote(false); });
       $('#autoVoteBtn').addEventListener('click', autoVoteAll);
 
-      $('#useJokerBtn').addEventListener('click', useJoker);
+      $('#useJokerBtn').addEventListener('click', function(){});
       $('#nextRoundBtn').addEventListener('click', nextRound);
       $('#endGameBtn').addEventListener('click', endGame);
       $('#restartBtn').addEventListener('click', restart);
 
-      applyMode('Chill');
+      applyMode('Hardcore');
       updateStepper('lobby');
-      loadExternalQuestions();
     });
   </script>
 </body>
