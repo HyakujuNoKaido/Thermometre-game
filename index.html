@@ -5,39 +5,99 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
 <title>Le Thermomètre 🌡️</title>
 <meta name="theme-color" content="#040B16" />
-<link rel="manifest" href="manifest.json" />
-<link rel="icon" href="icon.svg" />
-<link rel="apple-touch-icon" href="icon.svg" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700;800&family=Nunito:ital,wght@0,400;0,700;1,400&display=swap');
+  
   * { -webkit-tap-highlight-color: transparent; }
-  body { margin:0; background:#000; font-family:'Baloo 2',cursive,sans-serif; color:#fff; -webkit-font-smoothing:antialiased; overflow-x:hidden; }
-  .font-roast { font-family:'Nunito',sans-serif; }
-  .thermo-slider { -webkit-appearance:none; appearance:none; width:100%; height:56px; background:transparent; cursor:pointer; }
-  .thermo-slider::-webkit-slider-thumb { -webkit-appearance:none; width:44px; height:44px; border-radius:9999px; background:#fff; border:3px solid rgba(255,255,255,.6); box-shadow:0 0 18px rgba(255,255,255,.8); }
-  .thermo-slider::-moz-range-thumb { width:44px; height:44px; border-radius:9999px; background:#fff; border:3px solid rgba(255,255,255,.6); }
-  @keyframes blob { 0%{transform:translate(0,0) scale(1)} 33%{transform:translate(30px,-40px) scale(1.1)} 66%{transform:translate(-20px,30px) scale(.95)} 100%{transform:translate(0,0) scale(1)} }
-  .animate-blob { animation:blob 12s infinite ease-in-out; } .blob-delay { animation-delay:4s; }
-  @keyframes pop { from{transform:scale(.4);opacity:0} to{transform:scale(1);opacity:1} } .animate-pop { animation:pop .4s cubic-bezier(.34,1.56,.64,1) forwards; }
-  @keyframes slideUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} } .animate-up { animation:slideUp .35s ease forwards; }
-  .scroll::-webkit-scrollbar { width:4px; } .scroll::-webkit-scrollbar-thumb { background:rgba(255,255,255,.3); border-radius:10px; }
-  .toast { animation:slideUp .25s ease; }
+  body { 
+    margin: 0; 
+    background: #040B16; 
+    font-family: 'Baloo 2', cursive, sans-serif; 
+    color: #fff; 
+    -webkit-font-smoothing: antialiased; 
+    overflow-x: hidden; 
+  }
+  .font-roast { font-family: 'Nunito', sans-serif; }
+  
+  /* Slider personnalisé ultra fluide */
+  .thermo-slider { -webkit-appearance: none; appearance: none; width: 100%; height: 64px; background: transparent; cursor: pointer; outline: none; }
+  .thermo-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 50px; height: 50px; border-radius: 9999px; background: #fff; border: 4px solid rgba(255,255,255,.8); box-shadow: 0 4px 12px rgba(0,0,0,0.3), 0 0 20px rgba(255,255,255,.5); transition: transform 0.1s; }
+  .thermo-slider::-webkit-slider-thumb:active { transform: scale(1.1); }
+  .thermo-slider::-moz-range-thumb { width: 50px; height: 50px; border-radius: 9999px; background: #fff; border: 4px solid rgba(255,255,255,.8); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+  
+  /* Arrière-plan animé (Blobs) */
+  @keyframes blob { 
+    0% { transform: translate(0,0) scale(1); } 
+    33% { transform: translate(30px,-50px) scale(1.1); } 
+    66% { transform: translate(-20px,20px) scale(.9); } 
+    100% { transform: translate(0,0) scale(1); } 
+  }
+  .animate-blob { animation: blob 15s infinite alternate ease-in-out; } 
+  .blob-delay { animation-delay: 5s; }
+  
+  /* Apparitions douces */
+  @keyframes slideUp { 
+    from { opacity: 0; transform: translateY(20px); } 
+    to { opacity: 1; transform: translateY(0); } 
+  } 
+  .animate-up { animation: slideUp .4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .animate-fade { animation: fadeIn .3s ease forwards; }
+
+  /* Verre dépoli (Glassmorphism) */
+  .glass-card {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+  }
+  
+  /* Scrollbar discrète */
+  .scroll::-webkit-scrollbar { width: 4px; } 
+  .scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,.2); border-radius: 10px; }
+  
+  /* Toasts de notification */
+  .toast { animation: slideUp .3s ease; }
 </style>
 </head>
-<body>
-<div id="bg" class="fixed inset-0 -z-10 overflow-hidden transition-colors duration-700" style="background:#040B16">
-  <div id="blob1" class="absolute -top-[10%] -left-[15%] w-80 h-80 rounded-full opacity-60 animate-blob" style="filter:blur(110px)"></div>
-  <div id="blob2" class="absolute -bottom-[10%] -right-[15%] w-96 h-96 rounded-full opacity-50 animate-blob blob-delay" style="filter:blur(120px)"></div>
+<body class="selection:bg-white/30">
+
+<!-- Arrière-plan dynamique -->
+<div id="bg" class="fixed inset-0 -z-10 overflow-hidden transition-colors duration-1000" style="background:#040B16">
+  <div id="blob1" class="absolute top-[-10%] left-[-15%] w-96 h-96 rounded-full opacity-50 animate-blob mix-blend-screen" style="filter:blur(100px); background:#00F0FF;"></div>
+  <div id="blob2" class="absolute bottom-[-10%] right-[-15%] w-[30rem] h-[30rem] rounded-full opacity-40 animate-blob blob-delay mix-blend-screen" style="filter:blur(120px); background:#0038FF;"></div>
 </div>
-<div id="toasts" class="fixed top-3 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2 w-[90%] max-w-sm"></div>
+
+<!-- Conteneur des notifications -->
+<div id="toasts" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2 w-[90%] max-w-sm pointer-events-none"></div>
+
+<!-- Conteneur principal de l'application -->
 <div class="w-full max-w-md mx-auto min-h-screen px-5 py-6 flex flex-col relative z-10" id="app"></div>
 
+<!-- Modal "Comment jouer ?" -->
+<div id="rulesModal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fade">
+  <div class="glass-card w-full max-w-sm rounded-3xl p-6 relative">
+    <button onclick="toggleRules()" class="absolute top-4 right-4 text-white/50 hover:text-white text-xl">✕</button>
+    <h2 class="text-2xl font-black mb-4">Comment jouer ? 🍻</h2>
+    <div class="text-white/80 space-y-3 text-sm font-medium leading-relaxed max-h-[60vh] overflow-y-auto scroll pr-2">
+      <p><b>1.</b> L'hôte lance la partie et choisit l'ambiance (Chill, Spicy, Hardcore).</p>
+      <p><b>2.</b> À chaque manche, une question apparaît ciblant un joueur (ex: "À quel pourcentage Alex...").</p>
+      <p><b>3.</b> <b>La cible</b> vote honnêtement sur le curseur.</p>
+      <p><b>4.</b> <b>Les autres joueurs</b> doivent deviner le pourcentage choisi par la cible.</p>
+      <p><b>5. Le Verdict :</b> On calcule la moyenne des votes des autres. Si la moyenne est éloignée du vote de la cible, la cible boit. Si la moyenne est très proche, tous les autres boivent !</p>
+      <p><b>🃏 Les Jokers :</b> Chaque joueur a un pouvoir unique par partie. Utilisez-le stratégiquement !</p>
+    </div>
+    <button onclick="toggleRules()" class="w-full mt-6 py-3 rounded-xl bg-white/10 border border-white/20 font-bold active:scale-95">J'ai compris !</button>
+  </div>
+</div>
+
 <script>
-// ===== CONFIG =====
+// ===== CONFIGURATION =====
 const firebaseConfig = {
   apiKey: "AIzaSyBEwzH6QEPWegpgBmnevtiBX9gqy3V3dcY",
   authDomain: "le-thermometre.firebaseapp.com",
@@ -48,317 +108,977 @@ const firebaseConfig = {
   appId: "1:650617838327:web:f20b05a54fe85a781011f2",
   measurementId: "G-L9FLQZ1768"
 };
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
-const WORKER_URL = ""; // <-- mets l'URL de ton Cloudflare Worker ici pour activer les questions IA
 
-// ===== DATA =====
+// INITIALISATION FIREBASE
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+}
+const db = firebase.database();
+
+// CLÉ API GEMINI
+const GEMINI_API_KEY = "AQ.Ab8RN6IB_6U4QMMkAf7W_tFyngxZv3X12jImgPfSGYpmMFp-cQ";
+
+// ===== DONNÉES DU JEU =====
 const THEMES = {
   Chill:    { base:"#040B16", b1:"#00F0FF", b2:"#0038FF", glow:"rgba(0,240,255,.5)", from:"#67e8f9", to:"#3b82f6", label:"Chill", emoji:"🥶", icon:"❄️" },
   Spicy:    { base:"#1A0505", b1:"#FF5C00", b2:"#FF003C", glow:"rgba(255,92,0,.5)",  from:"#facc15", to:"#f97316", label:"Spicy", emoji:"🥵", icon:"🔥" },
   Hardcore: { base:"#0A0012", b1:"#9D00FF", b2:"#FF003C", glow:"rgba(157,0,255,.5)", from:"#e879f9", to:"#dc2626", label:"Hardcore", emoji:"😈", icon:"💀" }
 };
+
 const JOKERS = {
-  SHIELD:{name:"Bouclier",icon:"🛡️",desc:"Annule tes gorgées."},
-  MIRROR:{name:"Miroir",icon:"🔁",desc:"Transfère tes gorgées à un autre joueur."},
-  DOUBLE:{name:"Double ou rien",icon:"✖️2",desc:"Si tu es la cible : enjeu x2 (bois double si tu te plantes, sinon les autres boivent double)."},
-  SHOT:{name:"Cul sec",icon:"🥃",desc:"Désigne un joueur qui boit 1 gorgée."},
-  THIEF:{name:"Voleur",icon:"🥷",desc:"Échange ton joker avec un autre joueur (au lobby)."}
+  SHIELD: { name: "Bouclier", icon: "🛡️", desc: "Annule toutes tes gorgées pour ce tour." },
+  MIRROR: { name: "Miroir", icon: "🔁", desc: "Transfère tes gorgées à la personne de ton choix." },
+  DOUBLE: { name: "Double ou rien", icon: "✖️2", desc: "Mise tout : bois double si tu te trompes, les autres boivent double sinon." },
+  SHOT: { name: "Cul sec", icon: "🥃", desc: "Distribue un cul sec d'office à un joueur." },
+  THIEF:  { name: "Voleur", icon: "🥷", desc: "Échange secrètement ton joker avec un autre (Lobby)." }
 };
+
+// BANQUE INTERNE (On utilise {name} et {name2})
 const BANK = {
-  Chill:["À quel pourcentage {n} est susceptible de s'endormir devant un film avant le générique ?","À quel pourcentage {n} a le pire sens de l'orientation du groupe ?","À quel pourcentage {n} chante faux sous la douche ?","À quel pourcentage {n} oublie les anniversaires de ses proches ?","À quel pourcentage {n} et {n2} feraient un bon road-trip ensemble ?","À quel pourcentage {n} pleure devant un film d'animation ?","À quel pourcentage {n} est accro à son téléphone ?","À quel pourcentage {n} arriverait en retard à son propre mariage ?"],
-  Spicy:["À quel pourcentage {n} a déjà fouillé dans le téléphone de quelqu'un ?","À quel pourcentage {n} survend ses exploits au lit ?","À quel pourcentage {n} a déjà menti pour annuler un plan ?","À quel pourcentage {n} flirterait avec un ex après quelques verres ?","À quel pourcentage {n} et {n2} ont déjà eu un crush l'un sur l'autre ?","À quel pourcentage {n} regarde encore le profil de son ex ?","À quel pourcentage {n} embrasserait un inconnu ce soir ?","À quel pourcentage {n} a déjà envoyé un texto qu'il/elle regrette ?"],
-  Hardcore:["Si on devait sacrifier l'un d'entre vous, à quel pourcentage choisirait-on {n} ?","À quel pourcentage {n} rirait secrètement à un enterrement ?","À quel pourcentage {n} trahirait le groupe pour de l'argent ?","À quel pourcentage {n} cacherait un corps sans poser de questions ?","À quel pourcentage {n} et {n2} formeraient le pire couple toxique ?","À quel pourcentage {n} finirait en prison avant 40 ans ?","À quel pourcentage {n} balancerait un secret pour sauver sa peau ?","À quel pourcentage {n} a déjà souhaité du mal à quelqu'un ici ?"]
+  Chill: [
+    "À quel pourcentage {name} est susceptible de s'endormir devant un film avant le générique ?",
+    "À quel pourcentage {name} a le pire sens de l'orientation du groupe ?",
+    "À quel pourcentage {name} chante faux sous la douche ?",
+    "À quel pourcentage {name} et {name2} feraient un bon road-trip ensemble ?"
+  ],
+  Spicy: [
+    "À quel pourcentage {name} a déjà fouillé dans le téléphone de son/sa partenaire ?",
+    "À quel pourcentage {name} survend ses exploits au lit ?",
+    "À quel pourcentage {name} a déjà menti pour annuler une soirée à la dernière minute ?",
+    "À quel pourcentage {name} et {name2} ont déjà eu un crush l'un sur l'autre ?"
+  ],
+  Hardcore: [
+    "Si on devait sacrifier l'un d'entre vous aux zombies, à quel pourcentage choisirait-on {name} ?",
+    "À quel pourcentage {name} rirait secrètement à un enterrement ?",
+    "À quel pourcentage {name} trahirait ses amis pour 1 million d'euros ?"
+  ]
 };
+
 const ROASTS = [
-  "{name}, finir dernier avec {score} points d'écart, c'est pas être nul, c'est vivre dans un univers parallèle. Bois et tais-toi.",
-  "{name}, ton intuition sociale est aussi affûtée qu'une cuillère en plastique. {score} points d'erreur... impressionnant. Cul sec.",
-  "Mesdames et messieurs, {name} et ses {score} points : la preuve qu'on peut respirer sans réfléchir. Bois tes gorgées.",
-  "{name}, avec {score} points d'écart, tu connais ce groupe comme moi je connais le calme. Santé !",
-  "{name}, {score} points... Même une boule de cristal cassée devinait mieux. Le bar t'attend."
+  "{name}, finir avec autant de points d'écart, c'est vivre dans un univers parallèle. Santé !",
+  "L'intuition sociale de {name} est proche de celle d'une petite cuillère. Impressionnant.",
+  "Mesdames et messieurs, {name} : la preuve qu'on peut participer sans rien comprendre.",
 ];
 
-// ===== STATE =====
-const S = { screen:"HOME", code:null, pid:null, room:null, name:"", joinCode:"", pendingMode:"Chill", voteValue:50, roomRef:null, pickingShot:false, timerLeft:null, timerInt:null };
-const vibrate = p => { if (navigator.vibrate) try{navigator.vibrate(p)}catch(e){} };
-const rand = a => a[Math.floor(Math.random()*a.length)];
-const genId = () => Math.random().toString(36).slice(2,10);
-const genCode = () => { const c="ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; return Array.from({length:4},()=>rand([...c])).join(""); };
-const esc = s => (s||"").replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
-function toast(msg, ok=false){ const el=document.createElement("div"); el.className=`toast px-4 py-3 rounded-2xl font-bold text-sm text-center shadow-lg ${ok?'bg-emerald-500':'bg-red-500'} text-white`; el.textContent=msg; document.getElementById("toasts").appendChild(el); setTimeout(()=>el.remove(),2600); }
-function playersArr(room){ return Object.entries(room.players||{}).map(([id,p])=>({id,...p})); }
-function connectedArr(room){ return playersArr(room).filter(p=>p.connected!==false); }
-function theme(){ return THEMES[(S.room&&S.room.mode)||S.pendingMode]; }
-function applyBg(){ const t=theme(); document.getElementById("bg").style.background=t.base; document.getElementById("blob1").style.background=t.b1; document.getElementById("blob2").style.background=t.b2; }
+// ===== ÉTAT DE L'APPLICATION =====
+const S = { 
+  screen: "HOME", 
+  code: null, 
+  pid: null, 
+  room: null, 
+  name: localStorage.getItem('thermo_name') || "", 
+  joinCode: "", 
+  pendingMode: "Chill", 
+  voteValue: 50, 
+  roomRef: null, 
+  pickingShot: false, 
+  timerLeft: null, 
+  timerInt: null,
+  isLoading: false // Pour bloquer l'UI pendant les requêtes
+};
 
-// ===== QUESTIONS (banque interne + questions.json + Worker IA) =====
+// ===== FONCTIONS UTILITAIRES =====
+const vibrate = p => { if (navigator.vibrate) try { navigator.vibrate(p) } catch(e){} };
+const rand = a => a[Math.floor(Math.random() * a.length)];
+const genId = () => Math.random().toString(36).slice(2, 10);
+const genCode = () => { 
+  const c = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; 
+  return Array.from({length: 4}, () => rand([...c])).join(""); 
+};
+const esc = s => (s || "").toString().replace(/[&<>"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+
+function toast(msg, ok=false) { 
+  const el = document.createElement("div"); 
+  el.className = `toast px-4 py-3 rounded-2xl font-bold text-sm text-center shadow-[0_4px_20px_rgba(0,0,0,0.5)] ${ok ? 'bg-emerald-500/90' : 'bg-red-500/90'} backdrop-blur-md text-white border border-white/20`; 
+  el.textContent = msg; 
+  document.getElementById("toasts").appendChild(el); 
+  setTimeout(() => el.remove(), 3000); 
+}
+
+function toggleRules() {
+  const modal = document.getElementById('rulesModal');
+  modal.classList.toggle('hidden');
+}
+
+function playersArr(room) { 
+  return Object.entries(room.players || {}).map(([id, p]) => ({id, ...p})); 
+}
+function connectedArr(room) { 
+  return playersArr(room).filter(p => p.connected !== false); 
+}
+function theme() { 
+  return THEMES[(S.room && S.room.mode) || S.pendingMode]; 
+}
+
+function applyBg() { 
+  const t = theme(); 
+  document.getElementById("bg").style.background = t.base; 
+  document.getElementById("blob1").style.background = t.b1; 
+  document.getElementById("blob2").style.background = t.b2; 
+}
+
+// ===== GESTION DES QUESTIONS & IA =====
 let QUESTIONS = {};
-function normMode(arr){ return (arr||[]).map(x => typeof x==="string" ? {text:x,cat:"général"} : {text:x.text,cat:x.cat||"général"}); }
-function resetQuestions(){ QUESTIONS = { Chill:normMode(BANK.Chill), Spicy:normMode(BANK.Spicy), Hardcore:normMode(BANK.Hardcore) }; }
+
+function resetQuestions() { 
+  QUESTIONS = { 
+    Chill: BANK.Chill.map(q => ({text: q, cat: "général"})), 
+    Spicy: BANK.Spicy.map(q => ({text: q, cat: "général"})), 
+    Hardcore: BANK.Hardcore.map(q => ({text: q, cat: "général"})) 
+  }; 
+}
 resetQuestions();
-async function loadQuestions(){
-  try{ const res=await fetch("questions.json",{cache:"no-store"}); if(res.ok){ const data=await res.json(); let added=0;
-    ["Chill","Spicy","Hardcore"].forEach(m=>{ if(Array.isArray(data[m])){ QUESTIONS[m]=QUESTIONS[m].concat(normMode(data[m])); added+=data[m].length; } });
-    console.log("questions.json chargé (+"+added+")"); } }catch(e){ console.warn("questions.json non chargé"); }
-}
-async function loadAIQuestions(mode){ if(!WORKER_URL) return; try{ const r=await fetch(`${WORKER_URL}?mode=${mode}&count=6`); const d=await r.json(); if(Array.isArray(d[mode])){ QUESTIONS[mode]=QUESTIONS[mode].concat(normMode(d[mode])); toast("Questions IA ajoutées ✨",true); } }catch(e){} }
-function catsFor(mode){ return [...new Set((QUESTIONS[mode]||[]).map(q=>q.cat))]; }
-function buildQuestion(room){
-  const ps=connectedArr(room); const t=rand(ps);
-  let pool=QUESTIONS[room.mode]||QUESTIONS.Chill;
-  if(room.cats && room.cats.length){ const f=pool.filter(q=>room.cats.includes(q.cat)); if(f.length) pool=f; }
-  let tpl=rand(pool).text;
-  if(tpl.includes("{n2}")){ const others=ps.filter(p=>p.id!==t.id); const t2=rand(others.length?others:ps); tpl=tpl.replace("{n}",t.name).replace("{n2}",t2.name); }
-  else tpl=tpl.replace("{n}",t.name);
-  return { text:tpl, targetId:t.id, targetName:t.name };
+
+// Génération via Gemini
+async function loadAIQuestions(mode) { 
+  if (!GEMINI_API_KEY) return; 
+  
+  toast("🤖 L'IA prépare de nouvelles questions...", true);
+  
+  try { 
+    const prompt = `Tu es un concepteur de jeu pour un jeu d'alcool pour adultes appelé "Le Thermomètre". 
+    Invente 5 nouvelles questions originales pour le mode "${mode}". 
+    Le mode Chill est léger, fun et inoffensif. Le mode Spicy est osé, séduction, potins. Le mode Hardcore est piquant, trash, trahison.
+    La question DOIT OBLIGATOIREMENT comporter la balise "{name}" pour désigner le joueur ciblé. Tu peux parfois utiliser "{name2}" si la question implique une autre personne.
+    Règles absolues :
+    1. Ne renvoie AUCUN texte d'introduction ou de conclusion.
+    2. Ne renvoie QUE un tableau JSON valide contenant uniquement des chaînes de caractères (strings).
+    Exemple attendu EXACT : ["À quel pourcentage {name} a déjà menti à ses parents ?", "À quel pourcentage {name} et {name2} pourraient finir ensemble ?"]`;
+
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`; 
+    
+    const response = await fetch(url, { 
+      method: "POST", 
+      headers: { "Content-Type": "application/json" }, 
+      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }) 
+    }); 
+
+    const result = await response.json(); 
+    
+    if (result.error) {
+      console.warn("Erreur API Gemini:", result.error.message);
+      return;
+    }
+
+    let textContent = result.candidates[0].content.parts[0].text.trim(); 
+    if (textContent.startsWith("```json")) { 
+       textContent = textContent.replace(/^```json\n?/, "").replace(/```$/, "").trim(); 
+    } else if (textContent.startsWith("```")) {
+       textContent = textContent.replace(/^```\n?/, "").replace(/```$/, "").trim(); 
+    }
+
+    const newQuestions = JSON.parse(textContent); 
+    
+    if (Array.isArray(newQuestions)) { 
+      const formatted = newQuestions.map(q => ({text: q, cat: "IA"}));
+      QUESTIONS[mode] = QUESTIONS[mode].concat(formatted); 
+      toast("✨ Questions IA ajoutées avec succès !", true); 
+    } 
+  } catch(e) { 
+    console.warn("L'IA n'a pas pu générer de questions pour le moment."); 
+  } 
 }
 
-// ===== CLEANUP vieilles rooms (> 6h) =====
-async function cleanupOldRooms(){
-  try{ const cutoff=Date.now()-6*3600*1000; const snap=await db.ref("rooms").orderByChild("createdAt").endAt(cutoff).limitToFirst(20).get();
-    snap.forEach(c=>{ db.ref("rooms/"+c.key).remove(); }); }catch(e){}
+function buildQuestion(room) {
+  const ps = connectedArr(room); 
+  const t = rand(ps);
+  let pool = QUESTIONS[room.mode] || QUESTIONS.Chill;
+  
+  let tpl = rand(pool).text;
+  
+  // Remplacement dynamique de {name} et {name2}
+  if (tpl.includes("{name2}")) { 
+    const others = ps.filter(p => p.id !== t.id); 
+    const t2 = rand(others.length ? others : ps); 
+    tpl = tpl.replace(/{name}/g, t.name).replace(/{name2}/g, t2.name); 
+  } else {
+    tpl = tpl.replace(/{name}/g, t.name);
+  }
+  
+  return { text: tpl, targetId: t.id, targetName: t.name };
 }
 
-// ===== ACTIONS =====
-async function createRoom(){
-  if(!S.name.trim()) return toast("Entre ton prénom d'abord !"); vibrate(20);
-  let code; for(let i=0;i<5;i++){ code=genCode(); const s=await db.ref("rooms/"+code).get(); if(!s.exists()) break; }
-  const pid=genId();
-  const room={ mode:S.pendingMode, phase:"LOBBY", round:0, hostId:pid, jokerMode:"RANDOM", maxRounds:0, timer:0, cats:null, createdAt:firebase.database.ServerValue.TIMESTAMP,
-    players:{ [pid]:{ name:S.name.trim().slice(0,20), joker:rand(Object.keys(JOKERS)), score:0, jokerUsed:false, connected:true } } };
-  try{ await db.ref("rooms/"+code).set(room); }catch(e){ return toast("Erreur Firebase : vérifie les règles de la base."); }
-  if(WORKER_URL) loadAIQuestions(S.pendingMode);
-  enterRoom(code,pid);
+// ===== ACTIONS DU JEU =====
+async function createRoom() {
+  if (!S.name.trim()) return toast("Oups ! Dis-nous comment tu t'appelles."); 
+  if (S.isLoading) return;
+  
+  vibrate(20);
+  S.isLoading = true;
+  render(); // Met à jour l'UI (Désactive le bouton)
+  
+  try {
+    let code; 
+    for (let i=0; i<5; i++) { 
+      code = genCode(); 
+      const s = await db.ref("rooms/" + code).get(); 
+      if (!s.exists()) break; 
+    }
+    
+    const pid = genId();
+    const room = { 
+      mode: S.pendingMode, 
+      phase: "LOBBY", 
+      round: 0, 
+      hostId: pid, 
+      jokerMode: "RANDOM", 
+      maxRounds: 0, 
+      timer: 0, 
+      createdAt: firebase.database.ServerValue.TIMESTAMP,
+      players: { 
+        [pid]: { 
+          name: S.name.trim().slice(0, 20), 
+          joker: rand(Object.keys(JOKERS)), 
+          score: 0, 
+          jokerUsed: false, 
+          connected: true 
+        } 
+      } 
+    };
+    
+    await db.ref("rooms/" + code).set(room); 
+    
+    // Lance la requête IA en arrière-plan sans bloquer l'UI
+    loadAIQuestions(S.pendingMode);
+    enterRoom(code, pid);
+    
+  } catch(e) { 
+    console.error("Erreur de connexion :", e);
+    toast("Problème de connexion. L'extension ou le réseau bloque Firebase."); 
+  } finally {
+    S.isLoading = false;
+    if (!S.room) render(); // Re-render obligatoirement en cas d'échec pour débloquer le bouton
+  }
 }
-async function joinRoom(){
-  if(!S.name.trim()) return toast("Entre ton prénom d'abord !");
-  const code=(S.joinCode||"").toUpperCase().trim(); if(code.length<4) return toast("Code invalide.");
-  const snap=await db.ref("rooms/"+code).get(); if(!snap.exists()) return toast("Room introuvable.");
-  const room=snap.val(); if(room.phase!=="LOBBY") return toast("La partie a déjà commencé.");
-  if(Object.values(room.players||{}).some(p=>p.name.toLowerCase()===S.name.trim().toLowerCase())) return toast("Ce prénom est déjà pris.");
-  vibrate(20); const pid=genId();
-  await db.ref(`rooms/${code}/players/${pid}`).set({ name:S.name.trim().slice(0,20), joker:rand(Object.keys(JOKERS)), score:0, jokerUsed:false, connected:true });
-  enterRoom(code,pid);
+
+async function joinRoom() {
+  if (!S.name.trim()) return toast("Oups ! Dis-nous comment tu t'appelles.");
+  const code = (S.joinCode || "").toUpperCase().trim(); 
+  if (code.length < 4) return toast("Le code de la salle est invalide.");
+  
+  if (S.isLoading) return;
+  vibrate(20); 
+  S.isLoading = true;
+  render();
+  
+  try {
+    const snap = await db.ref("rooms/" + code).get(); 
+    if (!snap.exists()) {
+      S.isLoading = false;
+      render();
+      return toast("Cette salle n'existe pas ou est fermée.");
+    }
+    
+    const room = snap.val(); 
+    if (room.phase !== "LOBBY") {
+      S.isLoading = false;
+      render();
+      return toast("Désolé, la partie a déjà commencé !");
+    }
+    
+    const nameExists = Object.values(room.players || {}).some(p => p.name.toLowerCase() === S.name.trim().toLowerCase());
+    if (nameExists) {
+      S.isLoading = false;
+      render();
+      return toast("Ce prénom est déjà pris dans cette salle.");
+    }
+    
+    const pid = genId();
+    await db.ref(`rooms/${code}/players/${pid}`).set({ 
+      name: S.name.trim().slice(0, 20), 
+      joker: rand(Object.keys(JOKERS)), 
+      score: 0, 
+      jokerUsed: false, 
+      connected: true 
+    });
+    
+    enterRoom(code, pid);
+  } catch (e) {
+    console.error("Erreur de connexion :", e);
+    toast("Erreur de connexion. Vérifie ta connexion.");
+  } finally {
+    S.isLoading = false;
+    if (!S.room) render();
+  }
 }
-function enterRoom(code,pid){
-  S.code=code; S.pid=pid;
-  history.replaceState(null,"","?room="+code);
-  db.ref(`rooms/${code}/players/${pid}`).onDisconnect().update({connected:false});
-  S.roomRef=db.ref("rooms/"+code);
-  S.roomRef.on("value",snap=>{ const room=snap.val();
-    if(!room){ detach(); S.screen="HOME"; S.room=null; toast("La partie a été fermée."); render(); return; }
-    S.room=room; S.screen="ROOM";
-    promoteHostIfNeeded(); hostAutoReveal(); render();
+
+function enterRoom(code, pid) {
+  S.code = code; 
+  S.pid = pid;
+  history.replaceState(null, "", "?room=" + code);
+  
+  db.ref(`rooms/${code}/players/${pid}`).onDisconnect().update({ connected: false });
+  S.roomRef = db.ref("rooms/" + code);
+  
+  S.roomRef.on("value", snap => { 
+    const room = snap.val();
+    if (!room) { 
+      detach(); 
+      S.screen = "HOME"; 
+      S.room = null; 
+      toast("L'hôte a fermé la salle."); 
+      render(); 
+      return; 
+    }
+    S.room = room; 
+    S.screen = "ROOM";
+    promoteHostIfNeeded(); 
+    hostAutoReveal(); 
+    render();
   });
 }
-function detach(){ if(S.roomRef){ S.roomRef.off(); S.roomRef=null; } stopTimer(); S.code=null; S.pid=null; }
 
-// Transfert d'hôte si l'hôte est déconnecté
-async function promoteHostIfNeeded(){ const r=S.room; if(!r) return; const host=r.players[r.hostId];
-  if(host && host.connected===false){ const conn=connectedArr(r).sort((a,b)=>a.id<b.id?-1:1); if(conn.length && conn[0].id===S.pid){ await S.roomRef.update({hostId:S.pid}); toast("Tu es le nouvel hôte 👑",true); } } }
+function detach() { 
+  if (S.roomRef) { S.roomRef.off(); S.roomRef = null; } 
+  stopTimer(); 
+  S.code = null; 
+  S.pid = null; 
+  history.replaceState(null, "", location.pathname);
+}
 
-async function startRound(){
-  const r=S.room; if(S.pid!==r.hostId) return; if(connectedArr(r).length<2) return; vibrate(50);
-  const q=buildQuestion(r); const upd={ phase:"VOTING", round:(r.round||0)+1, question:q, votes:null, result:null, startedAt:firebase.database.ServerValue.TIMESTAMP };
-  Object.keys(r.players).forEach(id=>{ upd[`players/${id}/dbl`]=false; });
+async function promoteHostIfNeeded() { 
+  const r = S.room; 
+  if (!r) return; 
+  const host = r.players[r.hostId];
+  if (host && host.connected === false) { 
+    const conn = connectedArr(r).sort((a, b) => a.id < b.id ? -1 : 1); 
+    if (conn.length && conn[0].id === S.pid) { 
+      await S.roomRef.update({ hostId: S.pid }); 
+      toast("L'hôte est parti, tu es le nouveau chef ! 👑", true); 
+    } 
+  } 
+}
+
+async function startRound() {
+  const r = S.room; 
+  if (S.pid !== r.hostId) return; 
+  if (connectedArr(r).length < 2) return toast("Il faut au moins 2 joueurs pour commencer !"); 
+  
+  vibrate(50);
+  const q = buildQuestion(r); 
+  const upd = { 
+    phase: "VOTING", 
+    round: (r.round || 0) + 1, 
+    question: q, 
+    votes: null, 
+    result: null, 
+    startedAt: firebase.database.ServerValue.TIMESTAMP 
+  };
+  
+  Object.keys(r.players).forEach(id => { upd[`players/${id}/dbl`] = false; });
   await S.roomRef.update(upd);
-  if(WORKER_URL && Math.random()<.3) loadAIQuestions(r.mode);
+  
+  // Chance de générer de nouvelles questions aléatoirement en cours de partie
+  if (Math.random() < 0.2) loadAIQuestions(r.mode);
 }
-async function nextRound(){ const r=S.room; if(S.pid!==r.hostId) return; if(r.maxRounds>0 && r.round>=r.maxRounds) return endGame(); startRound(); }
-async function vote(){ vibrate([30,50]); stopTimer(); await db.ref(`rooms/${S.code}/votes/${S.pid}`).set(Number(S.voteValue)); }
 
-let revealing=false;
-async function hostAutoReveal(){ const r=S.room; if(!r||r.phase!=="VOTING"||S.pid!==r.hostId||revealing) return;
-  const conn=connectedArr(r); const votes=r.votes||{}; if(!conn.every(p=>votes[p.id]!==undefined)) return;
-  revealing=true; const q=r.question, tid=q.targetId;
-  const nonT=Object.entries(votes).filter(([id])=>id!==tid).map(([,v])=>v); const pool=nonT.length?nonT:Object.values(votes);
-  const average=Math.round(pool.reduce((a,b)=>a+b,0)/pool.length); const tv=votes[tid]??50; const diff=Math.abs(tv-average); const isClose=diff<=15;
-  let sips=1; if(diff>20)sips=2; if(diff>40)sips=4; if(r.mode==="Hardcore")sips+=1;
-  const dbl=!!(r.players[tid]&&r.players[tid].dbl);
-  const result={ average, targetVote:tv, targetName:q.targetName, targetId:tid, diff, isClose, double:dbl,
-    sips:isClose?(dbl?2:1):(dbl?sips*2:sips), drinker:isClose?"others":tid, drinkerName:isClose?null:q.targetName, jokerUsed:null, shot:null };
-  const upd={ phase:"REVEAL", result }; upd[`players/${tid}/score`]=(r.players[tid].score||0)+diff;
-  await S.roomRef.update(upd); revealing=false;
+async function nextRound() { 
+  const r = S.room; 
+  if (S.pid !== r.hostId) return; 
+  if (r.maxRounds > 0 && r.round >= r.maxRounds) return endGame(); 
+  startRound(); 
 }
-async function activateDouble(){ const r=S.room, me=r.players[S.pid]; if(me.joker!=="DOUBLE"||me.jokerUsed||r.question.targetId!==S.pid) return; vibrate(30);
-  await S.roomRef.update({[`players/${S.pid}/dbl`]:true, [`players/${S.pid}/jokerUsed`]:true}); toast("Double ou rien activé ✖️2",true); }
-async function useJoker(){ const r=S.room,res=r.result,me=r.players[S.pid]; if(!res||res.isClose||me.jokerUsed||res.jokerUsed||res.drinker!==S.pid) return; vibrate([20,40,20]);
-  const upd={[`players/${S.pid}/jokerUsed`]:true};
-  if(me.joker==="SHIELD"){ upd["result/jokerUsed"]="SHIELD"; upd["result/drinker"]="none"; upd["result/drinkerName"]=null; }
-  else if(me.joker==="MIRROR"){ const o=connectedArr(r).filter(p=>p.id!==S.pid); if(o.length){ const v=rand(o); upd["result/jokerUsed"]="MIRROR"; upd["result/drinker"]=v.id; upd["result/drinkerName"]=v.name; } }
+
+async function vote() { 
+  vibrate([30, 50]); 
+  stopTimer(); 
+  await db.ref(`rooms/${S.code}/votes/${S.pid}`).set(Number(S.voteValue)); 
+}
+
+let revealing = false;
+async function hostAutoReveal() { 
+  const r = S.room; 
+  if (!r || r.phase !== "VOTING" || S.pid !== r.hostId || revealing) return;
+  
+  const conn = connectedArr(r); 
+  const votes = r.votes || {}; 
+  // Attendre que tous les joueurs connectés aient voté
+  if (!conn.every(p => votes[p.id] !== undefined)) return;
+  
+  revealing = true; 
+  const q = r.question;
+  const tid = q.targetId;
+  
+  const nonTargetVotes = Object.entries(votes).filter(([id]) => id !== tid).map(([,v]) => v); 
+  const pool = nonTargetVotes.length ? nonTargetVotes : Object.values(votes);
+  
+  const average = Math.round(pool.reduce((a, b) => a + b, 0) / pool.length); 
+  const tv = votes[tid] ?? 50; 
+  const diff = Math.abs(tv - average); 
+  
+  // Logique du jeu : "IsClose" si l'écart est <= 15%
+  const isClose = diff <= 15;
+  let sips = 1; 
+  if (diff > 25) sips = 2; 
+  if (diff > 45) sips = 4; 
+  if (r.mode === "Hardcore") sips += 1;
+  
+  const dbl = !!(r.players[tid] && r.players[tid].dbl);
+  
+  const result = { 
+    average, 
+    targetVote: tv, 
+    targetName: q.targetName, 
+    targetId: tid, 
+    diff, 
+    isClose, 
+    double: dbl,
+    sips: isClose ? (dbl ? 2 : 1) : (dbl ? sips * 2 : sips), 
+    drinker: isClose ? "others" : tid, 
+    drinkerName: isClose ? null : q.targetName, 
+    jokerUsed: null, 
+    shot: null 
+  };
+  
+  const upd = { phase: "REVEAL", result }; 
+  upd[`players/${tid}/score`] = (r.players[tid].score || 0) + diff;
+  
+  await S.roomRef.update(upd); 
+  revealing = false;
+}
+
+async function activateDouble() { 
+  const r = S.room;
+  const me = r.players[S.pid]; 
+  if (me.joker !== "DOUBLE" || me.jokerUsed || r.question.targetId !== S.pid) return; 
+  
+  vibrate(30);
+  await S.roomRef.update({
+    [`players/${S.pid}/dbl`]: true, 
+    [`players/${S.pid}/jokerUsed`]: true
+  }); 
+  toast("Joker Double activé ! ✖️2", true); 
+}
+
+async function useJoker() { 
+  const r = S.room;
+  const res = r.result;
+  const me = r.players[S.pid]; 
+  if (!res || res.isClose || me.jokerUsed || res.jokerUsed || res.drinker !== S.pid) return; 
+  
+  vibrate([20, 40, 20]);
+  const upd = { [`players/${S.pid}/jokerUsed`]: true };
+  
+  if (me.joker === "SHIELD") { 
+    upd["result/jokerUsed"] = "SHIELD"; 
+    upd["result/drinker"] = "none"; 
+    upd["result/drinkerName"] = null; 
+  } else if (me.joker === "MIRROR") { 
+    const others = connectedArr(r).filter(p => p.id !== S.pid); 
+    if (others.length) { 
+      const victim = rand(others); 
+      upd["result/jokerUsed"] = "MIRROR"; 
+      upd["result/drinker"] = victim.id; 
+      upd["result/drinkerName"] = victim.name; 
+    } 
+  }
   await S.roomRef.update(upd);
 }
-async function shotPick(id){ const r=S.room,me=r.players[S.pid]; if(me.joker!=="SHOT"||me.jokerUsed) return; vibrate(40);
-  await S.roomRef.update({[`players/${S.pid}/jokerUsed`]:true, "result/shot":{by:me.name, who:r.players[id].name}}); S.pickingShot=false; }
-async function setMode(m){ vibrate(10); await S.roomRef.update({mode:m}); if(WORKER_URL) loadAIQuestions(m); }
-async function endGame(){ const r=S.room; if(S.pid!==r.hostId) return; const ranked=playersArr(r).sort((a,b)=>a.score-b.score);
-  const w=ranked[0],l=ranked[ranked.length-1]; const roast=l?rand(ROASTS).replace("{name}",l.name).replace("{score}",l.score):"";
-  await S.roomRef.update({ phase:"STATS", ranking:{ winner:{name:w.name,score:w.score}, loser:{name:l.name,score:l.score}, all:ranked.map(p=>({id:p.id,name:p.name,score:p.score})) }, roast }); }
-async function restart(){ const r=S.room; if(S.pid!==r.hostId) return; const upd={ phase:"LOBBY", round:0, votes:null, result:null, ranking:null, roast:null };
-  Object.keys(r.players).forEach(id=>{ upd[`players/${id}/score`]=0; upd[`players/${id}/jokerUsed`]=false; upd[`players/${id}/dbl`]=false; }); await S.roomRef.update(upd); }
-function copyCode(){ navigator.clipboard&&navigator.clipboard.writeText(S.code); toast("Code copié !",true); vibrate(10); }
-function shareInvite(){ const url=location.origin+location.pathname+"?room="+S.code; const data={title:"Le Thermomètre",text:"Rejoins ma partie ! Code : "+S.code,url};
-  if(navigator.share) navigator.share(data).catch(()=>{}); else { navigator.clipboard&&navigator.clipboard.writeText(url); toast("Lien d'invitation copié !",true); } vibrate(10); }
 
-// ===== TIMER =====
-function stopTimer(){ if(S.timerInt){ clearInterval(S.timerInt); S.timerInt=null; } S.timerLeft=null; }
-function startTimer(){ const r=S.room; stopTimer(); if(!r.timer||!r.startedAt) return;
-  const tick=()=>{ const elapsed=(Date.now()-r.startedAt)/1000; const left=Math.max(0,Math.ceil(r.timer-elapsed)); S.timerLeft=left;
-    const el=document.getElementById("timer"); if(el) el.textContent=left+"s";
-    if(left<=0){ stopTimer(); const me=r.players[S.pid]; if(r.phase==="VOTING" && !(r.votes||{})[S.pid]){ vote(); } } };
-  tick(); S.timerInt=setInterval(tick,300);
+async function shotPick(id) { 
+  const r = S.room;
+  const me = r.players[S.pid]; 
+  if (me.joker !== "SHOT" || me.jokerUsed) return; 
+  
+  vibrate(40);
+  await S.roomRef.update({
+    [`players/${S.pid}/jokerUsed`]: true, 
+    "result/shot": { by: me.name, who: r.players[id].name }
+  }); 
+  S.pickingShot = false; 
 }
 
-// ===== RENDER =====
-const card="bg-white/10 backdrop-blur-xl border border-white/20 shadow-[0_8px_32px_0_rgba(0,0,0,.35)] rounded-3xl p-6";
-const pill="w-full py-4 px-8 rounded-full bg-[#FFD700] text-black font-extrabold text-xl active:scale-95 transition-all shadow-[0_0_15px_rgba(255,215,0,.4)] flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed";
-function header(){ const t=theme();
-  return `<header class="flex justify-between items-center mb-6">
-    <div class="flex items-center gap-2"><div class="p-2 rounded-xl shadow-lg -rotate-6" style="background:linear-gradient(135deg,${t.from},${t.to})">🌡️</div>
-    <h1 class="text-2xl font-extrabold italic">Le <span style="background:linear-gradient(90deg,${t.from},${t.to});-webkit-background-clip:text;background-clip:text;color:transparent">Thermo</span>mètre</h1></div>
-    ${S.room&&S.code?`<span class="text-xs font-bold bg-black/40 border border-white/20 px-3 py-1.5 rounded-full">${t.emoji} ${S.room.mode}</span>`:""}</header>`; }
-function modeBtns(cur,fn){ return Object.keys(THEMES).map(m=>{const t=THEMES[m];const a=cur===m;
-  return `<button onclick="${fn}('${m}')" class="flex flex-col items-center gap-1 py-3 rounded-2xl border transition-all ${a?'border-white/40 scale-105 shadow-lg':'bg-black/20 border-white/10 text-white/60'}" ${a?`style="background:linear-gradient(135deg,${t.from},${t.to})"`:""}><span class="text-xl">${t.icon}</span><span class="text-[11px] font-bold uppercase">${t.label}</span></button>`;}).join(""); }
-function chip(active,label,fn){ return `<button onclick="${fn}" class="px-3 py-1.5 rounded-full text-xs font-bold border transition-all ${active?'bg-white/20 border-white/40':'bg-black/20 border-white/10 text-white/60'}">${label}</button>`; }
-
-function render(){ applyBg(); const app=document.getElementById("app"); const t=theme(); let body="";
-  if(S.screen==="HOME") body=renderHome(t);
-  else if(S.room){ const r=S.room;
-    if(r.phase==="LOBBY") body=renderLobby(r,t);
-    else if(r.phase==="VOTING") body=renderVoting(r,t);
-    else if(r.phase==="REVEAL") body=renderReveal(r,t);
-    else if(r.phase==="STATS") body=renderStats(r,t); }
-  app.innerHTML=header()+body; bind();
-  if(S.room && S.room.phase==="VOTING" && S.room.timer && !(S.room.votes||{})[S.pid]) startTimer(); else stopTimer();
+async function setMode(m) { 
+  vibrate(10); 
+  await S.roomRef.update({ mode: m }); 
+  loadAIQuestions(m); 
 }
-function renderHome(t){ return `<div class="flex-1 flex flex-col justify-center animate-up">
-  <p class="text-center text-white/70 text-lg mb-4">Le jeu d'apéro où ton intuition fait boire.</p>
-  <div class="${card} flex flex-col gap-4">
-    <label class="text-white/80 font-bold text-sm uppercase tracking-wide">Ton prénom</label>
-    <input id="nameI" maxlength="20" placeholder="Ex: Alex" value="${esc(S.name)}" class="bg-black/30 border border-white/20 rounded-2xl px-4 py-3 text-lg outline-none focus:border-white/60"/>
-    <div class="grid grid-cols-3 gap-2">${modeBtns(S.pendingMode,"pickMode")}</div>
-    <button id="createB" class="${pill}">▶️ Créer une partie</button></div>
-  <div class="flex items-center gap-3 text-white/40 text-sm font-bold my-5"><div class="h-px flex-1 bg-white/20"></div>OU REJOINDRE<div class="h-px flex-1 bg-white/20"></div></div>
-  <div class="${card} flex flex-row gap-3 items-center">
-    <input id="joinI" maxlength="4" placeholder="CODE" value="${esc(S.joinCode)}" class="flex-1 min-w-0 bg-black/30 border border-white/20 rounded-2xl px-4 py-3 text-xl font-black tracking-widest text-center uppercase outline-none focus:border-white/60"/>
-    <button id="joinB" class="shrink-0 py-3 px-6 rounded-full bg-white/10 border border-white/20 font-bold active:scale-95">➡️ Go</button></div></div>`; }
 
-function renderLobby(r,t){ const isHost=S.pid===r.hostId; const ps=playersArr(r); const cats=catsFor(r.mode);
-  return `<div class="flex flex-col gap-5 animate-up">
-    <div class="${card} items-center text-center flex flex-col gap-2">
-      <span class="text-white/60 text-sm font-bold uppercase tracking-widest">Code de la partie</span>
-      <button id="copyB" class="flex items-center gap-3"><span class="text-5xl font-black tracking-[.3em]" style="text-shadow:0 0 15px ${t.glow}">${S.code}</span><span class="text-white/50">📋</span></button>
-      <button id="shareB" class="mt-1 px-4 py-2 rounded-full bg-white/10 border border-white/20 text-sm font-bold active:scale-95">🔗 Inviter</button></div>
-    ${isHost?`<div class="flex flex-col gap-2"><h2 class="text-sm font-bold uppercase tracking-wide text-white/80">🌡️ Ambiance</h2><div class="grid grid-cols-3 gap-2">${modeBtns(r.mode,"chooseMode")}</div></div>`:""}
-    ${isHost?`<div class="${card} flex flex-col gap-3 !p-4">
-      <div class="flex items-center justify-between"><span class="text-sm font-bold uppercase tracking-wide text-white/80">🃏 Jokers</span>
-        <div class="flex gap-2">${chip((r.jokerMode||'RANDOM')==='RANDOM',"🎲 Aléatoire","setJokerMode('RANDOM')")}${chip(r.jokerMode==='MANUAL',"✋ Manuel","setJokerMode('MANUAL')")}</div></div>
-      <div class="flex items-center justify-between"><span class="text-sm font-bold uppercase tracking-wide text-white/80">🏁 Manches</span>
-        <div class="flex gap-2">${[['0','∞'],['5','5'],['10','10']].map(([v,l])=>chip(String(r.maxRounds||0)===v,l,"setMax("+v+")")).join("")}</div></div>
-      <div class="flex items-center justify-between"><span class="text-sm font-bold uppercase tracking-wide text-white/80">⏱️ Timer</span>
-        <div class="flex gap-2">${[['0','Off'],['15','15s'],['30','30s']].map(([v,l])=>chip(String(r.timer||0)===v,l,"setTimer("+v+")")).join("")}</div></div>
-      ${cats.length>1?`<div class="flex flex-col gap-2"><span class="text-sm font-bold uppercase tracking-wide text-white/80">🏷️ Catégories</span><div class="flex flex-wrap gap-2">${cats.map(c=>chip(!r.cats||r.cats.includes(c),c,"toggleCat('"+c.replace(/'/g,"")+"')")).join("")}</div></div>`:""}
-    </div>`:""}
-    <div class="${card} flex flex-col gap-3">
-      <h2 class="text-sm font-bold uppercase tracking-wide text-white/80">👥 Joueurs (${ps.length})</h2>
-      <div class="flex flex-col gap-2 max-h-52 overflow-y-auto scroll pr-1">
-      ${ps.map(p=>`<div class="flex items-center justify-between p-3 rounded-2xl bg-black/20 border border-white/5 ${p.connected===false?'opacity-40':''}">
-        <div class="flex items-center gap-3"><div class="w-9 h-9 rounded-full flex items-center justify-center font-black" style="background:linear-gradient(135deg,${t.from},${t.to})">${esc(p.name[0].toUpperCase())}</div>
-        <span class="font-bold">${esc(p.name)}${p.id===S.pid?' <span class="text-white/40">(toi)</span>':''}</span>${p.id===r.hostId?' 👑':''}</div>
-        ${(isHost&&r.jokerMode==='MANUAL')?`<select onchange="setJoker('${p.id}',this.value)" class="text-xs bg-black/40 border border-white/20 rounded-full px-2 py-1 outline-none cursor-pointer">${Object.keys(JOKERS).map(k=>`<option value="${k}" ${p.joker===k?'selected':''}>${JOKERS[k].icon} ${JOKERS[k].name}</option>`).join("")}</select>`:`<span class="text-xs text-white/50 bg-white/5 px-2 py-1 rounded-full" title="${JOKERS[p.joker].desc}">${JOKERS[p.joker].icon} ${JOKERS[p.joker].name}</span>`}</div>`).join("")}
-      </div></div>
-    <div class="${card} flex flex-col gap-1 text-sm text-white/70">
-      <h3 class="font-bold text-white mb-1">🃏 Les pouvoirs</h3>
-      ${Object.values(JOKERS).map(j=>`<p><b class="text-white">${j.icon} ${j.name} :</b> ${j.desc}</p>`).join("")}</div>
-    ${isHost?`<button id="startB" class="${pill}" ${connectedArr(r).length<2?'disabled':''}>▶️ ${connectedArr(r).length<2?'Min. 2 joueurs':'Lancer la partie !'}</button>`
-      :`<div class="text-center py-4 text-white/60 font-bold animate-pulse">En attente de l'hôte...</div>`}</div>`; }
-
-function progress(r){ if(!r.maxRounds) return `Manche ${r.round}`; return `Manche ${r.round} / ${r.maxRounds}`; }
-function renderVoting(r,t){ const me=r.players[S.pid]; const q=r.question; const voted=(r.votes||{})[S.pid]!==undefined;
-  const amTarget=q.targetId===S.pid; const conn=connectedArr(r).length; const vc=Object.keys(r.votes||{}).length;
-  const canDouble=amTarget&&me.joker==="DOUBLE"&&!me.jokerUsed;
-  return `<div class="flex-1 flex flex-col justify-center gap-5 animate-up">
-    <div class="flex items-center justify-center gap-3">
-      ${amTarget?`<span class="px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest bg-[#FFD700] text-black">😏 Tu es la cible</span>`
-        :`<span class="px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest bg-black/40 border border-white/20">${progress(r)}</span>`}
-      ${r.timer?`<span id="timer" class="px-3 py-1.5 rounded-full text-sm font-black bg-black/40 border border-white/20">${S.timerLeft??r.timer}s</span>`:""}</div>
-    <div class="${card} text-center flex flex-col gap-3 justify-center min-h-[190px]">
-      <span class="text-white/50 uppercase text-xs font-bold tracking-wider">Cible</span>
-      <span class="text-3xl font-black" style="background:linear-gradient(90deg,${t.from},${t.to});-webkit-background-clip:text;background-clip:text;color:transparent">${esc(q.targetName)}</span>
-      <p class="text-xl font-bold leading-snug mt-1">"${esc(q.text)}"</p></div>
-    ${!voted?`
-      ${canDouble?`<button id="dblB" class="w-full py-3 rounded-full font-bold border-2 ${me.dbl?'bg-[#FFD700] text-black border-[#FFD700]':'bg-white/5 border-white/30'} active:scale-95">✖️2 ${me.dbl?'Double activé !':'Double ou rien (joker)'}</button>`:""}
-      <div class="${card} flex flex-col gap-4">
-        <div class="flex justify-between items-end"><span class="font-bold text-white/80">Ton estimation</span><span id="sv" class="text-4xl font-black" style="text-shadow:0 0 12px ${t.glow}">${S.voteValue}%</span></div>
-        <div class="relative h-14 rounded-full bg-black/40 overflow-hidden border border-white/10 flex items-center px-1">
-          <div id="fill" class="absolute left-0 top-0 bottom-0 rounded-full" style="width:${S.voteValue}%;background:linear-gradient(90deg,${t.b1},${t.b2})"></div>
-          <input id="slider" type="range" min="0" max="100" value="${S.voteValue}" class="thermo-slider relative z-10"/></div></div>
-      <button id="voteB" class="${pill}">Valider mon vote ✓</button>`
-    :`<div class="${card} flex flex-col items-center text-center gap-3"><span class="text-4xl">⏳</span><p class="font-bold text-lg">Vote enregistré !</p><p class="text-white/60">${vc}/${conn} ont voté</p></div>`}</div>`; }
-
-function renderReveal(r,t){ const me=r.players[S.pid]; const res=r.result; if(!res) return "";
-  const canJoker=res.drinker===S.pid&&!res.isClose&&me&&!me.jokerUsed&&!res.jokerUsed&&(me.joker==="SHIELD"||me.joker==="MIRROR");
-  const canShot=me&&me.joker==="SHOT"&&!me.jokerUsed&&!res.shot;
-  let v; if(res.isClose) v=`Bien deviné ! Tout le monde boit ${res.sips} gorgée${res.sips>1?'s':''} 🍻`;
-  else if(res.jokerUsed==="SHIELD") v=`${esc(res.targetName)} a utilisé le Bouclier 🛡️ — personne ne boit !`;
-  else if(res.jokerUsed==="MIRROR") v=`Miroir 🔁 — ${esc(res.drinkerName)} boit ${res.sips} gorgées à la place !`;
-  else v=`${esc(res.drinkerName)} boit ${res.sips} gorgées 🍻${res.double?' (✖️2 !)':''}`;
-  const isHost=S.pid===r.hostId; const others=connectedArr(r).filter(p=>p.id!==S.pid);
-  return `<div class="flex-1 flex flex-col justify-center gap-5">
-    <div class="text-center"><h2 class="text-2xl font-black mb-1">Le Verdict</h2><p class="text-white/60">Moyenne pour <b class="text-white uppercase">${esc(res.targetName)}</b></p></div>
-    <div class="text-center animate-pop"><span class="font-black leading-none" style="font-size:24vw;text-shadow:0 0 25px ${t.glow}">${res.average}%</span></div>
-    <div class="${card} flex flex-col items-center text-center gap-3">
-      <div class="flex justify-center gap-6 text-sm"><div><div class="text-white/50">${esc(res.targetName)} a dit</div><div class="text-2xl font-black">${res.targetVote}%</div></div>
-        <div><div class="text-white/50">Écart</div><div class="text-2xl font-black text-red-400">${res.diff}</div></div></div>
-      <p class="text-xl font-black">${v}</p>
-      ${res.shot?`<p class="text-sm text-white/80">🥃 ${esc(res.shot.by)} fait cul sec à ${esc(res.shot.who)} (+1 gorgée) !</p>`:""}</div>
-    ${(()=>{const vt=r.votes||{};const rows=Object.entries(vt).map(([id,val])=>({name:(r.players[id]||{}).name||'?',val,isT:id===res.targetId})).sort((a,b)=>b.val-a.val);if(!rows.length)return"";return `<details class="bg-black/30 border border-white/10 rounded-2xl px-4 py-3"><summary class="cursor-pointer text-white/60 text-sm font-bold select-none">👀 Détail des votes</summary><div class="flex flex-col gap-1 mt-3">${rows.map(x=>`<div class="flex justify-between text-sm ${x.isT?'text-yellow-300 font-bold':''}"><span>${esc(x.name)}${x.isT?' 🎯':''}</span><span class="font-black">${x.val}%</span></div>`).join("")}</div></details>`;})()}
-    ${canJoker?`<button id="jokerB" class="w-full py-4 rounded-full font-extrabold text-lg text-white active:scale-95 transition-all" style="background:linear-gradient(90deg,${t.from},${t.to})">${JOKERS[me.joker].icon} Joker : ${JOKERS[me.joker].name}</button>`:""}
-    ${canShot?(S.pickingShot
-      ?`<div class="${card} !p-4 flex flex-col gap-2"><p class="text-sm font-bold text-center">🥃 Qui fait cul sec ?</p><div class="grid grid-cols-2 gap-2">${others.map(p=>`<button onclick="shotPick('${p.id}')" class="py-2.5 rounded-2xl bg-white/10 border border-white/20 font-bold active:scale-95">${esc(p.name)}</button>`).join("")}</div></div>`
-      :`<button id="shotB" class="w-full py-4 rounded-full font-extrabold text-lg bg-white/10 border-2 border-white/30 active:scale-95">🥃 Cul sec (joker)</button>`):""}
-    ${isHost?`<div class="flex gap-3"><button id="nextB" class="${pill}" style="flex:3">${(r.maxRounds>0&&r.round>=r.maxRounds)?'🏁 Résultats':'Manche suivante ➡️'}</button><button id="endB" class="py-4 px-5 rounded-full bg-white/10 border border-white/20 font-bold active:scale-95" style="flex:1">📊</button></div>`
-      :`<div class="text-center py-3 text-white/60 font-bold animate-pulse">L'hôte décide de la suite...</div>`}</div>`; }
-
-function renderStats(r,t){ const rk=r.ranking; const mid=(rk.all||[]).slice(1,-1); const isHost=S.pid===r.hostId;
-  return `<div class="flex-1 flex flex-col gap-4 overflow-y-auto scroll pr-1 animate-up">
-    <h2 class="text-3xl font-black text-center">Fin de Partie 🏁</h2>
-    <div class="rounded-3xl p-[2px]" style="background:linear-gradient(135deg,#facc15,#d97706)"><div class="bg-black/80 rounded-3xl p-5 flex flex-col items-center text-center gap-1"><span class="text-3xl">👑</span><span class="text-yellow-400 text-xs font-bold uppercase tracking-widest">Le Visionnaire</span><p class="text-2xl font-black">${esc(rk.winner.name)} <span class="text-white/40 text-lg">(${rk.winner.score} pts)</span></p></div></div>
-    <div class="rounded-3xl p-[2px]" style="background:linear-gradient(135deg,#dc2626,#6b21a8)"><div class="bg-black/85 rounded-3xl p-5 flex flex-col items-center text-center gap-2"><span class="text-3xl">💀</span><span class="text-red-400 text-xs font-bold uppercase tracking-widest">Le Boulet</span><p class="text-2xl font-black">${esc(rk.loser.name)} <span class="text-white/40 text-lg">(${rk.loser.score} pts)</span></p><p class="font-roast italic text-white/80 text-sm leading-relaxed mt-1">"${esc(r.roast)}"</p></div></div>
-    ${mid.length?`<div class="${card} flex flex-col gap-2"><h3 class="text-white/50 text-xs font-bold uppercase tracking-wider text-center">Classement</h3>${mid.map((p,i)=>`<div class="flex justify-between text-sm bg-white/5 px-3 py-2 rounded-xl"><span class="font-bold">${i+2}. ${esc(p.name)}</span><span class="text-white/50">${p.score} pts</span></div>`).join("")}</div>`:""}
-    ${isHost?`<button id="restartB" class="${pill}">🔄 Rejouer</button>`:`<div class="text-center py-3 text-white/60 font-bold">Merci d'avoir joué !</div>`}</div>`; }
-
-// ===== BIND =====
-function bind(){ const g=id=>document.getElementById(id);
-  const ni=g("nameI"); if(ni) ni.oninput=e=>S.name=e.target.value;
-  const ji=g("joinI"); if(ji) ji.oninput=e=>S.joinCode=e.target.value.toUpperCase();
-  if(g("createB")) g("createB").onclick=createRoom;
-  if(g("joinB")) g("joinB").onclick=joinRoom;
-  if(g("copyB")) g("copyB").onclick=copyCode;
-  if(g("shareB")) g("shareB").onclick=shareInvite;
-  if(g("startB")) g("startB").onclick=startRound;
-  if(g("dblB")) g("dblB").onclick=activateDouble;
-  if(g("voteB")) g("voteB").onclick=vote;
-  if(g("jokerB")) g("jokerB").onclick=useJoker;
-  if(g("shotB")) g("shotB").onclick=()=>{ S.pickingShot=true; render(); };
-  if(g("nextB")) g("nextB").onclick=nextRound;
-  if(g("endB")) g("endB").onclick=endGame;
-  if(g("restartB")) g("restartB").onclick=restart;
-  const sl=g("slider"); if(sl) sl.oninput=e=>{ S.voteValue=e.target.value; g("sv").textContent=S.voteValue+"%"; g("fill").style.width=S.voteValue+"%"; vibrate(3); };
+async function endGame() { 
+  const r = S.room; 
+  if (S.pid !== r.hostId) return; 
+  
+  const ranked = playersArr(r).sort((a, b) => a.score - b.score);
+  const w = ranked[0];
+  const l = ranked[ranked.length - 1]; 
+  const roastTpl = l ? rand(ROASTS) : "";
+  const roast = roastTpl.replace(/{name}/g, l ? l.name : "");
+  
+  await S.roomRef.update({ 
+    phase: "STATS", 
+    ranking: { 
+      winner: { name: w.name, score: w.score }, 
+      loser: { name: l.name, score: l.score }, 
+      all: ranked.map(p => ({ id: p.id, name: p.name, score: p.score })) 
+    }, 
+    roast 
+  }); 
 }
-window.pickMode=m=>{ S.pendingMode=m; render(); };
-window.chooseMode=m=>setMode(m);
-window.setJokerMode=async m=>{ vibrate(10); await S.roomRef.update({jokerMode:m}); };
-window.setJoker=async (pid,j)=>{ vibrate(10); await db.ref(`rooms/${S.code}/players/${pid}/joker`).set(j); };
-window.setMax=async n=>{ vibrate(10); await S.roomRef.update({maxRounds:n}); };
-window.setTimer=async n=>{ vibrate(10); await S.roomRef.update({timer:n}); };
-window.toggleCat=async c=>{ const r=S.room; const all=catsFor(r.mode); let cur=r.cats||all.slice(); cur=cur.includes(c)?cur.filter(x=>x!==c):cur.concat(c); if(!cur.length) cur=all.slice(); await S.roomRef.update({cats:cur}); };
-window.shotPick=shotPick;
 
-// ===== INIT =====
-const urlRoom=new URLSearchParams(location.search).get("room"); if(urlRoom) S.joinCode=urlRoom.toUpperCase();
-if("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(()=>{});
-loadQuestions(); cleanupOldRooms(); render();
+async function restart() { 
+  const r = S.room; 
+  if (S.pid !== r.hostId) return; 
+  
+  const upd = { phase: "LOBBY", round: 0, votes: null, result: null, ranking: null, roast: null };
+  Object.keys(r.players).forEach(id => { 
+    upd[`players/${id}/score`] = 0; 
+    upd[`players/${id}/jokerUsed`] = false; 
+    upd[`players/${id}/dbl`] = false; 
+  }); 
+  await S.roomRef.update(upd); 
+}
+
+function copyCode() { 
+  if(navigator.clipboard) {
+    navigator.clipboard.writeText(S.code).catch(() => {}); 
+  } else {
+    // Fallback for Canvas/Iframes
+    const textArea = document.createElement("textarea");
+    textArea.value = S.code;
+    document.body.appendChild(textArea);
+    textArea.select();
+    try { document.execCommand('copy'); } catch (err) {}
+    document.body.removeChild(textArea);
+  }
+  toast("Code copié !", true); 
+  vibrate(10); 
+}
+
+function shareInvite() { 
+  const url = location.origin + location.pathname + "?room=" + S.code; 
+  const data = { title: "Le Thermomètre", text: "Rejoins ma partie ! Code : " + S.code, url };
+  if (navigator.share) {
+    navigator.share(data).catch(() => {}); 
+  } else { 
+    if(navigator.clipboard) navigator.clipboard.writeText(url); 
+    toast("Lien d'invitation copié !", true); 
+  } 
+  vibrate(10); 
+}
+
+// ===== GESTION DU TEMPS =====
+function stopTimer() { 
+  if (S.timerInt) { clearInterval(S.timerInt); S.timerInt = null; } 
+  S.timerLeft = null; 
+}
+function startTimer() { 
+  const r = S.room; 
+  stopTimer(); 
+  if (!r.timer || !r.startedAt) return;
+  
+  const tick = () => { 
+    const elapsed = (Date.now() - r.startedAt) / 1000; 
+    const left = Math.max(0, Math.ceil(r.timer - elapsed)); 
+    S.timerLeft = left;
+    
+    const el = document.getElementById("timer"); 
+    if (el) el.textContent = left + "s";
+    
+    if (left <= 0) { 
+      stopTimer(); 
+      if (r.phase === "VOTING" && !(r.votes || {})[S.pid]) { vote(); } 
+    } 
+  };
+  tick(); 
+  S.timerInt = setInterval(tick, 300);
+}
+
+// ===== INTERFACE GRAPHIQUE (UI) =====
+const btnPrimary = "w-full py-4 px-8 rounded-2xl bg-white text-black font-extrabold text-lg shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed";
+const btnSecondary = "py-3 px-6 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 font-bold active:scale-95 transition-all";
+
+function header() { 
+  const t = theme();
+  return `<header class="flex justify-between items-center mb-6 pt-2">
+    <div class="flex items-center gap-3">
+      <div class="p-2.5 rounded-2xl shadow-xl -rotate-6" style="background:linear-gradient(135deg,${t.from},${t.to})">
+        <span class="text-xl">🌡️</span>
+      </div>
+      <h1 class="text-2xl font-extrabold tracking-tight">Le <span style="background:linear-gradient(90deg,${t.from},${t.to});-webkit-background-clip:text;background-clip:text;color:transparent">Thermo</span>mètre</h1>
+    </div>
+    <div class="flex gap-2 items-center">
+      ${!S.room ? `<button onclick="toggleRules()" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white/70 font-bold border border-white/20">?</button>` : ""}
+      ${S.room && S.code ? `<span class="text-xs font-bold bg-white/10 backdrop-blur-md border border-white/20 px-3 py-1.5 rounded-full shadow-inner">${t.emoji} ${S.room.mode}</span>` : ""}
+    </div>
+  </header>`; 
+}
+
+function modeBtns(cur, fn) { 
+  return Object.keys(THEMES).map(m => {
+    const t = THEMES[m];
+    const a = cur === m;
+    return `<button onclick="${fn}('${m}')" class="flex flex-col items-center gap-2 py-4 rounded-2xl border transition-all duration-300 ${a ? 'border-white/50 scale-[1.02] shadow-[0_0_20px_rgba(255,255,255,0.2)]' : 'bg-black/20 border-white/10 text-white/50 hover:bg-white/5'}" ${a ? `style="background:linear-gradient(135deg, ${t.base}, rgba(0,0,0,0.8)); border-color: ${t.from}"` : ""}>
+      <span class="text-2xl filter drop-shadow-md">${t.icon}</span>
+      <span class="text-xs font-bold uppercase tracking-wider">${t.label}</span>
+    </button>`;
+  }).join(""); 
+}
+
+function render() { 
+  applyBg(); 
+  const app = document.getElementById("app"); 
+  const t = theme(); 
+  let body = "";
+  
+  if (S.screen === "HOME") body = renderHome(t);
+  else if (S.room) { 
+    const r = S.room;
+    if (r.phase === "LOBBY") body = renderLobby(r, t);
+    else if (r.phase === "VOTING") body = renderVoting(r, t);
+    else if (r.phase === "REVEAL") body = renderReveal(r, t);
+    else if (r.phase === "STATS") body = renderStats(r, t); 
+  }
+  
+  app.innerHTML = header() + body; 
+  bind();
+  
+  if (S.room && S.room.phase === "VOTING" && S.room.timer && !(S.room.votes || {})[S.pid]) startTimer(); 
+  else stopTimer();
+}
+
+function renderHome(t) { 
+  return `<div class="flex-1 flex flex-col justify-center animate-up pb-8">
+    
+    <div class="glass-card rounded-[2rem] p-6 flex flex-col gap-5 mb-6">
+      <div class="flex flex-col gap-2">
+        <label class="text-white/60 font-bold text-xs uppercase tracking-widest ml-1">Ton Prénom</label>
+        <input id="nameI" maxlength="15" placeholder="Ex: Alex" value="${esc(S.name)}" class="w-full bg-black/40 border border-white/10 rounded-2xl px-5 py-4 text-xl font-bold outline-none focus:border-white/50 transition-colors placeholder:text-white/20"/>
+      </div>
+      
+      <div class="flex flex-col gap-2">
+        <label class="text-white/60 font-bold text-xs uppercase tracking-widest ml-1">Ambiance de la partie</label>
+        <div class="grid grid-cols-3 gap-3">${modeBtns(S.pendingMode, "pickMode")}</div>
+      </div>
+      
+      <button id="createB" class="${btnPrimary} mt-2" ${S.isLoading ? 'disabled' : ''}>
+        ${S.isLoading ? 'Création en cours...' : '🍻 Créer une partie'}
+      </button>
+    </div>
+
+    <div class="flex items-center gap-4 text-white/30 text-xs font-bold uppercase tracking-widest mb-6">
+      <div class="h-px flex-1 bg-white/10"></div>
+      Rejoindre des amis
+      <div class="h-px flex-1 bg-white/10"></div>
+    </div>
+    
+    <div class="glass-card rounded-[2rem] p-3 flex flex-row gap-3 items-center">
+      <input id="joinI" maxlength="4" placeholder="CODE" value="${esc(S.joinCode)}" class="flex-1 min-w-0 bg-transparent border-none px-4 py-2 text-2xl font-black tracking-[0.3em] text-center uppercase outline-none placeholder:text-white/20 placeholder:tracking-normal"/>
+      <button id="joinB" class="shrink-0 py-3 px-8 rounded-xl bg-white/10 border border-white/20 font-bold hover:bg-white/20 active:scale-95 transition-all" ${S.isLoading ? 'disabled' : ''}>Go ➡️</button>
+    </div>
+  </div>`; 
+}
+
+function renderLobby(r, t) { 
+  const isHost = S.pid === r.hostId; 
+  const ps = playersArr(r); 
+  const myPlayer = r.players[S.pid];
+  const myJoker = JOKERS[myPlayer.joker];
+
+  return `<div class="flex flex-col gap-5 animate-up pb-8">
+    <div class="glass-card rounded-3xl p-6 text-center flex flex-col gap-4 relative overflow-hidden">
+      <div class="absolute inset-0 opacity-20" style="background: linear-gradient(135deg, transparent, ${t.from}, transparent);"></div>
+      <span class="text-white/60 text-xs font-bold uppercase tracking-widest relative z-10">Code de la salle</span>
+      <button id="copyB" class="flex flex-col items-center justify-center relative z-10 group cursor-pointer active:scale-95 transition-transform">
+        <span class="text-6xl font-black tracking-widest" style="text-shadow: 0 4px 20px ${t.glow}">${S.code}</span>
+        <span class="text-white/40 text-sm mt-2 flex items-center gap-1 group-hover:text-white/80 transition-colors"><span class="text-lg">📋</span> Toucher pour copier</span>
+      </button>
+      <button id="shareB" class="${btnSecondary} mt-2 relative z-10">🔗 Envoyer l'invitation</button>
+    </div>
+    
+    ${isHost ? `
+    <div class="glass-card rounded-3xl p-5 flex flex-col gap-3">
+      <h2 class="text-xs font-bold uppercase tracking-widest text-white/50 ml-1">Paramètres de l'hôte</h2>
+      <div class="grid grid-cols-3 gap-2">${modeBtns(r.mode, "chooseMode")}</div>
+    </div>` : ""}
+    
+    <div class="glass-card rounded-3xl p-5 flex flex-col gap-4">
+      <div class="flex justify-between items-end">
+        <h2 class="text-xs font-bold uppercase tracking-widest text-white/50 ml-1">Joueurs connectés (${ps.length})</h2>
+      </div>
+      <div class="flex flex-col gap-2 max-h-60 overflow-y-auto scroll pr-2">
+        ${ps.map(p => `
+          <div class="flex items-center justify-between p-3 rounded-2xl bg-black/30 border border-white/5 ${p.connected === false ? 'opacity-40 grayscale' : ''}">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-full flex items-center justify-center font-black text-lg shadow-inner" style="background:linear-gradient(135deg,${t.from},${t.to})">${esc(p.name[0].toUpperCase())}</div>
+              <span class="font-bold text-lg">${esc(p.name)} ${p.id === S.pid ? '<span class="text-white/40 text-sm font-normal">(Toi)</span>' : ''} ${p.id === r.hostId ? '👑' : ''}</span>
+            </div>
+          </div>
+        `).join("")}
+      </div>
+    </div>
+    
+    <div class="glass-card rounded-3xl p-5 border border-dashed border-white/30 bg-black/40">
+      <h3 class="text-xs font-bold uppercase tracking-widest text-white/50 mb-3 text-center">Ton pouvoir secret pour cette partie</h3>
+      <div class="flex items-center gap-4">
+        <div class="text-4xl bg-white/10 p-3 rounded-2xl shadow-inner">${myJoker.icon}</div>
+        <div>
+          <p class="font-bold text-lg text-white">${myJoker.name}</p>
+          <p class="text-white/60 text-sm leading-snug">${myJoker.desc}</p>
+        </div>
+      </div>
+    </div>
+    
+    ${isHost 
+      ? `<button id="startB" class="${btnPrimary} shadow-[0_0_30px_rgba(255,255,255,0.2)]" ${connectedArr(r).length < 2 ? 'disabled' : ''}>${connectedArr(r).length < 2 ? '⏳ En attente de joueurs...' : '🚀 Lancer la partie !'}</button>`
+      : `<div class="glass-card rounded-3xl p-5 text-center flex items-center justify-center gap-3 text-white/70 font-bold"><span class="animate-spin text-xl">⏳</span> En attente du chef...</div>`
+    }
+  </div>`; 
+}
+
+function renderVoting(r, t) { 
+  const me = r.players[S.pid]; 
+  const q = r.question; 
+  const voted = (r.votes || {})[S.pid] !== undefined;
+  const amTarget = q.targetId === S.pid; 
+  const conn = connectedArr(r).length; 
+  const vc = Object.keys(r.votes || {}).length;
+  const canDouble = amTarget && me.joker === "DOUBLE" && !me.jokerUsed;
+  
+  return `<div class="flex-1 flex flex-col justify-center gap-6 animate-up pb-8">
+    
+    <div class="glass-card rounded-3xl p-8 text-center flex flex-col gap-4 relative overflow-hidden min-h-[220px] justify-center">
+      <div class="absolute top-4 left-0 right-0 flex justify-center">
+        ${amTarget 
+          ? `<span class="px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest bg-yellow-400 text-black shadow-[0_0_15px_rgba(250,204,21,0.5)]">👀 C'est toi la cible !</span>`
+          : `<span class="px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest bg-white/10 border border-white/20 text-white/80">Manche ${r.round}</span>`
+        }
+      </div>
+      <div class="mt-8">
+        <span class="text-3xl font-black block mb-2" style="background:linear-gradient(90deg,${t.from},${t.to});-webkit-background-clip:text;background-clip:text;color:transparent">${esc(q.targetName)}</span>
+        <p class="text-xl font-medium leading-relaxed">"${esc(q.text)}"</p>
+      </div>
+    </div>
+    
+    ${!voted ? `
+      ${canDouble ? `
+      <button id="dblB" class="w-full py-4 rounded-2xl font-bold border-2 transition-all shadow-lg flex items-center justify-center gap-2 ${me.dbl ? 'bg-yellow-400 text-black border-yellow-400' : 'bg-black/40 text-yellow-400 border-yellow-400/50'}" active:scale-95">
+        <span class="text-2xl">✖️2</span> 
+        <div class="text-left leading-tight">
+          <div>${me.dbl ? 'Double activé !' : 'Utiliser le Double ou Rien'}</div>
+          <div class="text-[10px] font-normal opacity-70 uppercase tracking-wider">${me.dbl ? 'Enjeu doublé pour tout le monde' : 'Joker unique'}</div>
+        </div>
+      </button>` : ""}
+      
+      <div class="glass-card rounded-3xl p-6 flex flex-col gap-6">
+        <div class="flex justify-between items-end">
+          <span class="font-bold text-white/50 text-sm uppercase tracking-widest">${amTarget ? 'Ta vérité :' : 'Ton estimation :'}</span>
+          <span id="sv" class="text-5xl font-black transition-all" style="text-shadow: 0 4px 20px ${t.glow}">${S.voteValue}%</span>
+        </div>
+        
+        <div class="relative h-16 rounded-full bg-black/50 shadow-inner border border-white/10 flex items-center px-2">
+          <div id="fill" class="absolute left-2 top-2 bottom-2 rounded-full transition-all duration-100 ease-out" style="width:calc(${S.voteValue}% - 16px); background:linear-gradient(90deg,${t.b1},${t.b2}); box-shadow: 0 0 15px ${t.glow}"></div>
+          <input id="slider" type="range" min="0" max="100" value="${S.voteValue}" class="thermo-slider relative z-10 w-full"/>
+        </div>
+      </div>
+      
+      <button id="voteB" class="${btnPrimary}">Valider mon choix ✓</button>
+    ` : `
+      <div class="glass-card rounded-3xl p-10 flex flex-col items-center text-center gap-4">
+        <div class="w-16 h-16 rounded-full border-4 border-white/20 border-t-white animate-spin"></div>
+        <p class="font-bold text-xl mt-2">Choix enregistré</p>
+        <p class="text-white/50 font-medium bg-black/30 px-4 py-2 rounded-full">En attente des autres... (${vc}/${conn})</p>
+      </div>
+    `}
+  </div>`; 
+}
+
+function renderReveal(r, t) { 
+  const me = r.players[S.pid]; 
+  const res = r.result; 
+  if (!res) return "";
+  
+  const canJoker = res.drinker === S.pid && !res.isClose && me && !me.jokerUsed && !res.jokerUsed && (me.joker === "SHIELD" || me.joker === "MIRROR");
+  const canShot = me && me.joker === "SHOT" && !me.jokerUsed && !res.shot;
+  
+  let resultMsg, bgColor; 
+  if (res.isClose) {
+    resultMsg = `Bravo ! Vous lisez dans ses pensées.<br><span class="text-yellow-400">Tout le monde boit ${res.sips} gorgée${res.sips > 1 ? 's' : ''} 🍻</span>`;
+    bgColor = "bg-emerald-900/40 border-emerald-500/30";
+  } else if (res.jokerUsed === "SHIELD") {
+    resultMsg = `<span class="text-blue-400">${esc(res.targetName)} a sorti le Bouclier 🛡️</span><br>Personne ne boit !`;
+    bgColor = "bg-blue-900/40 border-blue-500/30";
+  } else if (res.jokerUsed === "MIRROR") {
+    resultMsg = `<span class="text-purple-400">Miroir activé 🔁</span><br>${esc(res.drinkerName)} prend ${res.sips} gorgées à la place !`;
+    bgColor = "bg-purple-900/40 border-purple-500/30";
+  } else {
+    resultMsg = `<span class="text-red-400">${esc(res.drinkerName)} s'est planté.</span><br>Bois ${res.sips} gorgée${res.sips > 1 ? 's' : ''} 🍻${res.double ? ' (✖️2 !)' : ''}`;
+    bgColor = "bg-red-900/40 border-red-500/30";
+  }
+  
+  const isHost = S.pid === r.hostId; 
+  const others = connectedArr(r).filter(p => p.id !== S.pid);
+  
+  return `<div class="flex-1 flex flex-col gap-5 animate-up pb-8">
+    <div class="text-center pt-2">
+      <p class="text-white/50 text-xs font-bold uppercase tracking-widest mb-1">La moyenne des votes pour</p>
+      <h2 class="text-3xl font-black uppercase tracking-tight">${esc(res.targetName)}</h2>
+    </div>
+    
+    <div class="text-center animate-pop my-4">
+      <span class="font-black leading-none drop-shadow-2xl" style="font-size: 22vw; text-shadow: 0 10px 40px ${t.glow}">${res.average}%</span>
+    </div>
+    
+    <div class="glass-card ${bgColor} border rounded-3xl p-6 flex flex-col items-center text-center gap-5 transition-colors duration-500">
+      <div class="flex w-full justify-around items-center">
+        <div class="flex flex-col items-center">
+          <span class="text-white/50 text-[10px] uppercase tracking-widest mb-1 font-bold">Sa réponse</span>
+          <span class="text-3xl font-black">${res.targetVote}%</span>
+        </div>
+        <div class="w-px h-10 bg-white/20"></div>
+        <div class="flex flex-col items-center">
+          <span class="text-white/50 text-[10px] uppercase tracking-widest mb-1 font-bold">L'écart</span>
+          <span class="text-3xl font-black ${res.diff > 25 ? 'text-red-400' : 'text-emerald-400'}">${res.diff}</span>
+        </div>
+      </div>
+      
+      <div class="w-full h-px bg-white/10"></div>
+      
+      <p class="text-xl font-bold leading-snug">${resultMsg}</p>
+      
+      ${res.shot ? `
+        <div class="w-full bg-orange-500/20 border border-orange-500/30 rounded-xl p-3 mt-2 animate-pop">
+          <p class="text-sm font-bold text-orange-200">🥃 ${esc(res.shot.by)} a offert un Cul Sec à ${esc(res.shot.who)} !</p>
+        </div>` : ""}
+    </div>
+    
+    ${canJoker ? `
+      <button id="jokerB" class="w-full py-4 rounded-2xl font-extrabold text-lg text-white active:scale-95 transition-all shadow-[0_0_20px_rgba(255,255,255,0.2)] border border-white/40 flex items-center justify-center gap-3 animate-pop" style="background:linear-gradient(135deg,${t.from},${t.to})">
+        <span class="text-2xl">${JOKERS[me.joker].icon}</span>
+        <div class="text-left leading-tight">
+          <div>Sauve-toi : ${JOKERS[me.joker].name}</div>
+          <div class="text-[10px] font-normal opacity-80 uppercase tracking-widest">Joker unique</div>
+        </div>
+      </button>` : ""}
+      
+    ${canShot ? (S.pickingShot
+      ? `<div class="glass-card rounded-3xl p-5 flex flex-col gap-3 border-orange-500/30 bg-orange-900/20 animate-fade">
+          <p class="text-sm font-bold text-center uppercase tracking-widest text-orange-200 mb-2">🥃 Qui fait le cul sec ?</p>
+          <div class="grid grid-cols-2 gap-2">
+            ${others.map(p => `<button onclick="shotPick('${p.id}')" class="py-3 rounded-xl bg-black/40 border border-orange-500/30 font-bold active:scale-95 hover:bg-orange-500/20 transition-colors">${esc(p.name)}</button>`).join("")}
+          </div>
+         </div>`
+      : `<button id="shotB" class="w-full py-4 rounded-2xl font-extrabold text-lg bg-orange-500/20 text-orange-200 border border-orange-500/40 active:scale-95 transition-all flex items-center justify-center gap-3">
+          <span class="text-2xl">🥃</span> Distribuer un Cul sec (Joker)
+         </button>`) : ""}
+    
+    ${isHost 
+      ? `<div class="flex gap-3 mt-2">
+          <button id="nextB" class="${btnPrimary} flex-grow">${(r.maxRounds > 0 && r.round >= r.maxRounds) ? '🏁 Voir les Résultats' : 'Manche Suivante ➡️'}</button>
+          <button id="endB" class="py-4 px-5 rounded-2xl bg-red-500/20 border border-red-500/30 text-red-200 font-bold active:scale-95 flex-shrink-0" title="Arrêter la partie">🛑</button>
+         </div>`
+      : `<div class="glass-card rounded-3xl p-4 text-center text-white/50 font-bold text-sm mt-2 flex justify-center items-center gap-2"><div class="w-2 h-2 bg-white/50 rounded-full animate-ping"></div> L'hôte décide de la suite...</div>`
+    }
+  </div>`; 
+}
+
+function renderStats(r, t) { 
+  const rk = r.ranking; 
+  const mid = (rk.all || []).slice(1, -1); 
+  const isHost = S.pid === r.hostId;
+  
+  return `<div class="flex-1 flex flex-col gap-6 animate-up pb-8">
+    <div class="text-center pt-4">
+      <h2 class="text-4xl font-black mb-2">Partie Terminée 🏁</h2>
+      <p class="text-white/60">Voici le verdict final</p>
+    </div>
+    
+    <div class="relative rounded-[2rem] p-1" style="background:linear-gradient(135deg,#facc15,#d97706)">
+      <div class="absolute -top-4 -right-4 text-4xl animate-bounce">👑</div>
+      <div class="bg-black/90 rounded-[1.8rem] p-6 flex flex-col items-center text-center gap-1 backdrop-blur-md">
+        <span class="text-yellow-400 text-[10px] font-bold uppercase tracking-widest mb-1">Le Médium du groupe</span>
+        <p class="text-3xl font-black text-white">${esc(rk.winner.name)}</p>
+        <p class="text-white/50 mt-1">${rk.winner.score} pts d'écart total</p>
+      </div>
+    </div>
+    
+    <div class="relative rounded-[2rem] p-1 mt-2" style="background:linear-gradient(135deg,#dc2626,#6b21a8)">
+      <div class="absolute -top-4 -left-4 text-4xl animate-pulse">💀</div>
+      <div class="bg-black/90 rounded-[1.8rem] p-6 flex flex-col items-center text-center gap-1 backdrop-blur-md">
+        <span class="text-red-400 text-[10px] font-bold uppercase tracking-widest mb-1">Le pire radar social</span>
+        <p class="text-3xl font-black text-white">${esc(rk.loser.name)}</p>
+        <p class="text-white/50 mt-1">${rk.loser.score} pts d'erreur !</p>
+        <div class="w-12 h-px bg-white/20 my-3"></div>
+        <p class="font-roast italic text-white/80 text-sm leading-relaxed">"${esc(r.roast)}"</p>
+      </div>
+    </div>
+    
+    ${mid.length ? `
+      <div class="glass-card rounded-3xl p-5 flex flex-col gap-3 mt-2">
+        <h3 class="text-white/40 text-[10px] font-bold uppercase tracking-widest text-center mb-1">Les autres (Le ventre mou)</h3>
+        ${mid.map((p, i) => `
+          <div class="flex justify-between items-center text-sm bg-black/40 border border-white/5 px-4 py-3 rounded-2xl">
+            <span class="font-bold text-white/90">${i + 2}. ${esc(p.name)}</span>
+            <span class="text-white/50 font-medium">${p.score} pts</span>
+          </div>
+        `).join("")}
+      </div>` : ""}
+      
+    ${isHost 
+      ? `<button id="restartB" class="${btnPrimary} mt-4">🔄 Refaire une partie</button>`
+      : `<div class="glass-card rounded-3xl p-5 text-center text-white/70 font-bold mt-4">Merci d'avoir joué ! Santé 🍻</div>`
+    }
+  </div>`; 
+}
+
+// ===== ÉCOUTEURS D'ÉVÉNEMENTS =====
+function bind() { 
+  const g = id => document.getElementById(id);
+  
+  const ni = g("nameI"); 
+  if (ni) {
+    ni.oninput = e => { 
+      S.name = e.target.value; 
+      localStorage.setItem('thermo_name', S.name);
+    };
+  }
+  
+  const ji = g("joinI"); 
+  if (ji) ji.oninput = e => S.joinCode = e.target.value.toUpperCase();
+  
+  if (g("createB")) g("createB").onclick = createRoom;
+  if (g("joinB")) g("joinB").onclick = joinRoom;
+  if (g("copyB")) g("copyB").onclick = copyCode;
+  if (g("shareB")) g("shareB").onclick = shareInvite;
+  if (g("startB")) g("startB").onclick = startRound;
+  if (g("dblB")) g("dblB").onclick = activateDouble;
+  if (g("voteB")) g("voteB").onclick = vote;
+  if (g("jokerB")) g("jokerB").onclick = useJoker;
+  if (g("shotB")) g("shotB").onclick = () => { S.pickingShot = true; render(); };
+  if (g("nextB")) g("nextB").onclick = nextRound;
+  if (g("endB")) g("endB").onclick = endGame;
+  if (g("restartB")) g("restartB").onclick = restart;
+  
+  const sl = g("slider"); 
+  if (sl) {
+    sl.oninput = e => { 
+      S.voteValue = e.target.value; 
+      g("sv").textContent = S.voteValue + "%"; 
+      g("fill").style.width = `calc(${S.voteValue}% - 16px)`; 
+      vibrate(3); 
+    };
+  }
+}
+
+// Fonctions globales exposées pour les "onclick" en HTML string
+window.pickMode = m => { S.pendingMode = m; render(); };
+window.chooseMode = m => setMode(m);
+window.shotPick = shotPick;
+window.toggleRules = toggleRules;
+
+// ===== DÉMARRAGE =====
+const urlRoom = new URLSearchParams(location.search).get("room"); 
+if (urlRoom) S.joinCode = urlRoom.toUpperCase();
+
+// On supprime l'ancien service worker qui cause les erreurs d'interception
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then(function(registrations) {
+    for(let registration of registrations) {
+      registration.unregister();
+    }
+  });
+}
+
+render();
 </script>
 </body>
 </html>
