@@ -1,991 +1,364 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Le Thermomètre – Party Game</title>
-  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --text-xs: clamp(0.75rem, 0.7rem + 0.25vw, 0.875rem);
-      --text-sm: clamp(0.875rem, 0.8rem + 0.35vw, 1rem);
-      --text-base: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
-      --text-lg: clamp(1.125rem, 1rem + 0.75vw, 1.5rem);
-      --text-xl: clamp(1.5rem, 1.2rem + 1.25vw, 2rem);
-      --space-1: .25rem; --space-2: .5rem; --space-3: .75rem; --space-4: 1rem;
-      --space-5: 1.25rem; --space-6: 1.5rem;
-
-      --chill-main: #34d5ff; --chill-bg: #0f172a; --chill-soft: rgba(17, 24, 39, 0.7);
-      --spicy-main: #ff7a3c; --spicy-bg: #2a0808; --spicy-soft: rgba(42, 8, 8, 0.8);
-      --hard-main: #ff003c; --hard-bg: #050000; --hard-soft: rgba(10, 0, 5, 0.85);
-
-      --mode-main: var(--chill-main);
-      --mode-bg: var(--chill-bg);
-      --mode-soft: var(--chill-soft);
-    }
-
-    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-    html{-webkit-font-smoothing:antialiased;text-size-adjust:none}
-    
-    /* ANIMATIONS GLOBALES */
-    @keyframes floatChill { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
-    @keyframes pulseSpicy { 0%, 100% { box-shadow: inset 0 0 50px rgba(255,122,60,0.1); } 50% { box-shadow: inset 0 0 150px rgba(255,122,60,0.3); } }
-    @keyframes glitchText { 0% { transform: translate(0) } 20% { transform: translate(-2px, 1px) } 40% { transform: translate(-1px, -1px) } 60% { transform: translate(2px, 1px) } 80% { transform: translate(1px, -1px) } 100% { transform: translate(0) } }
-    @keyframes slotMachine { 0% { filter: blur(4px); transform: translateY(-10px); opacity: 0; } 50% { filter: blur(0px); transform: translateY(0); opacity: 1; } 100% { filter: blur(4px); transform: translateY(10px); opacity: 0; } }
-
-    body {
-      min-height: 100dvh;
-      font-family: 'Satoshi', sans-serif;
-      font-size: var(--text-base);
-      display: flex; justify-content: center; align-items: stretch;
-      padding: var(--space-4); color: #e5e7eb;
-      transition: background 0.5s ease, box-shadow 0.5s ease;
-      overflow-x: hidden;
-    }
-
-    /* THEMES */
-    body.theme-chill { background: linear-gradient(-45deg, #0f172a, #1e3a8a, #064e3b, #0f172a); background-size: 400% 400%; animation: floatChill 15s ease infinite; }
-    body.theme-spicy { background: radial-gradient(circle at center, #3f0909, #0a0101); animation: pulseSpicy 4s ease-in-out infinite; }
-    body.theme-hardcore { background: #000; position: relative; }
-    body.theme-hardcore::before {
-      content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-      background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,0,60,0.1) 2px, rgba(255,0,60,0.1) 4px);
-      pointer-events: none; z-index: -1;
-    }
-    body.theme-hardcore h1 { text-shadow: 2px 2px var(--hard-main), -2px -2px #00fff9; animation: glitchText 0.3s infinite; }
-
-    @media (max-width: 600px){ body{padding:0;} }
-
-    /* CONTENEUR PRINCIPAL */
-    .app {
-      width: 100%; max-width: 480px; min-height: 100%;
-      background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
-      border-radius: 2.25rem; border: 1px solid rgba(255, 255, 255, 0.08);
-      box-shadow: 0 30px 80px rgba(0,0,0,.9);
-      display: flex; flex-direction: column; overflow-y: auto; overflow-x: hidden;
-      position: relative;
-    }
-    @media (max-width:600px){ .app{border-radius:0; border:none;} }
-
-    header { padding: var(--space-4) var(--space-5) var(--space-3); border-bottom: 1px solid rgba(255,255,255,0.05); }
-    .brand-row { display: flex; align-items: center; justify-content: space-between; }
-    h1 { font-size: var(--text-lg); font-weight: 900; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 0.2rem; }
-    .subtitle { font-size: var(--text-xs); font-weight: 700; text-transform: uppercase; letter-spacing: .16em; color: var(--mode-main); transition: color 0.3s; }
-
-    /* STEPPER */
-    .stepper { display: flex; gap: .35rem; font-size: 0.65rem; text-transform: uppercase; font-weight: 800; margin-top: 1rem; }
-    .step-pill { flex: 1; padding: .4rem .2rem; border-radius: 999px; background: rgba(255,255,255,0.05); text-align: center; color: rgba(255,255,255,0.4); transition: all 0.3s; }
-    .step-pill.active { background: var(--mode-main); color: #000; box-shadow: 0 0 15px var(--mode-main); }
-
-    main { flex: 1; display: flex; flex-direction: column; padding: var(--space-4); background: var(--mode-soft); transition: background 0.3s; }
-
-    .screen { display: none; flex-direction: column; gap: var(--space-4); height: 100%; opacity: 0; transform: translateY(15px); transition: all .4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-    .screen.active { display: flex; opacity: 1; transform: translateY(0); }
-
-    .card { background: rgba(0,0,0,0.4); border-radius: 1.5rem; padding: var(--space-4); border: 1px solid rgba(255,255,255,.05); }
-    
-    /* CARTES DE JEU */
-    .question-card {
-      background: linear-gradient(135deg, color-mix(in oklab, var(--mode-main) 40%, transparent), rgba(0,0,0,0.9));
-      color: white; text-align: center; padding: var(--space-6) var(--space-4); border-radius: 1.5rem;
-      box-shadow: 0 20px 50px rgba(0,0,0,.8), inset 0 0 20px rgba(255,255,255,0.05);
-      border: 1px solid color-mix(in oklab, var(--mode-main) 30%, transparent);
-      transition: all 0.3s;
-    }
-    .question-tag { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .16em; font-weight: 800; color: rgba(255,255,255,.6); margin-bottom: var(--space-3); }
-    .question-text { font-size: var(--text-xl); font-weight: 900; line-height: 1.2; text-shadow: 0 4px 10px rgba(0,0,0,0.8); }
-
-    /* LISTE DES JOUEURS */
-    .players-list { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: 0.5rem; }
-    .pill { padding: .4rem 1rem; border-radius: 999px; background: rgba(0,0,0,0.6); font-size: var(--text-xs); font-weight: 700; border: 1px solid rgba(255,255,255,0.1); }
-    .pill.host { border-color: var(--mode-main); color: var(--mode-main); }
-    .pill.me { outline: 2px solid #fff; }
-
-    /* FORMULAIRES */
-    label { display: block; font-size: var(--text-sm); font-weight: 700; margin-bottom: .4rem; color: #d1d5db; }
-    .input { width: 100%; min-height: 54px; border-radius: 1rem; border: 1px solid rgba(255,255,255,0.15); padding: 0 var(--space-4); font-size: var(--text-base); font-family: inherit; background: rgba(0,0,0,0.5); color: #fff; outline: none; transition: border-color 0.2s; }
-    .input:focus { border-color: var(--mode-main); box-shadow: 0 0 15px rgba(255,255,255,0.1); }
-
-    .modes { display: flex; gap: .5rem; margin-top: .5rem; }
-    .mode-btn { flex: 1; border-radius: 1rem; border: 1px solid rgba(255,255,255,0.1); padding: .8rem; font-size: var(--text-xs); font-weight: 800; text-transform: uppercase; color: #9ca3af; background: rgba(0,0,0,0.4); cursor: pointer; transition: all .2s; }
-    .mode-btn.active { background: var(--mode-main); color: #000; transform: translateY(-2px); border-color: transparent; box-shadow: 0 10px 20px color-mix(in oklab, var(--mode-main) 30%, transparent); }
-
-    .btn { border-radius: 1rem; border: none; padding: 1.2rem; font-size: var(--text-sm); font-weight: 900; text-transform: uppercase; letter-spacing: .05em; cursor: pointer; width: 100%; transition: all .2s; font-family: inherit; display: inline-flex; justify-content: center; align-items: center; }
-    .btn-primary { background: var(--mode-main); color: #000; box-shadow: 0 10px 30px color-mix(in oklab, var(--mode-main) 40%, transparent); }
-    .btn-primary:active { transform: scale(.97); }
-    .btn-ghost { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); color: #fff; padding: 0.8rem; }
-    .btn-ghost:active { background: rgba(255,255,255,0.1); transform: scale(.98); }
-    .btn:disabled { opacity: .5; pointer-events: none; filter: grayscale(1); }
-
-    /* SLIDER & THERMOMETRE */
-    .slider-wrap { margin-top: var(--space-4); }
-    .slider-value-bubble { display: inline-flex; justify-content: center; min-width: 5rem; padding: .5rem 1rem; border-radius: 1rem; background: var(--mode-main); color: #000; font-size: var(--text-xl); font-weight: 900; box-shadow: 0 10px 25px rgba(0,0,0,.6); margin: 0 auto 1.5rem; transition: background 0.3s; }
-    
-    input[type=range] { width: 100%; -webkit-appearance: none; background: transparent; margin-bottom: 2rem; }
-    input[type=range]::-webkit-slider-runnable-track { height: 14px; border-radius: 999px; background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.1); }
-    input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 34px; height: 34px; border-radius: 50%; background: #fff; border: 4px solid var(--mode-main); box-shadow: 0 0 20px var(--mode-main); margin-top: -11px; transition: transform .1s, border-color 0.3s; cursor: grab; }
-    input[type=range]:active::-webkit-slider-thumb { transform: scale(1.2); }
-
-    .thermo-wrap { display: flex; flex-direction: column; align-items: center; gap: 0; margin-top: 1rem; }
-    .thermo-bar { width: 44px; height: 180px; border-radius: 999px 999px 0 0; background: rgba(0,0,0,0.8); border: 2px solid rgba(255,255,255,0.1); border-bottom: none; padding: 4px; display: flex; align-items: flex-end; justify-content: center; z-index: 1; }
-    .thermo-mercury { width: 100%; border-radius: 999px; height: 0%; background: var(--mode-main); transition: height 0.1s linear, background 0.3s ease; box-shadow: inset 0 0 10px rgba(0,0,0,0.8); }
-    .thermo-bulb { width: 60px; height: 60px; border-radius: 50%; background: var(--mode-main); margin-top: -15px; box-shadow: inset -5px -5px 15px rgba(0,0,0,0.6), 0 10px 20px rgba(0,0,0,.8); border: 2px solid rgba(255,255,255,0.1); z-index: 2; transition: background 0.3s; }
-
-    /* ROULETTE DES GAGES */
-    .roulette-box { background: #000; border: 2px solid var(--mode-main); border-radius: 1rem; padding: 1rem; text-align: center; margin: 1rem 0; overflow: hidden; height: 80px; display: flex; align-items: center; justify-content: center; position: relative; box-shadow: 0 0 20px rgba(255,0,60,0.4); }
-    .roulette-text { font-size: var(--text-lg); font-weight: 900; color: #fff; white-space: nowrap; }
-    .roulette-text.spin { animation: slotMachine 0.1s infinite linear; }
-
-    /* CHRONO */
-    .timer-bar-container { width: 100%; height: 8px; background: rgba(0,0,0,0.5); border-radius: 999px; overflow: hidden; margin-bottom: 1rem; }
-    .timer-bar { height: 100%; width: 100%; background: #22c55e; transition: width 1s linear, background-color 0.5s; }
-    .timer-bar.warning { background: #facc15; }
-    .timer-bar.danger { background: #ef4444; }
-
-    /* MODAL JOKER */
-    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); z-index: 100; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
-    .modal-overlay.active { opacity: 1; pointer-events: auto; }
-    .modal-card { background: var(--mode-soft); border: 1px solid var(--mode-main); padding: 2rem; border-radius: 1.5rem; width: 90%; max-width: 400px; text-align: center; }
-    .modal-card h3 { font-size: var(--text-lg); margin-bottom: 1rem; }
-
-    .big-number { font-size: 4rem; font-weight: 900; text-align: center; color: var(--mode-main); text-shadow: 0 5px 20px rgba(0,0,0,0.8); margin-bottom: 0.5rem; transition: color 0.3s; }
-    .verdict-box { background: rgba(0,0,0,0.5); padding: 1rem; border-radius: 1rem; border-left: 4px solid var(--mode-main); font-weight: 800; text-align: center; margin-top: 1rem; transition: border-color 0.3s; }
-
-    /* STATS */
-    .stats-line { display: flex; justify-content: space-between; align-items: center; padding: 1rem; background: rgba(0,0,0,0.3); border-radius: 1rem; margin-bottom: 0.5rem; }
-    .stats-name { font-weight: 900; font-size: var(--text-lg); }
-    .stats-score { font-weight: 900; color: var(--mode-main); font-size: var(--text-xl); }
-    .stats-desc { font-size: var(--text-xs); color: #9ca3af; margin-top: 0.2rem; }
-
-    .joker-alert { background: #ff003c; color: white; padding: 1rem; border-radius: 1rem; text-align: center; font-weight: 900; margin-top: 1rem; animation: pulseSpicy 1s infinite; text-transform: uppercase; }
-
-    .hidden { display: none !important; }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<title>Le Thermomètre 🌡️</title>
+<meta name="theme-color" content="#040B16" />
+<link rel="manifest" href="manifest.json" />
+<link rel="icon" href="icon.svg" />
+<link rel="apple-touch-icon" href="icon.svg" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700;800&family=Nunito:ital,wght@0,400;0,700;1,400&display=swap');
+  * { -webkit-tap-highlight-color: transparent; }
+  body { margin:0; background:#000; font-family:'Baloo 2',cursive,sans-serif; color:#fff; -webkit-font-smoothing:antialiased; overflow-x:hidden; }
+  .font-roast { font-family:'Nunito',sans-serif; }
+  .thermo-slider { -webkit-appearance:none; appearance:none; width:100%; height:56px; background:transparent; cursor:pointer; }
+  .thermo-slider::-webkit-slider-thumb { -webkit-appearance:none; width:44px; height:44px; border-radius:9999px; background:#fff; border:3px solid rgba(255,255,255,.6); box-shadow:0 0 18px rgba(255,255,255,.8); }
+  .thermo-slider::-moz-range-thumb { width:44px; height:44px; border-radius:9999px; background:#fff; border:3px solid rgba(255,255,255,.6); }
+  @keyframes blob { 0%{transform:translate(0,0) scale(1)} 33%{transform:translate(30px,-40px) scale(1.1)} 66%{transform:translate(-20px,30px) scale(.95)} 100%{transform:translate(0,0) scale(1)} }
+  .animate-blob { animation:blob 12s infinite ease-in-out; } .blob-delay { animation-delay:4s; }
+  @keyframes pop { from{transform:scale(.4);opacity:0} to{transform:scale(1);opacity:1} } .animate-pop { animation:pop .4s cubic-bezier(.34,1.56,.64,1) forwards; }
+  @keyframes slideUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} } .animate-up { animation:slideUp .35s ease forwards; }
+  .scroll::-webkit-scrollbar { width:4px; } .scroll::-webkit-scrollbar-thumb { background:rgba(255,255,255,.3); border-radius:10px; }
+  .toast { animation:slideUp .25s ease; }
+</style>
 </head>
-<body class="theme-chill">
-  <div class="app">
-    <header>
-      <div class="brand-row">
-        <div>
-          <h1>Le Thermomètre</h1>
-          <div class="subtitle">Tranquille sur le canap</div>
-        </div>
-      </div>
-      <div class="stepper" id="stepper">
-        <div class="step-pill" data-step="lobby">Salon</div>
-        <div class="step-pill" data-step="vote">Vote</div>
-        <div class="step-pill" data-step="reveal">Résultat</div>
-        <div class="step-pill" data-step="stats">Score</div>
-      </div>
-    </header>
-
-    <main>
-      <!-- ROLE -->
-      <section class="screen active" id="screen-role" data-step="lobby">
-        <div class="card" style="display:flex;flex-direction:column;gap:1rem;">
-          <button class="btn btn-primary" id="roleHostBtn">Créer un salon</button>
-          <button class="btn btn-ghost" id="rolePlayerBtn">Rejoindre un pote</button>
-        </div>
-      </section>
-
-      <!-- SETUP HOST -->
-      <section class="screen" id="screen-host-setup" data-step="lobby">
-        <div class="card" style="display:flex;flex-direction:column;gap:1.5rem;">
-          <div>
-            <label>Ton prénom</label>
-            <input id="hostName" class="input" placeholder="Ex. Alex" maxlength="15" />
-          </div>
-          <div>
-            <label>Ambiance</label>
-            <div class="modes">
-              <button class="mode-btn active" data-mode="Chill">Chill</button>
-              <button class="mode-btn" data-mode="Spicy">Spicy</button>
-              <button class="mode-btn" data-mode="Hardcore">Hardcore</button>
-            </div>
-          </div>
-          <button class="btn btn-primary" id="createRoomBtn">Lancer le salon</button>
-        </div>
-      </section>
-
-      <!-- LOBBY HOST -->
-      <section class="screen" id="screen-host-lobby" data-step="lobby">
-        <div class="card">
-          <h2 style="font-size:var(--text-lg);font-weight:900;margin-bottom:1rem;">Code : <span id="roomCodeHost" style="color:var(--mode-main);"></span></h2>
-          
-          <label>Dossiers anonymes (Optionnel)</label>
-          <div style="display:flex; gap:0.5rem; margin-bottom: 1.5rem;">
-            <input id="customQuestionHost" class="input" placeholder="Écris une question vicieuse..." style="min-height:44px; font-size:var(--text-sm);" />
-            <button class="btn btn-ghost" id="submitCustomHostBtn" style="width:auto; padding:0 1rem;">Envoyer</button>
-          </div>
-
-          <label>Joueurs (<span id="hostPlayerCount">1</span>)</label>
-          <div class="players-list" id="playersList"></div>
-
-          <button class="btn btn-primary" id="startGameBtn" style="margin-top: 2rem;">Démarrer la partie</button>
-        </div>
-      </section>
-
-      <!-- JOIN PLAYER -->
-      <section class="screen" id="screen-player-join" data-step="lobby">
-        <div class="card" style="display:flex;flex-direction:column;gap:1.5rem;">
-          <div>
-            <label>Code du salon</label>
-            <input id="joinCode" class="input" placeholder="ABCD" maxlength="4" style="text-transform:uppercase;" />
-          </div>
-          <div>
-            <label>Ton prénom</label>
-            <input id="joinName" class="input" placeholder="Ex. Sam" maxlength="15" />
-          </div>
-          <button class="btn btn-primary" id="joinRoomBtn">Rejoindre</button>
-        </div>
-      </section>
-
-      <!-- LOBBY PLAYER -->
-      <section class="screen" id="screen-player-lobby" data-step="lobby">
-        <div class="card">
-          <h2 style="font-size:var(--text-lg);font-weight:900;margin-bottom:1rem;">Salon : <span id="roomCodePlayer" style="color:var(--mode-main);"></span></h2>
-          
-          <label>Dossiers anonymes</label>
-          <div style="display:flex; gap:0.5rem; margin-bottom: 1.5rem;">
-            <input id="customQuestionPlayer" class="input" placeholder="Balance un dossier..." style="min-height:44px; font-size:var(--text-sm);" />
-            <button class="btn btn-ghost" id="submitCustomPlayerBtn" style="width:auto; padding:0 1rem;">Envoyer</button>
-          </div>
-
-          <label>Joueurs présents</label>
-          <div class="players-list" id="playersListPlayer"></div>
-          <p style="font-size:var(--text-xs); color:#9ca3af; margin-top:1.5rem; text-align:center;">En attente de l'hôte...</p>
-        </div>
-      </section>
-
-      <!-- VOTE -->
-      <section class="screen" id="screen-vote" data-step="vote">
-        <div class="timer-bar-container"><div class="timer-bar" id="voteTimerBar"></div></div>
-        <div class="question-card">
-          <div class="question-tag" id="questionTag">Manche 1 • Cible : Alex</div>
-          <div class="question-text" id="questionText">Question…</div>
-        </div>
-        
-        <div class="card" style="margin-top:1rem; text-align:center;">
-          <div class="slider-wrap">
-            <div class="slider-value-bubble"><span id="sliderValue">50</span>%</div>
-            <input type="range" id="voteSlider" min="0" max="100" value="50" />
-          </div>
-          <div style="font-size:var(--text-xs); color:#9ca3af; margin-bottom:1rem;" id="voteStatus">À toi de voter !</div>
-          <button class="btn btn-primary" id="submitVoteBtn">Je valide</button>
-        </div>
-      </section>
-
-      <!-- REVEAL -->
-      <section class="screen" id="screen-reveal" data-step="reveal">
-        <div class="question-card">
-          <div class="question-tag">Résultat</div>
-          <div class="question-text" id="revealQuestion" style="font-size:var(--text-lg); opacity:0.9;">Question…</div>
-        </div>
-
-        <div class="card" style="margin-top:1rem; display:flex; flex-direction:column; align-items:center;">
-          <div style="font-size:var(--text-xs); text-transform:uppercase; letter-spacing:.1em; color:#9ca3af; margin-bottom:0.5rem;">Moyenne du groupe</div>
-          <div class="big-number" id="averageValue">--%</div>
-          
-          <div class="thermo-wrap">
-            <div class="thermo-bar"><div class="thermo-mercury" id="thermoReveal"></div></div>
-            <div class="thermo-bulb" id="thermoBulbReveal"></div>
-          </div>
-
-          <div id="rouletteContainer" class="hidden" style="width:100%;">
-            <div class="roulette-box">
-              <div class="roulette-text" id="rouletteText">GÉNÉRATION DU GAGE...</div>
-            </div>
-          </div>
-
-          <div id="jokerAlertContainer" class="hidden" style="width:100%;"></div>
-
-          <div class="verdict-box" id="verdictText" style="width:100%;"></div>
-
-          <div style="width:100%; margin-top:1.5rem; display:flex; flex-direction:column; gap:0.5rem;">
-            <button class="btn btn-ghost" id="btnOpenJoker">Utiliser mon joker (<span id="myJokerName"></span>)</button>
-            <button class="btn btn-primary hidden" id="nextRoundBtn">Manche suivante</button>
-            <button class="btn btn-ghost hidden" id="endGameBtn">Terminer la partie</button>
-          </div>
-        </div>
-      </section>
-
-      <!-- STATS -->
-      <section class="screen" id="screen-stats" data-step="stats">
-        <div class="card">
-          <h2 style="font-size:var(--text-xl); font-weight:900; text-align:center; margin-bottom:2rem;">Bilan de la soirée</h2>
-          <div id="statsList"></div>
-          <button class="btn btn-primary" id="restartBtn" style="margin-top:2rem;">Rejouer</button>
-        </div>
-      </section>
-    </main>
-  </div>
-
-  <!-- MODAL JOKER -->
-  <div class="modal-overlay" id="jokerModal">
-    <div class="modal-card">
-      <h3 id="jokerModalTitle">Action du Joker</h3>
-      <p style="font-size:var(--text-sm); color:#9ca3af; margin-bottom:1.5rem;" id="jokerModalDesc"></p>
-      
-      <div id="jokerTargetSelectContainer" class="hidden" style="margin-bottom:1.5rem;">
-        <label>Choisis ta victime :</label>
-        <select id="jokerTargetSelect" class="input" style="appearance:none; text-align:center;"></select>
-      </div>
-
-      <div style="display:flex; gap:0.5rem;">
-        <button class="btn btn-ghost" id="cancelJokerBtn">Annuler</button>
-        <button class="btn btn-primary" id="confirmJokerBtn">Valider</button>
-      </div>
-    </div>
-  </div>
-
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
-    import { getDatabase, ref, set, get, onValue, update, push, off } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
-
-    // Configuration Firebase RESTAURÉE en intégralité
-    const firebaseConfig = {
-      apiKey: "AIzaSyBEwzH6QEPWegpgBmnevtiBX9gqy3V3dcY",
-      authDomain: "le-thermometre.firebaseapp.com",
-      databaseURL: "https://le-thermometre-default-rtdb.europe-west1.firebasedatabase.app",
-      projectId: "le-thermometre",
-      storageBucket: "le-thermometre.firebasestorage.app",
-      messagingSenderId: "650617838327",
-      appId: "1:650617838327:web:f20b05a54fe85a781011f2",
-      measurementId: "G-L9FLQZ1768"
-    };
-
-    const appFb = initializeApp(firebaseConfig);
-    const db = getDatabase(appFb);
-
-    function generateCode() {
-      const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; 
-      let code = "";
-      for (let i = 0; i < 4; i++) code += chars[Math.floor(Math.random() * chars.length)];
-      return code;
-    }
-    
-    function generateId() { 
-      return Math.random().toString(36).slice(2, 10); 
-    }
-
-    // Jokers Disponibles
-    const JOKER_TYPES = ['SHIELD', 'DICTATOR', 'AMNESIAC'];
-    const JOKER_LABELS = { 'SHIELD': 'Bouclier', 'DICTATOR': 'Dictateur', 'AMNESIAC': 'Amnésique' };
-    
-    function randomJoker() { 
-      return JOKER_TYPES[Math.floor(Math.random() * JOKER_TYPES.length)]; 
-    }
-
-    window.firebaseApi = {
-      db, ref, get, onValue, off, update, push, set,
-      
-      createRoom: async (hostName, mode) => {
-        const hostId = generateId();
-        let code, roomRef, snap;
-        
-        // Boucle pour s'assurer que le code est bien unique
-        for (let i = 0; i < 10; i++) {
-          code = generateCode();
-          roomRef = ref(db, 'rooms/' + code);
-          snap = await get(roomRef);
-          if (!snap.exists()) break;
-        }
-        
-        if (snap && snap.exists()) {
-          throw new Error("Impossible de générer un code de salon unique");
-        }
-        
-        // On push les données de base
-        await set(roomRef, {
-          mode, 
-          phase: 'LOBBY', 
-          round: 0, 
-          hostId, 
-          createdAt: Date.now(),
-          currentRound: null, 
-          result: null,
-          players: { 
-            [hostId]: { name: hostName, score: 0, joker: randomJoker(), jokerUsed: false, isHost: true } 
-          }
-        });
-        
-        return { code, hostId };
-      },
-
-      joinRoom: async (code, playerName) => {
-        const roomRef = ref(db, 'rooms/' + code);
-        const snap = await get(roomRef);
-        
-        if (!snap.exists()) throw new Error('Ce code de salon est introuvable.');
-        if (snap.val().phase !== 'LOBBY') throw new Error('Désolé, la partie est déjà en cours !');
-        
-        const playerId = generateId();
-        await set(ref(db, `rooms/${code}/players/${playerId}`), {
-          name: playerName, 
-          score: 0, 
-          joker: randomJoker(), 
-          jokerUsed: false, 
-          isHost: false
-        });
-        
-        return { playerId };
-      },
-
-      addCustomQuestion: async (code, question) => {
-        const qRef = push(ref(db, `rooms/${code}/customQuestions`));
-        await set(qRef, question);
-      },
-
-      startRound: async (code, payload) => {
-        await update(ref(db, 'rooms/' + code), { 
-          phase: 'VOTE', 
-          round: payload.round, 
-          currentRound: payload, 
-          result: null 
-        });
-      },
-
-      submitVote: async (code, roundId, playerId, value) => {
-        await set(ref(db, `rooms/${code}/currentRound/votes/${playerId}`), { 
-          value, 
-          votedAt: Date.now() 
-        });
-      },
-
-      setReveal: async (code, result) => {
-        await update(ref(db, 'rooms/' + code), { phase: 'REVEAL', result });
-      },
-
-      updateScores: async (code, scoreUpdates) => {
-        const updates = {};
-        Object.keys(scoreUpdates).forEach(id => { 
-          updates[`players/${id}/score`] = scoreUpdates[id]; 
-        });
-        await update(ref(db, `rooms/${code}`), updates);
-      },
-
-      useJoker: async (code, playerId, roundId, jokerEvent) => {
-        const updates = {};
-        updates[`players/${playerId}/jokerUsed`] = true;
-        updates[`currentRound/jokerEvent`] = jokerEvent;
-        await update(ref(db, `rooms/${code}`), updates);
-      },
-
-      endGame: async (code) => { 
-        await update(ref(db, 'rooms/' + code), { phase: 'STATS' }); 
-      },
-      
-      resetRoom: async (code) => {
-        const snap = await get(ref(db, `rooms/${code}/players`));
-        const players = snap.val() || {};
-        const updates = { phase: 'LOBBY', round: 0, currentRound: null, result: null, customQuestions: null };
-        Object.keys(players).forEach(id => {
-          updates[`players/${id}/score`] = 0;
-          updates[`players/${id}/joker`] = randomJoker();
-          updates[`players/${id}/jokerUsed`] = false;
-        });
-        await update(ref(db, 'rooms/' + code), updates);
-      }
-    };
-  </script>
-
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      // UTILITAIRES
-      const $ = sel => document.querySelector(sel);
-      const $all = sel => Array.from(document.querySelectorAll(sel));
-      const vibrate = (pattern) => { if(navigator.vibrate) navigator.vibrate(pattern); };
-
-      // CONFIGURATION
-      const MODES = {
-        Chill: { subtitle: 'Tranquille sur le canap' },
-        Spicy: { subtitle: 'Les secrets tombent' },
-        Hardcore: { subtitle: 'Préparez vos foies' }
-      };
-
-      const QUESTIONS = {
-        Chill: ["Quel % de chances que {name} s'endorme en premier ?", "Quel % de chances que {name} ait le pire sens de l'orientation ?"],
-        Spicy: ["Quel % de chances que {name} mente pour annuler une soirée ?", "Quel % de chances que {name} stalke son ex ?"],
-        Hardcore: ["Quel % de chances que {name} trahisse le groupe pour 1000€ ?", "Quel % de chances que {name} finisse en garde à vue ce soir ?"]
-      };
-
-      const WHEEL_GAGES = ["CUL SEC !", "DISTRIBUE 4 GORGÉES", "BOIS 3 GORGÉES", "VÉRITÉ OU BOIS", "INVENTE UNE RÈGLE"];
-      const JOKER_LABELS = { 'SHIELD': 'Bouclier', 'DICTATOR': 'Dictateur', 'AMNESIAC': 'Amnésique' };
-
-      // ETAT GLOBAL
-      let state = {
-        role: null, mode: 'Chill', roomCode: null, playerId: null, players: [],
-        roomData: null, currentVotes: {}, timerInterval: null, revealInterval: null
-      };
-
-      // UI ET THEMES
-      function applyMode(mode) {
-        state.mode = mode;
-        document.body.className = 'theme-' + mode.toLowerCase();
-        $('.subtitle').textContent = MODES[mode].subtitle;
-        $all('.mode-btn').forEach(b => b.classList.toggle('active', b.getAttribute('data-mode') === mode));
-      }
-
-      function showScreen(stepId) {
-        $all('.screen').forEach(s => s.classList.remove('active'));
-        const target = document.getElementById(stepId);
-        if(target) target.classList.add('active');
-        const step = target ? target.getAttribute('data-step') : 'lobby';
-        $all('.step-pill').forEach(p => p.classList.toggle('active', p.getAttribute('data-step') === step));
-      }
-
-      // THERMOMETRE DYNAMIQUE
-      function getThermoColor(val) {
-        const hue = Math.max(0, 200 - (val * 2)); // Bleu -> Rouge
-        return `hsl(${hue}, 100%, 50%)`;
-      }
-      
-      function updateThermoUI(val) {
-        const mercury = $('#thermoReveal');
-        const bulb = $('#thermoBulbReveal');
-        mercury.style.height = `${Math.max(10, val)}%`;
-        mercury.style.background = getThermoColor(val);
-        bulb.style.background = getThermoColor(val);
-      }
-
-      // LOBBY & REJOINDRE
-      $('#roleHostBtn').addEventListener('click', () => showScreen('screen-host-setup'));
-      $('#rolePlayerBtn').addEventListener('click', () => showScreen('screen-player-join'));
-      
-      $all('.mode-btn').forEach(b => b.addEventListener('click', () => applyMode(b.getAttribute('data-mode'))));
-
-      // ===== CREATION DU SALON =====
-      $('#createRoomBtn').addEventListener('click', async (e) => {
-        const name = $('#hostName').value.trim();
-        if(!name) {
-          alert("N'oublie pas d'entrer ton prénom !");
-          return;
-        }
-
-        const btn = e.target;
-        const originalText = btn.textContent;
-        btn.textContent = "Création du salon...";
-        btn.disabled = true;
-
-        try {
-          const res = await window.firebaseApi.createRoom(name, state.mode);
-          state.role = 'HOST'; 
-          state.roomCode = res.code; 
-          state.playerId = res.hostId;
-          
-          $('#roomCodeHost').textContent = res.code;
-          attachSync(res.code);
-          showScreen('screen-host-lobby');
-        } catch(error) {
-          console.error("Erreur Firebase:", error);
-          alert("Erreur de connexion : " + error.message);
-        } finally {
-          btn.textContent = originalText;
-          btn.disabled = false;
-        }
-      });
-
-      $('#joinRoomBtn').addEventListener('click', async (e) => {
-        const code = $('#joinCode').value.trim().toUpperCase();
-        const name = $('#joinName').value.trim();
-        
-        if(!code || !name) {
-          alert("Remplis bien les deux champs !");
-          return;
-        }
-
-        const btn = e.target;
-        const originalText = btn.textContent;
-        btn.textContent = "Connexion...";
-        btn.disabled = true;
-
-        try {
-          const res = await window.firebaseApi.joinRoom(code, name);
-          state.role = 'PLAYER'; 
-          state.roomCode = code; 
-          state.playerId = res.playerId;
-          
-          $('#roomCodePlayer').textContent = code;
-          attachSync(code);
-          showScreen('screen-player-lobby');
-        } catch(error) {
-          console.error("Erreur de connexion:", error);
-          alert(error.message);
-        } finally {
-          btn.textContent = originalText;
-          btn.disabled = false;
-        }
-      });
-
-      // DOSSIERS
-      async function submitCustom(inputEl) {
-        const q = inputEl.value.trim();
-        if(!q || !state.roomCode) return;
-        
-        try {
-          await window.firebaseApi.addCustomQuestion(state.roomCode, q);
-          inputEl.value = '';
-          inputEl.placeholder = 'Dossier envoyé ! Un autre ?';
-        } catch(e) {
-          console.error(e);
-        }
-      }
-      
-      $('#submitCustomHostBtn').addEventListener('click', () => submitCustom($('#customQuestionHost')));
-      $('#submitCustomPlayerBtn').addEventListener('click', () => submitCustom($('#customQuestionPlayer')));
-
-      // GESTION DU VOTE
-      $('#voteSlider').addEventListener('input', (e) => {
-        $('#sliderValue').textContent = e.target.value;
-        vibrate(20);
-      });
-
-      $('#submitVoteBtn').addEventListener('click', async () => {
-        if(!state.roomData?.currentRound?.id) return;
-        const val = Number($('#voteSlider').value);
-        
-        try {
-          await window.firebaseApi.submitVote(state.roomCode, state.roomData.currentRound.id, state.playerId, val);
-          $('#submitVoteBtn').disabled = true;
-          $('#submitVoteBtn').textContent = 'Vote enregistré';
-          vibrate([50, 50]);
-        } catch(e) {
-          alert("Erreur lors de l'envoi du vote.");
-        }
-      });
-
-      // JOKERS
-      $('#btnOpenJoker').addEventListener('click', () => {
-        const me = state.players.find(p => p.id === state.playerId);
-        if(!me || me.jokerUsed) return;
-        
-        $('#jokerModalTitle').textContent = `Joker : ${JOKER_LABELS[me.joker]}`;
-        const targetSelect = $('#jokerTargetSelectContainer');
-        const select = $('#jokerTargetSelect');
-        
-        if(me.joker === 'DICTATOR') {
-          $('#jokerModalDesc').textContent = "Choisis secrètement qui boira toutes les gorgées de cette manche. Ton nom ne sera pas affiché.";
-          targetSelect.classList.remove('hidden');
-          select.innerHTML = state.players.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
-        } else if (me.joker === 'SHIELD') {
-          $('#jokerModalDesc').textContent = "Annule tes gorgées pour cette manche.";
-          targetSelect.classList.add('hidden');
-        } else if (me.joker === 'AMNESIAC') {
-          $('#jokerModalDesc').textContent = "Annule la manche pour tout le monde.";
-          targetSelect.classList.add('hidden');
-        }
-        $('#jokerModal').classList.add('active');
-      });
-
-      $('#cancelJokerBtn').addEventListener('click', () => {
-        $('#jokerModal').classList.remove('active');
-      });
-      
-      $('#confirmJokerBtn').addEventListener('click', async () => {
-        const me = state.players.find(p => p.id === state.playerId);
-        let event = { type: me.joker, sourceId: state.playerId };
-        
-        if(me.joker === 'DICTATOR') {
-          event.targetId = $('#jokerTargetSelect').value;
-          event.targetName = state.players.find(p => p.id === event.targetId).name;
-        }
-        
-        try {
-          await window.firebaseApi.useJoker(state.roomCode, state.playerId, state.roomData.currentRound.id, event);
-          $('#jokerModal').classList.remove('active');
-          $('#btnOpenJoker').classList.add('hidden');
-        } catch(e) {
-          alert("Erreur lors de l'utilisation du joker.");
-        }
-      });
-
-      // ANIMATION ROULETTE
-      async function spinRoulette() {
-        const el = $('#rouletteText');
-        $('#rouletteContainer').classList.remove('hidden');
-        el.classList.add('spin');
-        
-        return new Promise(resolve => {
-          let spins = 0;
-          const iv = setInterval(() => {
-            el.textContent = WHEEL_GAGES[Math.floor(Math.random() * WHEEL_GAGES.length)];
-            spins++;
-            vibrate(50);
-            if(spins > 20) {
-              clearInterval(iv);
-              el.classList.remove('spin');
-              const finalGage = WHEEL_GAGES[Math.floor(Math.random() * WHEEL_GAGES.length)];
-              el.textContent = finalGage;
-              vibrate([100, 50, 100]);
-              resolve(finalGage);
-            }
-          }, 100);
-        });
-      }
-
-      // MOTEUR DU JEU (HÔTE UNIQUEMENT)
-      $('#startGameBtn').addEventListener('click', () => startNextRound());
-      $('#nextRoundBtn').addEventListener('click', () => startNextRound());
-      $('#endGameBtn').addEventListener('click', () => window.firebaseApi.endGame(state.roomCode));
-      $('#restartBtn').addEventListener('click', () => window.firebaseApi.resetRoom(state.roomCode));
-
-      async function startNextRound() {
-        const roundNum = (state.roomData.round || 0) + 1;
-        const target = state.players[Math.floor(Math.random() * state.players.length)];
-        
-        // Mélange les dossiers perso avec les questions de base
-        let qList = [...QUESTIONS[state.mode]];
-        if(state.roomData.customQuestions) {
-          const customs = Object.values(state.roomData.customQuestions);
-          if(customs.length > 0) qList = qList.concat(customs);
-        }
-        
-        let qText = qList[Math.floor(Math.random() * qList.length)];
-        qText = qText.replace('{name}', target.name);
-
-        try {
-          await window.firebaseApi.startRound(state.roomCode, {
-            id: 'R_' + Date.now(), 
-            round: roundNum,
-            targetId: target.id, 
-            targetName: target.name,
-            question: qText, 
-            startedAt: Date.now()
-          });
-        } catch(e) {
-          alert("Impossible de lancer la manche.");
-        }
-      }
-
-      async function forceReveal() {
-        if(state.role !== 'HOST' || state.roomData.phase !== 'VOTE') return;
-        const cr = state.roomData.currentRound;
-        
-        try {
-          // Vote auto pour les retardataires (punition 100%)
-          for(let p of state.players) {
-            if(!cr.votes || !cr.votes[p.id]) {
-              await window.firebaseApi.submitVote(state.roomCode, cr.id, p.id, 100); 
-            }
-          }
-
-          // On récupère la liste complète et on calcule
-          const snap = await window.firebaseApi.get(window.firebaseApi.ref(window.firebaseApi.db, `rooms/${state.roomCode}/currentRound/votes`));
-          const votesMap = snap.val() || {};
-          
-          const values = Object.values(votesMap).map(v => Number(v.value));
-          const average = Math.round(values.reduce((a,b)=>a+b,0) / values.length);
-          const targetVote = votesMap[cr.targetId] ? Number(votesMap[cr.targetId].value) : 50;
-          const diff = Math.abs(targetVote - average);
-
-          await window.firebaseApi.setReveal(state.roomCode, {
-            roundId: cr.id, average, targetId: cr.targetId, targetName: cr.targetName, diff
-          });
-        } catch (e) {
-          console.error(e);
-        }
-      }
-
-      // SYNCHRONISATION FIREBASE REALTIME
-      function attachSync(code) {
-        window.firebaseApi.onValue(window.firebaseApi.ref(window.firebaseApi.db, 'rooms/' + code), (snap) => {
-          const data = snap.val();
-          if(!data) return;
-          state.roomData = data;
-          
-          if(data.mode !== state.mode) applyMode(data.mode);
-          
-          state.players = Object.entries(data.players || {}).map(([id, p]) => ({ id, ...p }));
-          $('#hostPlayerCount').textContent = state.players.length;
-          
-          const renderPill = p => `<span class="pill ${p.isHost?'host':''} ${p.id===state.playerId?'me':''}">${p.name} ${p.isHost?'👑':''}</span>`;
-          $('#playersList').innerHTML = state.players.map(renderPill).join('');
-          $('#playersListPlayer').innerHTML = state.players.map(renderPill).join('');
-
-          if(data.phase === 'LOBBY') {
-            showScreen(state.role === 'HOST' ? 'screen-host-lobby' : 'screen-player-lobby');
-          } 
-          else if (data.phase === 'VOTE') {
-            handleVotePhase(data);
-          }
-          else if (data.phase === 'REVEAL') {
-            handleRevealPhase(data);
-          }
-          else if (data.phase === 'STATS') {
-            handleStatsPhase(data);
-          }
-        });
-      }
-
-      function handleVotePhase(data) {
-        showScreen('screen-vote');
-        clearInterval(state.timerInterval);
-        
-        const cr = data.currentRound;
-        $('#questionTag').textContent = `Manche ${data.round} • Cible : ${cr.targetName}`;
-        $('#questionText').textContent = cr.question;
-        
-        const myVote = cr.votes?.[state.playerId];
-        $('#submitVoteBtn').disabled = !!myVote;
-        $('#submitVoteBtn').textContent = myVote ? 'Vote enregistré' : 'Je valide';
-        
-        const votesCount = Object.keys(cr.votes || {}).length;
-        $('#voteStatus').textContent = `${votesCount} / ${state.players.length} votes`;
-
-        // Chrono sous tension
-        const timeLimit = Math.max(5, 15 - data.round); 
-        const elapsed = (Date.now() - cr.startedAt) / 1000;
-        let timeLeft = timeLimit - elapsed;
-
-        state.timerInterval = setInterval(() => {
-          timeLeft -= 0.1;
-          const pct = Math.max(0, (timeLeft / timeLimit) * 100);
-          const bar = $('#voteTimerBar');
-          bar.style.width = pct + '%';
-          bar.className = 'timer-bar ' + (pct < 30 ? 'danger' : (pct < 60 ? 'warning' : ''));
-          
-          if(timeLeft <= 3 && Math.floor(timeLeft*10)%10 === 0) vibrate(50);
-          
-          if(timeLeft <= 0) {
-            clearInterval(state.timerInterval);
-            if(state.role === 'HOST' && votesCount < state.players.length) forceReveal();
-          }
-        }, 100);
-
-        if(state.role === 'HOST' && votesCount >= state.players.length && !data.result) {
-          clearInterval(state.timerInterval);
-          forceReveal();
-        }
-      }
-
-      async function handleRevealPhase(data) {
-        showScreen('screen-reveal');
-        clearInterval(state.timerInterval);
-        clearInterval(state.revealInterval);
-        
-        const res = data.result;
-        const cr = data.currentRound;
-        $('#revealQuestion').textContent = cr.question;
-        $('#rouletteContainer').classList.add('hidden');
-        $('#jokerAlertContainer').classList.add('hidden');
-        $('#verdictText').innerHTML = '';
-        
-        const jokerEvent = cr.jokerEvent;
-        let isAmnesia = false;
-        let actualTargetId = res.targetId;
-        let actualTargetName = res.targetName;
-
-        if(jokerEvent) {
-          const alertBox = $('#jokerAlertContainer');
-          alertBox.classList.remove('hidden');
-          if(jokerEvent.type === 'AMNESIAC') {
-            isAmnesia = true;
-            alertBox.innerHTML = `<div class="joker-alert">L'Amnésique a frappé ! Manche annulée !</div>`;
-          } else if (jokerEvent.type === 'DICTATOR') {
-            actualTargetId = jokerEvent.targetId;
-            actualTargetName = jokerEvent.targetName;
-            alertBox.innerHTML = `<div class="joker-alert">Un Dictateur a sévi !<br/>${actualTargetName} prend tout !</div>`;
-          } else if (jokerEvent.type === 'SHIELD' && jokerEvent.sourceId === res.targetId) {
-            alertBox.innerHTML = `<div class="joker-alert">${res.targetName} a utilisé un Bouclier ! 0 Gorgée !</div>`;
-          }
-        }
-
-        $('#averageValue').textContent = '0%';
-        updateThermoUI(0);
-        
-        let currentAvg = 0;
-        state.revealInterval = setInterval(async () => {
-          currentAvg += 2;
-          if(currentAvg >= res.average) {
-            currentAvg = res.average;
-            clearInterval(state.revealInterval);
-            vibrate([100, 50, 100]);
-          }
-          
-          $('#averageValue').textContent = currentAvg + '%';
-          updateThermoUI(currentAvg);
-
-          if(currentAvg === res.average && !isAmnesia) {
-            let sips = 1;
-            if(res.diff > 20) sips = 2;
-            if(data.mode === 'Hardcore') sips++;
-
-            let text = '';
-            if(res.diff <= 15) {
-              text = `🔥 Bien visé ! ${res.targetName} est sauvé(e). Tout le monde boit 1 gorgée.`;
-            } else {
-              if(res.diff > 40) {
-                const gage = await spinRoulette();
-                text = `💥 CRITIQUE (${res.diff}% d'écart) !<br/>${actualTargetName} : ${gage}`;
-                sips = 4;
-              } else {
-                text = `💥 ${res.diff}% d'écart.<br/>${actualTargetName} boit ${sips} gorgées.`;
-              }
-            }
-            
-            if(jokerEvent?.type === 'SHIELD' && jokerEvent.sourceId === actualTargetId) {
-               text = `🛡️ Sauvé par le bouclier ! Personne ne boit.`;
-               sips = 0;
-            }
-
-            $('#verdictText').innerHTML = text;
-
-            if(state.role === 'HOST' && !data.currentRound.scoresUpdated) {
-              const scoreUpdates = {};
-              state.players.forEach(p => {
-                let add = 0;
-                if (res.diff <= 15) add = 1;
-                else if (p.id === actualTargetId) add = sips;
-                scoreUpdates[p.id] = p.score + add;
-              });
-              await window.firebaseApi.updateScores(state.roomCode, scoreUpdates);
-              await window.firebaseApi.update(window.firebaseApi.ref(window.firebaseApi.db, `rooms/${state.roomCode}/currentRound`), { scoresUpdated: true });
-            }
-          }
-        }, 30);
-
-        const me = state.players.find(p => p.id === state.playerId);
-        if(me && !me.jokerUsed && !jokerEvent) {
-          $('#btnOpenJoker').classList.remove('hidden');
-          $('#myJokerName').textContent = JOKER_LABELS[me.joker];
-        } else {
-          $('#btnOpenJoker').classList.add('hidden');
-        }
-
-        if(state.role === 'HOST') {
-          setTimeout(() => {
-            $('#nextRoundBtn').classList.remove('hidden');
-            $('#endGameBtn').classList.remove('hidden');
-          }, 2000);
-        }
-      }
-
-      function handleStatsPhase(data) {
-        showScreen('screen-stats');
-        const list = $('#statsList');
-        list.innerHTML = '';
-        
-        const sorted = [...state.players].sort((a,b) => b.score - a.score);
-        
-        sorted.forEach((p, idx) => {
-          let desc = "Rien de spécial, bois ton eau.";
-          if(idx === 0) desc = "A pris le plus cher. Cul sec !";
-          if(idx === sorted.length - 1 && sorted.length > 1) desc = "A esquivé les balles. Distribue 3 gorgées.";
-          
-          list.innerHTML += `
-            <div class="stats-line">
-              <div>
-                <div class="stats-name">${idx+1}. ${p.name}</div>
-                <div class="stats-desc">${desc}</div>
-              </div>
-              <div class="stats-score">${p.score} pts</div>
-            </div>
-          `;
-        });
-
-        $('#restartBtn').style.display = state.role === 'HOST' ? 'block' : 'none';
-      }
-    }); // Fin du DOMContentLoaded
-  </script>
+<body>
+<div id="bg" class="fixed inset-0 -z-10 overflow-hidden transition-colors duration-700" style="background:#040B16">
+  <div id="blob1" class="absolute -top-[10%] -left-[15%] w-80 h-80 rounded-full opacity-60 animate-blob" style="filter:blur(110px)"></div>
+  <div id="blob2" class="absolute -bottom-[10%] -right-[15%] w-96 h-96 rounded-full opacity-50 animate-blob blob-delay" style="filter:blur(120px)"></div>
+</div>
+<div id="toasts" class="fixed top-3 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2 w-[90%] max-w-sm"></div>
+<div class="w-full max-w-md mx-auto min-h-screen px-5 py-6 flex flex-col relative z-10" id="app"></div>
+
+<script>
+// ===== CONFIG =====
+const firebaseConfig = {
+  apiKey: "AIzaSyBEwzH6QEPWegpgBmnevtiBX9gqy3V3dcY",
+  authDomain: "le-thermometre.firebaseapp.com",
+  databaseURL: "https://le-thermometre-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "le-thermometre",
+  storageBucket: "le-thermometre.firebasestorage.app",
+  messagingSenderId: "650617838327",
+  appId: "1:650617838327:web:f20b05a54fe85a781011f2",
+  measurementId: "G-L9FLQZ1768"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const WORKER_URL = ""; // <-- mets l'URL de ton Cloudflare Worker ici pour activer les questions IA
+
+// ===== DATA =====
+const THEMES = {
+  Chill:    { base:"#040B16", b1:"#00F0FF", b2:"#0038FF", glow:"rgba(0,240,255,.5)", from:"#67e8f9", to:"#3b82f6", label:"Chill", emoji:"🥶", icon:"❄️" },
+  Spicy:    { base:"#1A0505", b1:"#FF5C00", b2:"#FF003C", glow:"rgba(255,92,0,.5)",  from:"#facc15", to:"#f97316", label:"Spicy", emoji:"🥵", icon:"🔥" },
+  Hardcore: { base:"#0A0012", b1:"#9D00FF", b2:"#FF003C", glow:"rgba(157,0,255,.5)", from:"#e879f9", to:"#dc2626", label:"Hardcore", emoji:"😈", icon:"💀" }
+};
+const JOKERS = {
+  SHIELD:{name:"Bouclier",icon:"🛡️",desc:"Annule tes gorgées."},
+  MIRROR:{name:"Miroir",icon:"🔁",desc:"Transfère tes gorgées à un autre joueur."},
+  DOUBLE:{name:"Double ou rien",icon:"✖️2",desc:"Si tu es la cible : enjeu x2 (bois double si tu te plantes, sinon les autres boivent double)."},
+  SHOT:{name:"Cul sec",icon:"🥃",desc:"Désigne un joueur qui boit 1 gorgée."},
+  THIEF:{name:"Voleur",icon:"🥷",desc:"Échange ton joker avec un autre joueur (au lobby)."}
+};
+const BANK = {
+  Chill:["À quel pourcentage {n} est susceptible de s'endormir devant un film avant le générique ?","À quel pourcentage {n} a le pire sens de l'orientation du groupe ?","À quel pourcentage {n} chante faux sous la douche ?","À quel pourcentage {n} oublie les anniversaires de ses proches ?","À quel pourcentage {n} et {n2} feraient un bon road-trip ensemble ?","À quel pourcentage {n} pleure devant un film d'animation ?","À quel pourcentage {n} est accro à son téléphone ?","À quel pourcentage {n} arriverait en retard à son propre mariage ?"],
+  Spicy:["À quel pourcentage {n} a déjà fouillé dans le téléphone de quelqu'un ?","À quel pourcentage {n} survend ses exploits au lit ?","À quel pourcentage {n} a déjà menti pour annuler un plan ?","À quel pourcentage {n} flirterait avec un ex après quelques verres ?","À quel pourcentage {n} et {n2} ont déjà eu un crush l'un sur l'autre ?","À quel pourcentage {n} regarde encore le profil de son ex ?","À quel pourcentage {n} embrasserait un inconnu ce soir ?","À quel pourcentage {n} a déjà envoyé un texto qu'il/elle regrette ?"],
+  Hardcore:["Si on devait sacrifier l'un d'entre vous, à quel pourcentage choisirait-on {n} ?","À quel pourcentage {n} rirait secrètement à un enterrement ?","À quel pourcentage {n} trahirait le groupe pour de l'argent ?","À quel pourcentage {n} cacherait un corps sans poser de questions ?","À quel pourcentage {n} et {n2} formeraient le pire couple toxique ?","À quel pourcentage {n} finirait en prison avant 40 ans ?","À quel pourcentage {n} balancerait un secret pour sauver sa peau ?","À quel pourcentage {n} a déjà souhaité du mal à quelqu'un ici ?"]
+};
+const ROASTS = [
+  "{name}, finir dernier avec {score} points d'écart, c'est pas être nul, c'est vivre dans un univers parallèle. Bois et tais-toi.",
+  "{name}, ton intuition sociale est aussi affûtée qu'une cuillère en plastique. {score} points d'erreur... impressionnant. Cul sec.",
+  "Mesdames et messieurs, {name} et ses {score} points : la preuve qu'on peut respirer sans réfléchir. Bois tes gorgées.",
+  "{name}, avec {score} points d'écart, tu connais ce groupe comme moi je connais le calme. Santé !",
+  "{name}, {score} points... Même une boule de cristal cassée devinait mieux. Le bar t'attend."
+];
+
+// ===== STATE =====
+const S = { screen:"HOME", code:null, pid:null, room:null, name:"", joinCode:"", pendingMode:"Chill", voteValue:50, roomRef:null, pickingShot:false, timerLeft:null, timerInt:null };
+const vibrate = p => { if (navigator.vibrate) try{navigator.vibrate(p)}catch(e){} };
+const rand = a => a[Math.floor(Math.random()*a.length)];
+const genId = () => Math.random().toString(36).slice(2,10);
+const genCode = () => { const c="ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; return Array.from({length:4},()=>rand([...c])).join(""); };
+const esc = s => (s||"").replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+function toast(msg, ok=false){ const el=document.createElement("div"); el.className=`toast px-4 py-3 rounded-2xl font-bold text-sm text-center shadow-lg ${ok?'bg-emerald-500':'bg-red-500'} text-white`; el.textContent=msg; document.getElementById("toasts").appendChild(el); setTimeout(()=>el.remove(),2600); }
+function playersArr(room){ return Object.entries(room.players||{}).map(([id,p])=>({id,...p})); }
+function connectedArr(room){ return playersArr(room).filter(p=>p.connected!==false); }
+function theme(){ return THEMES[(S.room&&S.room.mode)||S.pendingMode]; }
+function applyBg(){ const t=theme(); document.getElementById("bg").style.background=t.base; document.getElementById("blob1").style.background=t.b1; document.getElementById("blob2").style.background=t.b2; }
+
+// ===== QUESTIONS (banque interne + questions.json + Worker IA) =====
+let QUESTIONS = {};
+function normMode(arr){ return (arr||[]).map(x => typeof x==="string" ? {text:x,cat:"général"} : {text:x.text,cat:x.cat||"général"}); }
+function resetQuestions(){ QUESTIONS = { Chill:normMode(BANK.Chill), Spicy:normMode(BANK.Spicy), Hardcore:normMode(BANK.Hardcore) }; }
+resetQuestions();
+async function loadQuestions(){
+  try{ const res=await fetch("questions.json",{cache:"no-store"}); if(res.ok){ const data=await res.json(); let added=0;
+    ["Chill","Spicy","Hardcore"].forEach(m=>{ if(Array.isArray(data[m])){ QUESTIONS[m]=QUESTIONS[m].concat(normMode(data[m])); added+=data[m].length; } });
+    console.log("questions.json chargé (+"+added+")"); } }catch(e){ console.warn("questions.json non chargé"); }
+}
+async function loadAIQuestions(mode){ if(!WORKER_URL) return; try{ const r=await fetch(`${WORKER_URL}?mode=${mode}&count=6`); const d=await r.json(); if(Array.isArray(d[mode])){ QUESTIONS[mode]=QUESTIONS[mode].concat(normMode(d[mode])); toast("Questions IA ajoutées ✨",true); } }catch(e){} }
+function catsFor(mode){ return [...new Set((QUESTIONS[mode]||[]).map(q=>q.cat))]; }
+function buildQuestion(room){
+  const ps=connectedArr(room); const t=rand(ps);
+  let pool=QUESTIONS[room.mode]||QUESTIONS.Chill;
+  if(room.cats && room.cats.length){ const f=pool.filter(q=>room.cats.includes(q.cat)); if(f.length) pool=f; }
+  let tpl=rand(pool).text;
+  if(tpl.includes("{n2}")){ const others=ps.filter(p=>p.id!==t.id); const t2=rand(others.length?others:ps); tpl=tpl.replace("{n}",t.name).replace("{n2}",t2.name); }
+  else tpl=tpl.replace("{n}",t.name);
+  return { text:tpl, targetId:t.id, targetName:t.name };
+}
+
+// ===== CLEANUP vieilles rooms (> 6h) =====
+async function cleanupOldRooms(){
+  try{ const cutoff=Date.now()-6*3600*1000; const snap=await db.ref("rooms").orderByChild("createdAt").endAt(cutoff).limitToFirst(20).get();
+    snap.forEach(c=>{ db.ref("rooms/"+c.key).remove(); }); }catch(e){}
+}
+
+// ===== ACTIONS =====
+async function createRoom(){
+  if(!S.name.trim()) return toast("Entre ton prénom d'abord !"); vibrate(20);
+  let code; for(let i=0;i<5;i++){ code=genCode(); const s=await db.ref("rooms/"+code).get(); if(!s.exists()) break; }
+  const pid=genId();
+  const room={ mode:S.pendingMode, phase:"LOBBY", round:0, hostId:pid, jokerMode:"RANDOM", maxRounds:0, timer:0, cats:null, createdAt:firebase.database.ServerValue.TIMESTAMP,
+    players:{ [pid]:{ name:S.name.trim().slice(0,20), joker:rand(Object.keys(JOKERS)), score:0, jokerUsed:false, connected:true } } };
+  try{ await db.ref("rooms/"+code).set(room); }catch(e){ return toast("Erreur Firebase : vérifie les règles de la base."); }
+  if(WORKER_URL) loadAIQuestions(S.pendingMode);
+  enterRoom(code,pid);
+}
+async function joinRoom(){
+  if(!S.name.trim()) return toast("Entre ton prénom d'abord !");
+  const code=(S.joinCode||"").toUpperCase().trim(); if(code.length<4) return toast("Code invalide.");
+  const snap=await db.ref("rooms/"+code).get(); if(!snap.exists()) return toast("Room introuvable.");
+  const room=snap.val(); if(room.phase!=="LOBBY") return toast("La partie a déjà commencé.");
+  if(Object.values(room.players||{}).some(p=>p.name.toLowerCase()===S.name.trim().toLowerCase())) return toast("Ce prénom est déjà pris.");
+  vibrate(20); const pid=genId();
+  await db.ref(`rooms/${code}/players/${pid}`).set({ name:S.name.trim().slice(0,20), joker:rand(Object.keys(JOKERS)), score:0, jokerUsed:false, connected:true });
+  enterRoom(code,pid);
+}
+function enterRoom(code,pid){
+  S.code=code; S.pid=pid;
+  history.replaceState(null,"","?room="+code);
+  db.ref(`rooms/${code}/players/${pid}`).onDisconnect().update({connected:false});
+  S.roomRef=db.ref("rooms/"+code);
+  S.roomRef.on("value",snap=>{ const room=snap.val();
+    if(!room){ detach(); S.screen="HOME"; S.room=null; toast("La partie a été fermée."); render(); return; }
+    S.room=room; S.screen="ROOM";
+    promoteHostIfNeeded(); hostAutoReveal(); render();
+  });
+}
+function detach(){ if(S.roomRef){ S.roomRef.off(); S.roomRef=null; } stopTimer(); S.code=null; S.pid=null; }
+
+// Transfert d'hôte si l'hôte est déconnecté
+async function promoteHostIfNeeded(){ const r=S.room; if(!r) return; const host=r.players[r.hostId];
+  if(host && host.connected===false){ const conn=connectedArr(r).sort((a,b)=>a.id<b.id?-1:1); if(conn.length && conn[0].id===S.pid){ await S.roomRef.update({hostId:S.pid}); toast("Tu es le nouvel hôte 👑",true); } } }
+
+async function startRound(){
+  const r=S.room; if(S.pid!==r.hostId) return; if(connectedArr(r).length<2) return; vibrate(50);
+  const q=buildQuestion(r); const upd={ phase:"VOTING", round:(r.round||0)+1, question:q, votes:null, result:null, startedAt:firebase.database.ServerValue.TIMESTAMP };
+  Object.keys(r.players).forEach(id=>{ upd[`players/${id}/dbl`]=false; });
+  await S.roomRef.update(upd);
+  if(WORKER_URL && Math.random()<.3) loadAIQuestions(r.mode);
+}
+async function nextRound(){ const r=S.room; if(S.pid!==r.hostId) return; if(r.maxRounds>0 && r.round>=r.maxRounds) return endGame(); startRound(); }
+async function vote(){ vibrate([30,50]); stopTimer(); await db.ref(`rooms/${S.code}/votes/${S.pid}`).set(Number(S.voteValue)); }
+
+let revealing=false;
+async function hostAutoReveal(){ const r=S.room; if(!r||r.phase!=="VOTING"||S.pid!==r.hostId||revealing) return;
+  const conn=connectedArr(r); const votes=r.votes||{}; if(!conn.every(p=>votes[p.id]!==undefined)) return;
+  revealing=true; const q=r.question, tid=q.targetId;
+  const nonT=Object.entries(votes).filter(([id])=>id!==tid).map(([,v])=>v); const pool=nonT.length?nonT:Object.values(votes);
+  const average=Math.round(pool.reduce((a,b)=>a+b,0)/pool.length); const tv=votes[tid]??50; const diff=Math.abs(tv-average); const isClose=diff<=15;
+  let sips=1; if(diff>20)sips=2; if(diff>40)sips=4; if(r.mode==="Hardcore")sips+=1;
+  const dbl=!!(r.players[tid]&&r.players[tid].dbl);
+  const result={ average, targetVote:tv, targetName:q.targetName, targetId:tid, diff, isClose, double:dbl,
+    sips:isClose?(dbl?2:1):(dbl?sips*2:sips), drinker:isClose?"others":tid, drinkerName:isClose?null:q.targetName, jokerUsed:null, shot:null };
+  const upd={ phase:"REVEAL", result }; upd[`players/${tid}/score`]=(r.players[tid].score||0)+diff;
+  await S.roomRef.update(upd); revealing=false;
+}
+async function activateDouble(){ const r=S.room, me=r.players[S.pid]; if(me.joker!=="DOUBLE"||me.jokerUsed||r.question.targetId!==S.pid) return; vibrate(30);
+  await S.roomRef.update({[`players/${S.pid}/dbl`]:true, [`players/${S.pid}/jokerUsed`]:true}); toast("Double ou rien activé ✖️2",true); }
+async function useJoker(){ const r=S.room,res=r.result,me=r.players[S.pid]; if(!res||res.isClose||me.jokerUsed||res.jokerUsed||res.drinker!==S.pid) return; vibrate([20,40,20]);
+  const upd={[`players/${S.pid}/jokerUsed`]:true};
+  if(me.joker==="SHIELD"){ upd["result/jokerUsed"]="SHIELD"; upd["result/drinker"]="none"; upd["result/drinkerName"]=null; }
+  else if(me.joker==="MIRROR"){ const o=connectedArr(r).filter(p=>p.id!==S.pid); if(o.length){ const v=rand(o); upd["result/jokerUsed"]="MIRROR"; upd["result/drinker"]=v.id; upd["result/drinkerName"]=v.name; } }
+  await S.roomRef.update(upd);
+}
+async function shotPick(id){ const r=S.room,me=r.players[S.pid]; if(me.joker!=="SHOT"||me.jokerUsed) return; vibrate(40);
+  await S.roomRef.update({[`players/${S.pid}/jokerUsed`]:true, "result/shot":{by:me.name, who:r.players[id].name}}); S.pickingShot=false; }
+async function setMode(m){ vibrate(10); await S.roomRef.update({mode:m}); if(WORKER_URL) loadAIQuestions(m); }
+async function endGame(){ const r=S.room; if(S.pid!==r.hostId) return; const ranked=playersArr(r).sort((a,b)=>a.score-b.score);
+  const w=ranked[0],l=ranked[ranked.length-1]; const roast=l?rand(ROASTS).replace("{name}",l.name).replace("{score}",l.score):"";
+  await S.roomRef.update({ phase:"STATS", ranking:{ winner:{name:w.name,score:w.score}, loser:{name:l.name,score:l.score}, all:ranked.map(p=>({id:p.id,name:p.name,score:p.score})) }, roast }); }
+async function restart(){ const r=S.room; if(S.pid!==r.hostId) return; const upd={ phase:"LOBBY", round:0, votes:null, result:null, ranking:null, roast:null };
+  Object.keys(r.players).forEach(id=>{ upd[`players/${id}/score`]=0; upd[`players/${id}/jokerUsed`]=false; upd[`players/${id}/dbl`]=false; }); await S.roomRef.update(upd); }
+function copyCode(){ navigator.clipboard&&navigator.clipboard.writeText(S.code); toast("Code copié !",true); vibrate(10); }
+function shareInvite(){ const url=location.origin+location.pathname+"?room="+S.code; const data={title:"Le Thermomètre",text:"Rejoins ma partie ! Code : "+S.code,url};
+  if(navigator.share) navigator.share(data).catch(()=>{}); else { navigator.clipboard&&navigator.clipboard.writeText(url); toast("Lien d'invitation copié !",true); } vibrate(10); }
+
+// ===== TIMER =====
+function stopTimer(){ if(S.timerInt){ clearInterval(S.timerInt); S.timerInt=null; } S.timerLeft=null; }
+function startTimer(){ const r=S.room; stopTimer(); if(!r.timer||!r.startedAt) return;
+  const tick=()=>{ const elapsed=(Date.now()-r.startedAt)/1000; const left=Math.max(0,Math.ceil(r.timer-elapsed)); S.timerLeft=left;
+    const el=document.getElementById("timer"); if(el) el.textContent=left+"s";
+    if(left<=0){ stopTimer(); const me=r.players[S.pid]; if(r.phase==="VOTING" && !(r.votes||{})[S.pid]){ vote(); } } };
+  tick(); S.timerInt=setInterval(tick,300);
+}
+
+// ===== RENDER =====
+const card="bg-white/10 backdrop-blur-xl border border-white/20 shadow-[0_8px_32px_0_rgba(0,0,0,.35)] rounded-3xl p-6";
+const pill="w-full py-4 px-8 rounded-full bg-[#FFD700] text-black font-extrabold text-xl active:scale-95 transition-all shadow-[0_0_15px_rgba(255,215,0,.4)] flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed";
+function header(){ const t=theme();
+  return `<header class="flex justify-between items-center mb-6">
+    <div class="flex items-center gap-2"><div class="p-2 rounded-xl shadow-lg -rotate-6" style="background:linear-gradient(135deg,${t.from},${t.to})">🌡️</div>
+    <h1 class="text-2xl font-extrabold italic">Le <span style="background:linear-gradient(90deg,${t.from},${t.to});-webkit-background-clip:text;background-clip:text;color:transparent">Thermo</span>mètre</h1></div>
+    ${S.room&&S.code?`<span class="text-xs font-bold bg-black/40 border border-white/20 px-3 py-1.5 rounded-full">${t.emoji} ${S.room.mode}</span>`:""}</header>`; }
+function modeBtns(cur,fn){ return Object.keys(THEMES).map(m=>{const t=THEMES[m];const a=cur===m;
+  return `<button onclick="${fn}('${m}')" class="flex flex-col items-center gap-1 py-3 rounded-2xl border transition-all ${a?'border-white/40 scale-105 shadow-lg':'bg-black/20 border-white/10 text-white/60'}" ${a?`style="background:linear-gradient(135deg,${t.from},${t.to})"`:""}><span class="text-xl">${t.icon}</span><span class="text-[11px] font-bold uppercase">${t.label}</span></button>`;}).join(""); }
+function chip(active,label,fn){ return `<button onclick="${fn}" class="px-3 py-1.5 rounded-full text-xs font-bold border transition-all ${active?'bg-white/20 border-white/40':'bg-black/20 border-white/10 text-white/60'}">${label}</button>`; }
+
+function render(){ applyBg(); const app=document.getElementById("app"); const t=theme(); let body="";
+  if(S.screen==="HOME") body=renderHome(t);
+  else if(S.room){ const r=S.room;
+    if(r.phase==="LOBBY") body=renderLobby(r,t);
+    else if(r.phase==="VOTING") body=renderVoting(r,t);
+    else if(r.phase==="REVEAL") body=renderReveal(r,t);
+    else if(r.phase==="STATS") body=renderStats(r,t); }
+  app.innerHTML=header()+body; bind();
+  if(S.room && S.room.phase==="VOTING" && S.room.timer && !(S.room.votes||{})[S.pid]) startTimer(); else stopTimer();
+}
+function renderHome(t){ return `<div class="flex-1 flex flex-col justify-center animate-up">
+  <p class="text-center text-white/70 text-lg mb-4">Le jeu d'apéro où ton intuition fait boire.</p>
+  <div class="${card} flex flex-col gap-4">
+    <label class="text-white/80 font-bold text-sm uppercase tracking-wide">Ton prénom</label>
+    <input id="nameI" maxlength="20" placeholder="Ex: Alex" value="${esc(S.name)}" class="bg-black/30 border border-white/20 rounded-2xl px-4 py-3 text-lg outline-none focus:border-white/60"/>
+    <div class="grid grid-cols-3 gap-2">${modeBtns(S.pendingMode,"pickMode")}</div>
+    <button id="createB" class="${pill}">▶️ Créer une partie</button></div>
+  <div class="flex items-center gap-3 text-white/40 text-sm font-bold my-5"><div class="h-px flex-1 bg-white/20"></div>OU REJOINDRE<div class="h-px flex-1 bg-white/20"></div></div>
+  <div class="${card} flex flex-row gap-3 items-center">
+    <input id="joinI" maxlength="4" placeholder="CODE" value="${esc(S.joinCode)}" class="flex-1 min-w-0 bg-black/30 border border-white/20 rounded-2xl px-4 py-3 text-xl font-black tracking-widest text-center uppercase outline-none focus:border-white/60"/>
+    <button id="joinB" class="shrink-0 py-3 px-6 rounded-full bg-white/10 border border-white/20 font-bold active:scale-95">➡️ Go</button></div></div>`; }
+
+function renderLobby(r,t){ const isHost=S.pid===r.hostId; const ps=playersArr(r); const cats=catsFor(r.mode);
+  return `<div class="flex flex-col gap-5 animate-up">
+    <div class="${card} items-center text-center flex flex-col gap-2">
+      <span class="text-white/60 text-sm font-bold uppercase tracking-widest">Code de la partie</span>
+      <button id="copyB" class="flex items-center gap-3"><span class="text-5xl font-black tracking-[.3em]" style="text-shadow:0 0 15px ${t.glow}">${S.code}</span><span class="text-white/50">📋</span></button>
+      <button id="shareB" class="mt-1 px-4 py-2 rounded-full bg-white/10 border border-white/20 text-sm font-bold active:scale-95">🔗 Inviter</button></div>
+    ${isHost?`<div class="flex flex-col gap-2"><h2 class="text-sm font-bold uppercase tracking-wide text-white/80">🌡️ Ambiance</h2><div class="grid grid-cols-3 gap-2">${modeBtns(r.mode,"chooseMode")}</div></div>`:""}
+    ${isHost?`<div class="${card} flex flex-col gap-3 !p-4">
+      <div class="flex items-center justify-between"><span class="text-sm font-bold uppercase tracking-wide text-white/80">🃏 Jokers</span>
+        <div class="flex gap-2">${chip((r.jokerMode||'RANDOM')==='RANDOM',"🎲 Aléatoire","setJokerMode('RANDOM')")}${chip(r.jokerMode==='MANUAL',"✋ Manuel","setJokerMode('MANUAL')")}</div></div>
+      <div class="flex items-center justify-between"><span class="text-sm font-bold uppercase tracking-wide text-white/80">🏁 Manches</span>
+        <div class="flex gap-2">${[['0','∞'],['5','5'],['10','10']].map(([v,l])=>chip(String(r.maxRounds||0)===v,l,"setMax("+v+")")).join("")}</div></div>
+      <div class="flex items-center justify-between"><span class="text-sm font-bold uppercase tracking-wide text-white/80">⏱️ Timer</span>
+        <div class="flex gap-2">${[['0','Off'],['15','15s'],['30','30s']].map(([v,l])=>chip(String(r.timer||0)===v,l,"setTimer("+v+")")).join("")}</div></div>
+      ${cats.length>1?`<div class="flex flex-col gap-2"><span class="text-sm font-bold uppercase tracking-wide text-white/80">🏷️ Catégories</span><div class="flex flex-wrap gap-2">${cats.map(c=>chip(!r.cats||r.cats.includes(c),c,"toggleCat('"+c.replace(/'/g,"")+"')")).join("")}</div></div>`:""}
+    </div>`:""}
+    <div class="${card} flex flex-col gap-3">
+      <h2 class="text-sm font-bold uppercase tracking-wide text-white/80">👥 Joueurs (${ps.length})</h2>
+      <div class="flex flex-col gap-2 max-h-52 overflow-y-auto scroll pr-1">
+      ${ps.map(p=>`<div class="flex items-center justify-between p-3 rounded-2xl bg-black/20 border border-white/5 ${p.connected===false?'opacity-40':''}">
+        <div class="flex items-center gap-3"><div class="w-9 h-9 rounded-full flex items-center justify-center font-black" style="background:linear-gradient(135deg,${t.from},${t.to})">${esc(p.name[0].toUpperCase())}</div>
+        <span class="font-bold">${esc(p.name)}${p.id===S.pid?' <span class="text-white/40">(toi)</span>':''}</span>${p.id===r.hostId?' 👑':''}</div>
+        ${(isHost&&r.jokerMode==='MANUAL')?`<select onchange="setJoker('${p.id}',this.value)" class="text-xs bg-black/40 border border-white/20 rounded-full px-2 py-1 outline-none cursor-pointer">${Object.keys(JOKERS).map(k=>`<option value="${k}" ${p.joker===k?'selected':''}>${JOKERS[k].icon} ${JOKERS[k].name}</option>`).join("")}</select>`:`<span class="text-xs text-white/50 bg-white/5 px-2 py-1 rounded-full" title="${JOKERS[p.joker].desc}">${JOKERS[p.joker].icon} ${JOKERS[p.joker].name}</span>`}</div>`).join("")}
+      </div></div>
+    <div class="${card} flex flex-col gap-1 text-sm text-white/70">
+      <h3 class="font-bold text-white mb-1">🃏 Les pouvoirs</h3>
+      ${Object.values(JOKERS).map(j=>`<p><b class="text-white">${j.icon} ${j.name} :</b> ${j.desc}</p>`).join("")}</div>
+    ${isHost?`<button id="startB" class="${pill}" ${connectedArr(r).length<2?'disabled':''}>▶️ ${connectedArr(r).length<2?'Min. 2 joueurs':'Lancer la partie !'}</button>`
+      :`<div class="text-center py-4 text-white/60 font-bold animate-pulse">En attente de l'hôte...</div>`}</div>`; }
+
+function progress(r){ if(!r.maxRounds) return `Manche ${r.round}`; return `Manche ${r.round} / ${r.maxRounds}`; }
+function renderVoting(r,t){ const me=r.players[S.pid]; const q=r.question; const voted=(r.votes||{})[S.pid]!==undefined;
+  const amTarget=q.targetId===S.pid; const conn=connectedArr(r).length; const vc=Object.keys(r.votes||{}).length;
+  const canDouble=amTarget&&me.joker==="DOUBLE"&&!me.jokerUsed;
+  return `<div class="flex-1 flex flex-col justify-center gap-5 animate-up">
+    <div class="flex items-center justify-center gap-3">
+      ${amTarget?`<span class="px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest bg-[#FFD700] text-black">😏 Tu es la cible</span>`
+        :`<span class="px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest bg-black/40 border border-white/20">${progress(r)}</span>`}
+      ${r.timer?`<span id="timer" class="px-3 py-1.5 rounded-full text-sm font-black bg-black/40 border border-white/20">${S.timerLeft??r.timer}s</span>`:""}</div>
+    <div class="${card} text-center flex flex-col gap-3 justify-center min-h-[190px]">
+      <span class="text-white/50 uppercase text-xs font-bold tracking-wider">Cible</span>
+      <span class="text-3xl font-black" style="background:linear-gradient(90deg,${t.from},${t.to});-webkit-background-clip:text;background-clip:text;color:transparent">${esc(q.targetName)}</span>
+      <p class="text-xl font-bold leading-snug mt-1">"${esc(q.text)}"</p></div>
+    ${!voted?`
+      ${canDouble?`<button id="dblB" class="w-full py-3 rounded-full font-bold border-2 ${me.dbl?'bg-[#FFD700] text-black border-[#FFD700]':'bg-white/5 border-white/30'} active:scale-95">✖️2 ${me.dbl?'Double activé !':'Double ou rien (joker)'}</button>`:""}
+      <div class="${card} flex flex-col gap-4">
+        <div class="flex justify-between items-end"><span class="font-bold text-white/80">Ton estimation</span><span id="sv" class="text-4xl font-black" style="text-shadow:0 0 12px ${t.glow}">${S.voteValue}%</span></div>
+        <div class="relative h-14 rounded-full bg-black/40 overflow-hidden border border-white/10 flex items-center px-1">
+          <div id="fill" class="absolute left-0 top-0 bottom-0 rounded-full" style="width:${S.voteValue}%;background:linear-gradient(90deg,${t.b1},${t.b2})"></div>
+          <input id="slider" type="range" min="0" max="100" value="${S.voteValue}" class="thermo-slider relative z-10"/></div></div>
+      <button id="voteB" class="${pill}">Valider mon vote ✓</button>`
+    :`<div class="${card} flex flex-col items-center text-center gap-3"><span class="text-4xl">⏳</span><p class="font-bold text-lg">Vote enregistré !</p><p class="text-white/60">${vc}/${conn} ont voté</p></div>`}</div>`; }
+
+function renderReveal(r,t){ const me=r.players[S.pid]; const res=r.result; if(!res) return "";
+  const canJoker=res.drinker===S.pid&&!res.isClose&&me&&!me.jokerUsed&&!res.jokerUsed&&(me.joker==="SHIELD"||me.joker==="MIRROR");
+  const canShot=me&&me.joker==="SHOT"&&!me.jokerUsed&&!res.shot;
+  let v; if(res.isClose) v=`Bien deviné ! Tout le monde boit ${res.sips} gorgée${res.sips>1?'s':''} 🍻`;
+  else if(res.jokerUsed==="SHIELD") v=`${esc(res.targetName)} a utilisé le Bouclier 🛡️ — personne ne boit !`;
+  else if(res.jokerUsed==="MIRROR") v=`Miroir 🔁 — ${esc(res.drinkerName)} boit ${res.sips} gorgées à la place !`;
+  else v=`${esc(res.drinkerName)} boit ${res.sips} gorgées 🍻${res.double?' (✖️2 !)':''}`;
+  const isHost=S.pid===r.hostId; const others=connectedArr(r).filter(p=>p.id!==S.pid);
+  return `<div class="flex-1 flex flex-col justify-center gap-5">
+    <div class="text-center"><h2 class="text-2xl font-black mb-1">Le Verdict</h2><p class="text-white/60">Moyenne pour <b class="text-white uppercase">${esc(res.targetName)}</b></p></div>
+    <div class="text-center animate-pop"><span class="font-black leading-none" style="font-size:24vw;text-shadow:0 0 25px ${t.glow}">${res.average}%</span></div>
+    <div class="${card} flex flex-col items-center text-center gap-3">
+      <div class="flex justify-center gap-6 text-sm"><div><div class="text-white/50">${esc(res.targetName)} a dit</div><div class="text-2xl font-black">${res.targetVote}%</div></div>
+        <div><div class="text-white/50">Écart</div><div class="text-2xl font-black text-red-400">${res.diff}</div></div></div>
+      <p class="text-xl font-black">${v}</p>
+      ${res.shot?`<p class="text-sm text-white/80">🥃 ${esc(res.shot.by)} fait cul sec à ${esc(res.shot.who)} (+1 gorgée) !</p>`:""}</div>
+    ${(()=>{const vt=r.votes||{};const rows=Object.entries(vt).map(([id,val])=>({name:(r.players[id]||{}).name||'?',val,isT:id===res.targetId})).sort((a,b)=>b.val-a.val);if(!rows.length)return"";return `<details class="bg-black/30 border border-white/10 rounded-2xl px-4 py-3"><summary class="cursor-pointer text-white/60 text-sm font-bold select-none">👀 Détail des votes</summary><div class="flex flex-col gap-1 mt-3">${rows.map(x=>`<div class="flex justify-between text-sm ${x.isT?'text-yellow-300 font-bold':''}"><span>${esc(x.name)}${x.isT?' 🎯':''}</span><span class="font-black">${x.val}%</span></div>`).join("")}</div></details>`;})()}
+    ${canJoker?`<button id="jokerB" class="w-full py-4 rounded-full font-extrabold text-lg text-white active:scale-95 transition-all" style="background:linear-gradient(90deg,${t.from},${t.to})">${JOKERS[me.joker].icon} Joker : ${JOKERS[me.joker].name}</button>`:""}
+    ${canShot?(S.pickingShot
+      ?`<div class="${card} !p-4 flex flex-col gap-2"><p class="text-sm font-bold text-center">🥃 Qui fait cul sec ?</p><div class="grid grid-cols-2 gap-2">${others.map(p=>`<button onclick="shotPick('${p.id}')" class="py-2.5 rounded-2xl bg-white/10 border border-white/20 font-bold active:scale-95">${esc(p.name)}</button>`).join("")}</div></div>`
+      :`<button id="shotB" class="w-full py-4 rounded-full font-extrabold text-lg bg-white/10 border-2 border-white/30 active:scale-95">🥃 Cul sec (joker)</button>`):""}
+    ${isHost?`<div class="flex gap-3"><button id="nextB" class="${pill}" style="flex:3">${(r.maxRounds>0&&r.round>=r.maxRounds)?'🏁 Résultats':'Manche suivante ➡️'}</button><button id="endB" class="py-4 px-5 rounded-full bg-white/10 border border-white/20 font-bold active:scale-95" style="flex:1">📊</button></div>`
+      :`<div class="text-center py-3 text-white/60 font-bold animate-pulse">L'hôte décide de la suite...</div>`}</div>`; }
+
+function renderStats(r,t){ const rk=r.ranking; const mid=(rk.all||[]).slice(1,-1); const isHost=S.pid===r.hostId;
+  return `<div class="flex-1 flex flex-col gap-4 overflow-y-auto scroll pr-1 animate-up">
+    <h2 class="text-3xl font-black text-center">Fin de Partie 🏁</h2>
+    <div class="rounded-3xl p-[2px]" style="background:linear-gradient(135deg,#facc15,#d97706)"><div class="bg-black/80 rounded-3xl p-5 flex flex-col items-center text-center gap-1"><span class="text-3xl">👑</span><span class="text-yellow-400 text-xs font-bold uppercase tracking-widest">Le Visionnaire</span><p class="text-2xl font-black">${esc(rk.winner.name)} <span class="text-white/40 text-lg">(${rk.winner.score} pts)</span></p></div></div>
+    <div class="rounded-3xl p-[2px]" style="background:linear-gradient(135deg,#dc2626,#6b21a8)"><div class="bg-black/85 rounded-3xl p-5 flex flex-col items-center text-center gap-2"><span class="text-3xl">💀</span><span class="text-red-400 text-xs font-bold uppercase tracking-widest">Le Boulet</span><p class="text-2xl font-black">${esc(rk.loser.name)} <span class="text-white/40 text-lg">(${rk.loser.score} pts)</span></p><p class="font-roast italic text-white/80 text-sm leading-relaxed mt-1">"${esc(r.roast)}"</p></div></div>
+    ${mid.length?`<div class="${card} flex flex-col gap-2"><h3 class="text-white/50 text-xs font-bold uppercase tracking-wider text-center">Classement</h3>${mid.map((p,i)=>`<div class="flex justify-between text-sm bg-white/5 px-3 py-2 rounded-xl"><span class="font-bold">${i+2}. ${esc(p.name)}</span><span class="text-white/50">${p.score} pts</span></div>`).join("")}</div>`:""}
+    ${isHost?`<button id="restartB" class="${pill}">🔄 Rejouer</button>`:`<div class="text-center py-3 text-white/60 font-bold">Merci d'avoir joué !</div>`}</div>`; }
+
+// ===== BIND =====
+function bind(){ const g=id=>document.getElementById(id);
+  const ni=g("nameI"); if(ni) ni.oninput=e=>S.name=e.target.value;
+  const ji=g("joinI"); if(ji) ji.oninput=e=>S.joinCode=e.target.value.toUpperCase();
+  if(g("createB")) g("createB").onclick=createRoom;
+  if(g("joinB")) g("joinB").onclick=joinRoom;
+  if(g("copyB")) g("copyB").onclick=copyCode;
+  if(g("shareB")) g("shareB").onclick=shareInvite;
+  if(g("startB")) g("startB").onclick=startRound;
+  if(g("dblB")) g("dblB").onclick=activateDouble;
+  if(g("voteB")) g("voteB").onclick=vote;
+  if(g("jokerB")) g("jokerB").onclick=useJoker;
+  if(g("shotB")) g("shotB").onclick=()=>{ S.pickingShot=true; render(); };
+  if(g("nextB")) g("nextB").onclick=nextRound;
+  if(g("endB")) g("endB").onclick=endGame;
+  if(g("restartB")) g("restartB").onclick=restart;
+  const sl=g("slider"); if(sl) sl.oninput=e=>{ S.voteValue=e.target.value; g("sv").textContent=S.voteValue+"%"; g("fill").style.width=S.voteValue+"%"; vibrate(3); };
+}
+window.pickMode=m=>{ S.pendingMode=m; render(); };
+window.chooseMode=m=>setMode(m);
+window.setJokerMode=async m=>{ vibrate(10); await S.roomRef.update({jokerMode:m}); };
+window.setJoker=async (pid,j)=>{ vibrate(10); await db.ref(`rooms/${S.code}/players/${pid}/joker`).set(j); };
+window.setMax=async n=>{ vibrate(10); await S.roomRef.update({maxRounds:n}); };
+window.setTimer=async n=>{ vibrate(10); await S.roomRef.update({timer:n}); };
+window.toggleCat=async c=>{ const r=S.room; const all=catsFor(r.mode); let cur=r.cats||all.slice(); cur=cur.includes(c)?cur.filter(x=>x!==c):cur.concat(c); if(!cur.length) cur=all.slice(); await S.roomRef.update({cats:cur}); };
+window.shotPick=shotPick;
+
+// ===== INIT =====
+const urlRoom=new URLSearchParams(location.search).get("room"); if(urlRoom) S.joinCode=urlRoom.toUpperCase();
+if("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(()=>{});
+loadQuestions(); cleanupOldRooms(); render();
+</script>
 </body>
 </html>
