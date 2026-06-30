@@ -5,14 +5,14 @@ import { render, toast } from './ui.js';
 let revealing = false;
 
 export async function tryReconnect() {
-  const code = localStorage.getItem('thermo_code'); 
-  const pid = localStorage.getItem('thermo_pid');
+  const code = sessionStorage.getItem('thermo_code'); 
+  const pid = sessionStorage.getItem('thermo_pid');
   if (code && pid) {
     try {
       const snap = await db.ref("rooms/" + code).get();
       if (snap.exists() && snap.val().players && snap.val().players[pid]) {
         S.name = snap.val().players[pid].name;
-        await db.ref(`rooms/${code}/players/${pid}`).update({connected: true});
+        await db.ref(`rooms/${code}/players/${pid}`).update({ connected: true });
         enterRoom(code, pid); 
         toast("Reconnexion réussie ✨", true); 
         return true;
@@ -55,8 +55,8 @@ export async function createRoom() {
         } 
       } 
     });
-    localStorage.setItem('thermo_code', code); 
-    localStorage.setItem('thermo_pid', pid);
+    sessionStorage.setItem('thermo_code', code); 
+    sessionStorage.setItem('thermo_pid', pid);
     enterRoom(code, pid);
   } catch(e) { 
     toast("Erreur de connexion."); 
@@ -89,8 +89,8 @@ export async function joinRoom() {
       jokerUsed: false, 
       connected: true 
     });
-    localStorage.setItem('thermo_code', code); 
-    localStorage.setItem('thermo_pid', pid);
+    sessionStorage.setItem('thermo_code', code); 
+    sessionStorage.setItem('thermo_pid', pid);
     enterRoom(code, pid);
   } catch (e) { 
     toast("Erreur réseau."); 
@@ -129,8 +129,8 @@ function detach() {
     S.roomRef.off(); 
     S.roomRef = null; 
   }
-  localStorage.removeItem('thermo_code'); 
-  localStorage.removeItem('thermo_pid');
+  sessionStorage.removeItem('thermo_code'); 
+  sessionStorage.removeItem('thermo_pid');
   S.code = null; 
   S.pid = null; 
   history.replaceState(null, "", window.location.pathname);
@@ -202,18 +202,20 @@ export async function startRound() {
   
   const t = rand(connectedArr(r)); 
   const qText = rand(QUESTIONS[r.mode]).replace(/{name}/g, t.name);
+  
   const expectedVoters = {}; 
   connectedArr(r).forEach(p => expectedVoters[p.id] = true);
   
   const upd = { 
     phase: "VOTING", 
     round: (r.round || 0) + 1, 
-    question: {text: qText, targetId: t.id, targetName: t.name}, 
-    expectedVoters, 
+    question: { text: qText, targetId: t.id, targetName: t.name }, 
+    expectedVoters: expectedVoters, 
     votes: null, 
     result: null, 
     startedAt: ServerValue.TIMESTAMP 
   };
+  
   Object.keys(r.players).forEach(id => { upd[`players/${id}/dbl`] = false; });
   await S.roomRef.update(upd);
 }
@@ -249,24 +251,28 @@ export async function hostAutoReveal() {
   if (r.mode === "Hardcore") sips += 1;
   const dbl = !!(r.players[tid] && r.players[tid].dbl);
   
+  const finalSips = isClose ? (dbl ? 2 : 1) : (dbl ? sips * 2 : sips);
+  const finalDrinker = isClose ? "others" : tid;
+  const finalDrinkerName = isClose ? null : r.question.targetName;
+  
   const result = { 
-    average, 
+    average: average, 
     targetVote: tv, 
     targetName: r.question.targetName, 
     targetId: tid, 
-    diff, 
-    isClose, 
+    diff: diff, 
+    isClose: isClose, 
     double: dbl, 
-    sips: isClose ? (dbl ? 2 : 1) : (dbl ? sips * 2 : sips), 
-    drinker: isClose ? "others" : tid, 
-    drinkerName: isClose ? null : r.question.targetName, 
+    sips: finalSips, 
+    drinker: finalDrinker, 
+    drinkerName: finalDrinkerName, 
     jokerUsed: null, 
     shot: null 
   };
   
   await S.roomRef.update({ 
     phase: "REVEAL", 
-    result, 
+    result: result, 
     [`players/${tid}/score`]: (r.players[tid].score || 0) + diff 
   });
   revealing = false;
@@ -339,7 +345,7 @@ export async function endGame() {
       loser: { name: l.name, score: l.score }, 
       all: ranked.map(p => ({ id: p.id, name: p.name, score: p.score })) 
     }, 
-    roast 
+    roast: roast 
   }); 
 }
 
