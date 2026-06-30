@@ -9,16 +9,17 @@ export const THEMES = {
 };
 
 export const JOKERS = {
-  SHIELD: { name: "Bouclier", icon: "🛡️", desc: "Annule tes gorgées." },
-  MIRROR: { name: "Miroir", icon: "🔁", desc: "Transfère tes gorgées." },
-  DOUBLE: { name: "Double ou rien", icon: "✖️2", desc: "Mise tout (x2)." },
-  SHOT: { name: "Cul sec", icon: "🥃", desc: "Distribue un cul sec." },
-  THIEF: { name: "Voleur", icon: "🥷", desc: "Échange ton joker secrètement." }
+  SHIELD: { name: "Bouclier", icon: "🛡️", desc: "Mode intouchable. Zéro gorgée." },
+  MIRROR: { name: "Miroir", icon: "🔁", desc: "C'est l'autre qui trinque." },
+  DOUBLE: { name: "Double ou Rien", icon: "✖️2", desc: "Grosse prise de risque (x2)." },
+  SHOT: { name: "Cul sec", icon: "🥃", desc: "Bim. Un cul sec cadeau." },
+  THIEF: { name: "Voleur", icon: "🥷", desc: "Pique un pouvoir en scred." }
 };
 
 export const ROASTS = [
-  "{name}, c'est vivre dans un univers parallèle. Santé !",
-  "L'intuition sociale de {name} est proche d'une petite cuillère."
+  "{name} vit clairement dans une autre galaxie. 🛸",
+  "Radar social de {name} : ERROR 404. 🤖",
+  "Même en tirant au hasard, {name} aurait fait mieux. 🤡"
 ];
 
 export let QUESTIONS = {
