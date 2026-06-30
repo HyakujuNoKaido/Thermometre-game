@@ -119,11 +119,13 @@ function renderLobby(r, t) {
        ? `<span class="text-white/50 font-bold text-sm mt-1 animate-pulse block">On attend le lancement du boss...</span>` : "";
   const hostControls = isHost ? `<button id="startB" class="${btnPrimary} mt-3" ${connectedArr(r).length < 2 ? 'disabled' : ''}>🚀 Let's Go !</button>` : "";
 
-  return `<div class="flex flex-col gap-5 animate-up pb-8">
-    <div class="glass-card rounded-3xl p-6 text-center flex flex-col gap-4 relative overflow-hidden shadow-2xl border-white/20 bg-black/40">
-      <div class="absolute inset-0 opacity-30" style="background: linear-gradient(135deg, transparent, ${t.from}, transparent);"></div>
-      <span class="text-white/70 text-[10px] font-black uppercase tracking-widest relative z-10">Passe ce code à la team 🤫</span>
-      <span class="text-7xl font-display font-black tracking-widest relative z-10 text-white drop-shadow-[0_10px_20px_rgba(0,0,0,0.8)]" style="text-shadow: 0 4px 40px ${t.glow}">${S.code}</span>
+  return `<div class="glass-card rounded-3xl p-5 flex items-center gap-4 shadow-xl border border-white/10 bg-black/40">
+      <div class="w-14 h-14 shrink-0 rounded-2xl flex items-center justify-center text-3xl shadow-lg" style="background:linear-gradient(135deg,${t.from},${t.to})">${myJoker ? myJoker.icon : '🎴'}</div>
+      <div class="flex flex-col min-w-0">
+        <span class="text-[10px] font-black uppercase tracking-widest text-white/60">Ton pouvoir secret 🃏</span>
+        <span class="text-lg font-black text-white leading-tight">${myJoker ? esc(myJoker.name) : 'Aucun'}</span>
+        <span class="text-xs text-white/60 font-medium leading-snug">${myJoker ? esc(myJoker.desc) : ''}</span>
+      </div>
     </div>
     
     ${isHost ? `<div class="glass-card rounded-3xl p-5 flex flex-col gap-3 shadow-xl border border-white/10 bg-black/40"><h2 class="text-[10px] font-black uppercase tracking-widest text-white/60 ml-1">Vibe de la partie</h2><div class="grid grid-cols-3 gap-2">${modeBtns(r.mode, "chooseMode")}</div></div>` : ""}
@@ -174,7 +176,8 @@ function renderVoting(r, t) {
     ${!voted ? `
       <div class="glass-card rounded-3xl p-6 flex flex-col gap-6 shadow-2xl border border-white/20 bg-black/60">
         <div class="flex justify-between items-end"><span class="font-black text-white/50 text-[10px] uppercase tracking-widest">${amTarget ? 'Sois honnête 🤫' : 'Tu penses à combien ? 🤔'}</span><span id="sv" class="text-7xl font-display font-black text-white drop-shadow-xl">${S.voteValue}%</span></div>
-        <div class="relative h-20 rounded-full bg-black/80 shadow-[inset_0_5px_15px_rgba(0,0,0,0.5)] border-2 border-white/10 flex items-center px-2"><div id="fill" class="absolute left-2 top-2 bottom-2 rounded-full transition-all duration-100 ease-out" style="width:calc(${S.voteValue}% - 16px); background:linear-gradient(90deg,${t.b1},${t.b2});"></div><input id="slider" type="range" min="0" max="100" value="${S.voteValue}" class="thermo-slider relative z-10 w-full"/></div>
+        <div class="relative h-20 rounded-full bg-black/80 shadow-[inset_0_5px_15px_rgba(0,0,0,0.5)] border-2 border-white/10 flex items-center px-2"><div id="thumb-bubble" class="thumb-bubble font-display" style="left:${S.voteValue}%;background:${t.b1};border-top-color:${t.b1}">${S.voteValue}%</div>
+
       </div>
       <button id="voteB" class="${btnPrimary}">Je lock mon vote 🔒</button>
     ` : `<div class="glass-card rounded-3xl p-6 flex flex-col gap-4 shadow-2xl border border-white/10 bg-black/40"><div class="flex flex-col gap-3 max-h-[50vh] overflow-y-auto scroll pr-2">${waitingList}</div></div>`}
