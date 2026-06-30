@@ -3,17 +3,18 @@ import { S } from './store.js';
 import * as Game from './game.js';
 import * as UI from './ui.js';
 
-// 1. On injecte toutes les fonctions Game et UI dans l'objet window 
-// pour que tes boutons <button onclick="window.maFonction()"> fonctionnent.
-// Dans src/main.js
 Object.assign(window, Game);
 window.toggleRules = UI.toggleRules;
 
-// 2. Écouteurs d'événements physiques (Inputs)
 function bindInputs() {
   const g = id => document.getElementById(id);
-  const ni = g("nameI"); if (ni) ni.oninput = e => { S.name = e.target.value; localStorage.setItem('thermo_name', S.name); };
-  const ji = g("joinI"); if (ji) ji.oninput = e => S.joinCode = e.target.value.toUpperCase();
+  
+  // Utilisation de sessionStorage ici
+  const ni = g("nameI"); 
+  if (ni) ni.oninput = e => { S.name = e.target.value; sessionStorage.setItem('thermo_name', S.name); };
+  
+  const ji = g("joinI"); 
+  if (ji) ji.oninput = e => S.joinCode = e.target.value.toUpperCase();
   
   if (g("createB")) g("createB").onclick = Game.createRoom;
   if (g("joinB")) g("joinB").onclick = Game.joinRoom;
@@ -21,6 +22,7 @@ function bindInputs() {
   if (g("voteB")) g("voteB").onclick = Game.vote;
   if (g("nextB")) g("nextB").onclick = Game.nextRound;
   if (g("restartB")) g("restartB").onclick = Game.restart;
+  if (g("jokerB")) g("jokerB").onclick = Game.useJoker;
   
   const sl = g("slider"); 
   if (sl) {
@@ -29,13 +31,11 @@ function bindInputs() {
   }
 }
 
-// 3. Boucle d'animation personnalisée (Surcharge de la fonction render)
 const originalRender = UI.render;
 UI.render = function() {
-    originalRender(); // Dessine l'HTML
-    bindInputs();     // Re-branche les boutons JavaScript
+    originalRender(); 
+    bindInputs();     
     
-    // Nouveaux effets pour la phase Reveal !
     if (S.room && S.room.phase === "REVEAL" && !S.animDone) {
         S.animDone = true; 
         const avgEl = document.getElementById("reveal-avg");
@@ -58,7 +58,6 @@ UI.render = function() {
     }
 }
 
-// Lancement de l'application
 async function initApp() {
   const urlRoom = new URLSearchParams(window.location.search).get("room"); 
   if (urlRoom) S.joinCode = urlRoom.toUpperCase();
