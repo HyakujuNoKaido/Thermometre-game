@@ -1,4 +1,4 @@
-import { S, THEMES, JOKERS, esc, connectedArr, playersArr, vibrate } from './store.js';
+import { S, THEMES, JOKERS, esc, connectedArr, playersArr } from './store.js';
 
 export function toast(msg, ok=false) { 
   const el = document.createElement("div"); 
@@ -89,11 +89,29 @@ function renderHome(t) {
 
 function renderLobby(r, t) { 
   const isHost = S.pid === r.hostId; const ps = playersArr(r); const me = r.players[S.pid]; const myJoker = JOKERS[me.joker]; const others = connectedArr(r).filter(p => p.id !== S.pid);
+  const currentMax = r.maxRounds || 10;
   
   let thiefUi = "";
   if (me.joker === "THIEF" && !me.jokerUsed && others.length > 0) {
     const targets = others.map(p => `<button onclick="window.stealJoker('${p.id}')" class="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-xl border border-white/20 text-sm font-bold active:scale-95 transition-colors text-white">${esc(p.name)}</button>`).join("");
     thiefUi = `<div class="mt-4 p-4 bg-black/40 border border-white/10 rounded-2xl"><p class="text-xs font-bold uppercase tracking-widest text-emerald-400 mb-3">🥷 Choisis ta victime :</p><div class="flex flex-wrap gap-2">${targets}</div></div>`;
+  }
+
+  // Sélection du nombre de questions pour l'hôte
+  let roundsSelectorUi = "";
+  if (isHost) {
+    roundsSelectorUi = `
+      <div class="glass-card rounded-3xl p-5 flex flex-col gap-3">
+        <h2 class="text-xs font-bold uppercase tracking-widest text-white/50 ml-1">Nombre de questions</h2>
+        <div class="grid grid-cols-4 gap-2">
+          ${[5, 10, 15, 0].map(num => `
+            <button onclick="window.changeMaxRounds(${num})" class="py-2 rounded-xl font-bold border ${currentMax === num || (num === 0 && r.maxRounds === 0) ? 'bg-white/25 border-white/60' : 'bg-black/20 border-white/10 text-white/60'}">
+              ${num === 0 ? '♾️' : num}
+            </button>
+          `).join("")}
+        </div>
+      </div>
+    `;
   }
 
   return `<div class="flex flex-col gap-5 animate-up pb-8">
@@ -102,7 +120,22 @@ function renderLobby(r, t) {
       <span class="text-white/60 text-xs font-bold uppercase tracking-widest relative z-10">Code de la salle</span><span class="text-6xl font-black tracking-widest relative z-10 text-white" style="text-shadow: 0 4px 20px ${t.glow}">${S.code}</span>
     </div>
     ${isHost ? `<div class="glass-card rounded-3xl p-5 flex flex-col gap-3"><h2 class="text-xs font-bold uppercase tracking-widest text-white/50 ml-1">Ambiance</h2><div class="grid grid-cols-3 gap-2">${modeBtns(r.mode, "chooseMode")}</div></div>` : ""}
+    ${roundsSelectorUi}
     
+    <div class="glass-card rounded-3xl p-5 flex flex-col gap-4">
+      <h2 class="text-xs font-bold uppercase tracking-widest text-white/50 ml-1">Joueurs connectés (${ps.length})</h2>
+      <div class="flex flex-col gap-2 max-h-48 overflow-y-auto scroll">
+        ${ps.map(p => `
+          <div class="flex items-center justify-between p-3 rounded-2xl bg-black/30 border border-white/5">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-full flex items-center justify-center font-black text-white" style="background:${getAvatarGradient(p.name)}">${esc((p.name || "A")[0].toUpperCase())}</div>
+              <span class="font-bold text-white">${esc(p.name)} ${p.id === S.pid ? '<span class="text-white/40 text-xs">(Toi)</span>' : ''}</span>
+            </div>
+          </div>
+        `).join("")}
+      </div>
+    </div>
+
     <div class="glass-card rounded-3xl p-5 border border-dashed border-white/30 bg-black/40">
       <h3 class="text-xs font-bold uppercase tracking-widest text-white/50 mb-3 text-center">Choisis ton pouvoir</h3>
       <div class="grid grid-cols-5 gap-2 mb-3">
@@ -112,12 +145,13 @@ function renderLobby(r, t) {
       ${thiefUi}
     </div>
 
-    ${isHost ? `<button id="startB" class="${btnPrimary}" ${connectedArr(r).length < 2 ? 'disabled' : ''}>${connectedArr(r).length < 2 ? '⏳ En attente...' : '🚀 Lancer !'}</button>` : `<div class="glass-card rounded-3xl p-5 text-center flex items-center justify-center gap-3 text-white/70 font-bold"><span class="animate-spin text-xl">⏳</span> En attente du chef...</div>`}
+    ${isHost ? `<button id="startB" class="${btnPrimary}" ${connectedArr(r).length < 2 ? 'disabled' : ''}>${connectedArr(r).length < 2 ? '⏳ En attente de joueurs...' : '🚀 Lancer !'}</button>` : `<div class="glass-card rounded-3xl p-5 text-center flex items-center justify-center gap-3 text-white/70 font-bold"><span class="animate-spin text-xl">⏳</span> En attente du chef...</div>`}
   </div>`; 
 }
 
 function renderVoting(r, t) { 
-  const me = r.players[S.pid]; const q = r.question; const voted = (r.votes || {})[S.pid] !== undefined; const amTarget = q.targetId === S.pid; const conn = connectedArr(r).length; const vc = Object.keys(r.votes || {}).length;
+  const q = r.question; const voted = (r.votes || {})[S.pid] !== undefined; const conn = connectedArr(r).length; const vc = Object.keys(r.votes || {}).length;
+  const roundCounter = r.maxRounds > 0 ? `Question ${r.round} / ${r.maxRounds}` : `Question ${r.round}`;
   
   const waitingList = connectedArr(r).map(p => {
       const hasVoted = (r.votes || {})[p.id] !== undefined;
@@ -125,12 +159,17 @@ function renderVoting(r, t) {
   }).join("");
   
   return `<div class="flex-1 flex flex-col justify-center gap-6 animate-up pb-8">
-    <div class="glass-card rounded-3xl p-8 text-center flex flex-col gap-4 relative overflow-hidden min-h-[220px] justify-center">
-      <div class="mt-8"><span class="text-3xl font-black block mb-2" style="background:linear-gradient(90deg,${t.from},${t.to});-webkit-background-clip:text;background-clip:text;color:transparent">${esc(q.targetName)}</span><p class="text-xl font-medium leading-relaxed text-white">"${esc(q.text)}"</p></div>
+    <div class="glass-card rounded-3xl p-8 text-center flex flex-col gap-4 relative overflow-hidden min-h-[180px] justify-center">
+      <div class="absolute top-4 left-0 right-0 flex justify-center">
+         <span class="px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest bg-white/10 border border-white/20 text-white/80">${roundCounter}</span>
+      </div>
+      <div class="mt-4">
+        <p class="text-xl font-medium leading-relaxed text-white">"${esc(q.text)}"</p>
+      </div>
     </div>
     ${!voted ? `
       <div class="glass-card rounded-3xl p-6 flex flex-col gap-6">
-        <div class="flex justify-between items-end"><span class="font-bold text-white/50 text-sm uppercase tracking-widest">${amTarget ? 'Ta vérité :' : 'Ton estimation :'}</span><span id="sv" class="text-6xl font-display font-black text-white">${S.voteValue}%</span></div>
+        <div class="flex justify-between items-end"><span class="font-bold text-white/50 text-sm uppercase tracking-widest">Ton estimation :</span><span id="sv" class="text-6xl font-display font-black text-white">${S.voteValue}%</span></div>
         <div class="relative h-16 rounded-full bg-black/50 shadow-inner border border-white/10 flex items-center px-2"><div id="fill" class="absolute left-2 top-2 bottom-2 rounded-full transition-all duration-100 ease-out" style="width:calc(${S.voteValue}% - 16px); background:linear-gradient(90deg,${t.b1},${t.b2});"></div><input id="slider" type="range" min="0" max="100" value="${S.voteValue}" class="thermo-slider relative z-10 w-full"/></div>
       </div>
       <button id="voteB" class="${btnPrimary}">Valider mon choix ✓</button>
@@ -141,14 +180,34 @@ function renderVoting(r, t) {
 function renderReveal(r, t) { 
   const res = r.result; if (!res) return "";
   const isHost = S.pid === r.hostId; 
+  
+  // LOGIQUE ET AFFICHAGE VISUELS POUR DIRE QUI BOIT QUOI EN TOUTES LETTRES
+  let sipsSentence = "";
+  if (res.isClose) {
+      sipsSentence = `<span class="text-yellow-400 font-extrabold block text-2xl uppercase tracking-wide mt-2">Tout le monde boit ${res.sips} gorgée${res.sips > 1 ? 's' : ''} ! 🍻</span>`;
+  } else {
+      sipsSentence = `<span class="text-red-400 font-extrabold block text-2xl uppercase tracking-wide mt-2">${esc(res.drinkerName)} boit ${res.sips} gorgée${res.sips > 1 ? 's' : ''} ! 🍻</span>`;
+  }
+
   return `<div class="flex-1 flex flex-col gap-5 animate-up pb-8">
-    <div class="text-center pt-2"><h2 class="text-3xl font-black uppercase text-white">${esc(res.targetName)}</h2></div>
+    <div class="text-center pt-2"><p class="text-white/50 text-xs font-bold uppercase tracking-widest">Moyenne générale de la table</p></div>
     <div class="text-center animate-pop my-4 h-28 flex items-center justify-center"><span id="reveal-avg" class="font-display text-white font-black leading-none drop-shadow-2xl blur-xl opacity-0 transition-all duration-[2000ms] text-[25vw]">0%</span></div>
+    
     <div id="reveal-details" class="opacity-0 transition-opacity duration-700 flex flex-col gap-5">
       <div class="glass-card bg-black/40 border rounded-3xl p-6 flex flex-col items-center text-center gap-5">
-        <div class="flex w-full justify-around items-center"><div class="flex flex-col"><span class="text-white/50 text-[10px] font-bold">Sa réponse</span><span class="text-4xl font-display font-black text-white">${res.targetVote}%</span></div></div>
+        <div class="flex w-full justify-around items-center">
+          <div class="flex flex-col"><span class="text-white/50 text-[10px] font-bold uppercase">Réponse de la cible</span><span class="text-4xl font-display font-black text-white">${res.targetVote}%</span></div>
+          <div class="w-px h-10 bg-white/20"></div>
+          <div class="flex flex-col"><span class="text-white/50 text-[10px] font-bold uppercase">Écart</span><span class="text-4xl font-display font-black text-white">${res.diff} pts</span></div>
+        </div>
+        <div class="w-full h-px bg-white/10"></div>
+        <div class="text-center leading-relaxed font-bold text-lg">${sipsSentence}</div>
       </div>
-      ${isHost ? `<button id="nextB" class="py-4 px-8 rounded-2xl btn-gold font-extrabold text-lg transition-all shadow-lg active:scale-95">Manche Suivante ➡️</button>` : `<div class="glass-card rounded-3xl p-4 text-center text-white/50 font-bold">En attente de l'hôte...</div>`}
+      
+      <div class="flex gap-3">
+        ${isHost ? `<button id="nextB" class="flex-grow py-4 px-6 rounded-2xl btn-gold font-extrabold text-lg transition-all shadow-lg active:scale-95">${r.maxRounds > 0 && r.round >= r.maxRounds ? '🏁 Voir le classement' : 'Manche Suivante ➡️'}</button>` : `<div class="w-full glass-card rounded-3xl p-4 text-center text-white/50 font-bold">En attente de l'hôte...</div>`}
+        ${isHost ? `<button onclick="window.endGame()" class="py-4 px-6 rounded-2xl bg-red-500/20 border border-red-500/30 text-red-200 font-bold active:scale-95" title="Terminer et voir les scores">🏁 Fin</button>` : ""}
+      </div>
     </div>
   </div>`; 
 }
@@ -157,8 +216,9 @@ function renderStats(r, t) {
   const rk = r.ranking; const isHost = S.pid === r.hostId;
   return `<div class="flex-1 flex flex-col gap-6 animate-up pb-8">
     <div class="text-center pt-4"><h2 class="text-4xl font-black mb-2 text-white">Partie Terminée 🏁</h2></div>
-    <div class="bg-black/90 rounded-[1.8rem] p-6 text-center"><p class="text-3xl font-black text-white">👑 ${esc(rk.winner.name)}</p></div>
-    ${isHost ? `<button id="restartB" class="${btnPrimary} mt-4">🔄 Refaire une partie</button>` : `<div class="glass-card rounded-3xl p-5 text-center text-white/70 font-bold">Santé 🍻</div>`}
+    <div class="bg-black/90 rounded-[1.8rem] p-6 text-center shadow-lg border border-yellow-500/30"><span class="text-yellow-400 text-xs font-bold uppercase tracking-widest block mb-1">Le Médium du groupe</span><p class="text-3xl font-black text-white">👑 ${esc(rk.winner.name)}</p><p class="text-white/50 text-sm mt-1">${rk.winner.score} pts d'écart total</p></div>
+    <div class="bg-black/90 rounded-[1.8rem] p-6 text-center shadow-lg border border-red-500/30"><span class="text-red-400 text-xs font-bold uppercase tracking-widest block mb-1">Le pire radar social</span><p class="text-3xl font-black text-white">💀 ${esc(rk.loser.name)}</p><p class="text-white/50 text-sm mt-1">${rk.loser.score} pts d'erreur !</p></div>
+    ${isHost ? `<button id="restartB" class="${btnPrimary} mt-4">🔄 Recommencer</button>` : `<div class="glass-card rounded-3xl p-5 text-center text-white/70 font-bold">Merci d'avoir joué ! Santé 🍻</div>`}
   </div>`; 
 }
 
