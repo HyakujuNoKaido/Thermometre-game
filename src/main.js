@@ -5,6 +5,7 @@ import * as UI from './ui.js';
 
 // 1. On injecte toutes les fonctions Game et UI dans l'objet window 
 // pour que tes boutons <button onclick="window.maFonction()"> fonctionnent.
+// Dans src/main.js
 Object.assign(window, Game);
 window.toggleRules = UI.toggleRules;
 
