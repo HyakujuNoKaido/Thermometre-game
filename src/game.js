@@ -69,7 +69,13 @@ function detach() {
   S.code = null; S.pid = null; history.replaceState(null, "", window.location.pathname);
 }
 
-export async function quitGame() { await db.ref(`rooms/${S.code}/players/${S.pid}`).remove(); detach(); S.screen = "HOME"; render(); }
+export async function quitGame() { 
+  await db.ref(`rooms/${S.code}/players/${S.pid}`).remove(); 
+  detach(); 
+  S.screen = "HOME"; 
+  render(); 
+}
+
 export async function kickPlayer(id) { await db.ref(`rooms/${S.code}/players/${id}`).remove(); toast("Joueur viré 🚪"); }
 export async function stealJoker(id) { const r = S.room; await S.roomRef.update({ [`players/${S.pid}/joker`]: r.players[id].joker, [`players/${id}/joker`]: r.players[S.pid].joker }); toast("Pouvoir volé en scred ! 🥷", true); }
 export async function selectJoker(k) { vibrate(10); await S.roomRef.update({ [`players/${S.pid}/joker`]: k }); }
@@ -77,11 +83,19 @@ export async function changeMaxRounds(num) { if(S.pid !== S.room.hostId) return;
 export function pickMode(m) { S.pendingMode = m; render(); }
 export async function chooseMode(m) { vibrate(10); await S.roomRef.update({ mode: m }); }
 
+// LE CORRECTIF EST ICI : Gère la déconnexion ET le retrait volontaire du boss
 async function promoteHostIfNeeded() { 
-  const r = S.room; if (!r) return; const host = r.players[r.hostId];
-  if (host && host.connected === false) { 
+  const r = S.room; 
+  if (!r || !r.players) return; 
+  
+  const host = r.players[r.hostId];
+  // Si le boss a disparu de la BDD (quitté) OU s'il est hors ligne
+  if (!host || host.connected === false) { 
     const conn = connectedArr(r).sort((a, b) => a.id < b.id ? -1 : 1); 
-    if (conn.length && conn[0].id === S.pid) { await S.roomRef.update({ hostId: S.pid }); toast("C'est toi le boss du salon 👑", true); } 
+    if (conn.length > 0 && conn[0].id === S.pid) { 
+      await S.roomRef.update({ hostId: S.pid }); 
+      toast("L'ancien boss s'est taillé, c'est TOI le chef maintenant 👑", true); 
+    } 
   } 
 }
 
@@ -100,22 +114,18 @@ export async function startRound() {
 export async function nextRound() { const r = S.room; if (r.maxRounds > 0 && r.round >= r.maxRounds) return endGame(); startRound(); }
 export async function vote() { vibrate([30, 50]); await db.ref(`rooms/${S.code}/votes/${S.pid}`).set(Number(S.voteValue)); }
 
-// Moteur de calcul blindé (Anti-bug de verrouillage)
 export async function hostAutoReveal() { 
   try {
     const r = S.room; 
-    // Vérifications de base pour stopper la fonction si ce n'est pas le bon moment
     if (!r || r.phase !== "VOTING" || S.pid !== r.hostId || revealing) return;
     
-    // On vérifie que tout le monde a bien voté
     const expectedIds = Object.keys(r.expectedVoters || {}); 
     const votes = r.votes || {};
     const missing = expectedIds.filter(id => r.players[id] && r.players[id].connected && votes[id] === undefined);
-    if (missing.length > 0) return; // Il manque des votes, on s'arrête là.
+    if (missing.length > 0) return; 
     
-    revealing = true; // On verrouille pour éviter de lancer le calcul 2 fois
+    revealing = true; 
 
-    // Calculs
     const tid = r.question.targetId; 
     const nonTargetVotes = Object.keys(votes).filter(id => id !== tid).map(id => votes[id]);
     const pool = nonTargetVotes.length > 0 ? nonTargetVotes : [50]; 
@@ -135,7 +145,6 @@ export async function hostAutoReveal() {
     const finalDrinker = isClose ? "others" : tid;
     const finalDrinkerName = isClose ? "La team" : (r.question.targetName || "La cible");
 
-    // Création de l'objet résultat avec des valeurs par défaut strictes pour éviter les plantages Firebase
     const result = { 
       average: average || 0, 
       targetVote: tv || 0, 
@@ -151,7 +160,6 @@ export async function hostAutoReveal() {
       shot: false 
     };
     
-    // Mise à jour de la base de données
     await S.roomRef.update({ 
       phase: "REVEAL", 
       result: result, 
@@ -162,7 +170,6 @@ export async function hostAutoReveal() {
     console.error("Erreur critique lors du calcul des votes :", err);
     toast("Aïe, un petit bug de calcul ! On retente...", false);
   } finally {
-    // Si la fonction plante, le finally s'assure de déverrouiller la sécurité pour retenter au prochain clic
     revealing = false;
   }
 }
