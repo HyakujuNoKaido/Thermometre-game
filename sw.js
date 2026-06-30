@@ -1,6 +1,6 @@
 // Service Worker — cache minimal pour PWA (offline shell)
 const CACHE = "thermo-v1";
-const ASSETS = ["./", "./index.html", "./icon.svg", "./manifest.json", "./questions.json"];
+const ASSETS = ["./", "./index.html", "./icon.svg", "./manifest.json", "./icon-192.png", "./icon-512.png", "./apple-touch-icon.png"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).catch(()=>{})); self.skipWaiting(); });
 self.addEventListener("activate", e => { e.waitUntil(caches.keys().then(k => Promise.all(k.filter(x=>x!==CACHE).map(x=>caches.delete(x))))); self.clients.claim(); });
 self.addEventListener("fetch", e => {
