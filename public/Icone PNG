@@ -1,5 +1,5 @@
 cd public
-curl -o icon-master.png "<https://static.prod-images.emergentagent.com/jobs/df2e1df4-9192-4ea2-921e-e8256d8cd425/images/2c382a9065b0a6e1c6e7b33f12da016082e4d315b5d3b5ef7ac32f6b5aabb4e6.png>"
+curl -o icon-master.png "https://static.prod-images.emergentagent.com/jobs/df2e1df4-9192-4ea2-921e-e8256d8cd425/images/2c382a9065b0a6e1c6e7b33f12da016082e4d315b5d3b5ef7ac32f6b5aabb4e6.png"
 # avec ImageMagick :
 convert icon-master.png -resize 512x512 icon-512.png
 convert icon-master.png -resize 512x512 icon-maskable.png
