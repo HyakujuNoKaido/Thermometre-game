@@ -100,31 +100,71 @@ export async function startRound() {
 export async function nextRound() { const r = S.room; if (r.maxRounds > 0 && r.round >= r.maxRounds) return endGame(); startRound(); }
 export async function vote() { vibrate([30, 50]); await db.ref(`rooms/${S.code}/votes/${S.pid}`).set(Number(S.voteValue)); }
 
+// Moteur de calcul blindé (Anti-bug de verrouillage)
 export async function hostAutoReveal() { 
-  const r = S.room; if (!r || r.phase !== "VOTING" || S.pid !== r.hostId || revealing) return;
-  const expectedIds = Object.keys(r.expectedVoters || {}); const votes = r.votes || {};
-  if (expectedIds.filter(id => r.players[id] && r.players[id].connected && votes[id] === undefined).length > 0) return;
-  
-  revealing = true; const tid = r.question.targetId; 
-  
-  // CORRECTION DU BUG MATHÉMATIQUE ICI : On exclut le vote de la cible !
-  const nonTargetVotes = Object.keys(votes).filter(id => id !== tid).map(id => votes[id]);
-  const pool = nonTargetVotes.length > 0 ? nonTargetVotes : [50]; 
-  
-  const average = Math.round(pool.reduce((a, b) => a + b, 0) / pool.length); 
-  const tv = votes[tid] !== undefined ? votes[tid] : 50; 
-  const diff = Math.abs(tv - average);
-  
-  const isClose = diff <= 15; let sips = diff > 45 ? 4 : (diff > 25 ? 2 : 1); if (r.mode === "Hardcore") sips += 1;
-  const dbl = !!(r.players[tid] && r.players[tid].dbl);
-  
-  const finalSips = isClose ? (dbl ? 2 : 1) : (dbl ? sips * 2 : sips);
-  const finalDrinker = isClose ? "others" : tid;
-  const finalDrinkerName = isClose ? null : r.question.targetName;
-  
-  const result = { average, targetVote: tv, targetName: r.question.targetName, targetId: tid, diff, isClose, double: dbl, sips: finalSips, drinker: finalDrinker, drinkerName: finalDrinkerName, jokerUsed: null, shot: null };
-  await S.roomRef.update({ phase: "REVEAL", result, [`players/${tid}/score`]: (r.players[tid].score || 0) + diff });
-  revealing = false;
+  try {
+    const r = S.room; 
+    // Vérifications de base pour stopper la fonction si ce n'est pas le bon moment
+    if (!r || r.phase !== "VOTING" || S.pid !== r.hostId || revealing) return;
+    
+    // On vérifie que tout le monde a bien voté
+    const expectedIds = Object.keys(r.expectedVoters || {}); 
+    const votes = r.votes || {};
+    const missing = expectedIds.filter(id => r.players[id] && r.players[id].connected && votes[id] === undefined);
+    if (missing.length > 0) return; // Il manque des votes, on s'arrête là.
+    
+    revealing = true; // On verrouille pour éviter de lancer le calcul 2 fois
+
+    // Calculs
+    const tid = r.question.targetId; 
+    const nonTargetVotes = Object.keys(votes).filter(id => id !== tid).map(id => votes[id]);
+    const pool = nonTargetVotes.length > 0 ? nonTargetVotes : [50]; 
+    
+    const average = Math.round(pool.reduce((a, b) => a + b, 0) / pool.length); 
+    const tv = votes[tid] !== undefined ? votes[tid] : 50; 
+    const diff = Math.abs(tv - average);
+    
+    const isClose = diff <= 15; 
+    let sips = diff > 45 ? 4 : (diff > 25 ? 2 : 1); 
+    if (r.mode === "Hardcore") sips += 1;
+    
+    const targetPlayer = r.players[tid] || {};
+    const dbl = !!targetPlayer.dbl;
+    
+    const finalSips = isClose ? (dbl ? 2 : 1) : (dbl ? sips * 2 : sips);
+    const finalDrinker = isClose ? "others" : tid;
+    const finalDrinkerName = isClose ? "La team" : (r.question.targetName || "La cible");
+
+    // Création de l'objet résultat avec des valeurs par défaut strictes pour éviter les plantages Firebase
+    const result = { 
+      average: average || 0, 
+      targetVote: tv || 0, 
+      targetName: r.question.targetName || "Inconnu", 
+      targetId: tid || "", 
+      diff: diff || 0, 
+      isClose: isClose, 
+      double: dbl, 
+      sips: finalSips || 1, 
+      drinker: finalDrinker, 
+      drinkerName: finalDrinkerName, 
+      jokerUsed: false, 
+      shot: false 
+    };
+    
+    // Mise à jour de la base de données
+    await S.roomRef.update({ 
+      phase: "REVEAL", 
+      result: result, 
+      [`players/${tid}/score`]: (targetPlayer.score || 0) + diff 
+    });
+
+  } catch (err) {
+    console.error("Erreur critique lors du calcul des votes :", err);
+    toast("Aïe, un petit bug de calcul ! On retente...", false);
+  } finally {
+    // Si la fonction plante, le finally s'assure de déverrouiller la sécurité pour retenter au prochain clic
+    revealing = false;
+  }
 }
 
 export async function endGame() { 
