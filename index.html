@@ -6,13 +6,19 @@
 <title>Le Thermomètre</title>
 <meta name="theme-color" content="#040B16" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-title" content="Thermomètre" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
 <link rel="icon" href="/icon.svg" type="image/svg+xml" />
-<link rel="apple-touch-icon" href="/icon.svg" />
+<link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
+<link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png" />
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
 <link rel="manifest" href="/manifest.json" />
 
-<script src="https://cdn.tailwindcss.com"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
@@ -29,9 +35,10 @@
 
 <div class="w-full max-w-md mx-auto min-h-screen-ios px-5 pt-6 safe-padding-bottom flex flex-col relative z-10" id="app"></div>
 
-<div id="rulesModal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fade">
-  <div class="glass-card w-full max-w-sm rounded-3xl p-6 relative">
-    <button onclick="toggleRules()" class="absolute top-4 right-4 text-white/50 hover:text-white text-xl">✕</button>
+<div id="rulesModal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center">
+  <div class="sheet glass-card w-full max-w-md sm:max-w-sm rounded-t-[2rem] sm:rounded-3xl p-6 pb-[calc(env(safe-area-inset-bottom,16px)+1.5rem)] sm:pb-6 relative">
+    <div class="w-12 h-1.5 rounded-full bg-white/25 mx-auto mb-4 sm:hidden"></div>
+    <button onclick="toggleRules()" class="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-white/60 hover:text-white text-lg active:scale-90 transition-transform">✕</button>
     <h2 class="text-2xl font-black mb-4 text-white">Comment jouer ? 🍻</h2>
     <div class="text-white/80 space-y-3 text-sm font-medium leading-relaxed max-h-[60vh] overflow-y-auto scroll pr-2">
       <p><b>1.</b> L'hôte lance la partie et choisit l'ambiance.</p>
@@ -41,7 +48,7 @@
       <p><b>5. Le Verdict :</b> Si l'écart est grand, la cible boit. S'il est proche, tous les autres boivent !</p>
       <p><b>🃏 Les Jokers :</b> Chaque joueur a un pouvoir unique.</p>
     </div>
-    <button onclick="toggleRules()" class="w-full mt-6 py-3 rounded-xl bg-white/10 border border-white/20 font-bold active:scale-95 text-white">J'ai compris !</button>
+    <button onclick="toggleRules()" class="w-full mt-6 py-3.5 rounded-xl bg-white/10 border border-white/20 font-bold active:scale-95 transition-transform text-white">J'ai compris !</button>
   </div>
 </div>
 
