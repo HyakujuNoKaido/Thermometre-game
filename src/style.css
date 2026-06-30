@@ -14,7 +14,14 @@ body { margin: 0; background: #040B16; font-family: 'Baloo 2', cursive, sans-ser
 .thermo-slider::-moz-range-thumb { width: 50px; height: 50px; border-radius: 9999px; background: #fff; border: 4px solid rgba(255,255,255,.8); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
 
 @keyframes blob { 0% { transform: translate(0,0) scale(1); } 33% { transform: translate(30px,-50px) scale(1.1); } 66% { transform: translate(-20px,20px) scale(.9); } 100% { transform: translate(0,0) scale(1); } }
-.animate-blob { animation: blob 15s infinite alternate ease-in-out; } 
+
+/* ACCÉLÉRATION GPU ICI */
+.animate-blob { 
+  animation: blob 15s infinite alternate ease-in-out; 
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+} 
 .blob-delay { animation-delay: 5s; }
 
 @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } } 
