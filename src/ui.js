@@ -293,14 +293,44 @@ function renderStats(r, t) {
   </div>`; 
 }
 
-export function render() { 
+let afterRenderHook = null;
+export function onAfterRender(fn) { afterRenderHook = fn; }
+
+let lastViewKey = null;
+export function render() {
   applyBg(); const app = document.getElementById("app"); const t = theme(); let body = "";
   if (S.screen === "HOME") body = renderHome(t);
-  else if (S.room) { 
+  else if (S.room) {
     if (S.room.phase === "LOBBY") body = renderLobby(S.room, t);
     else if (S.room.phase === "VOTING") body = renderVoting(S.room, t);
     else if (S.room.phase === "REVEAL") body = renderReveal(S.room, t);
-    else if (S.room.phase === "STATS") body = renderStats(S.room, t); 
+    else if (S.room.phase === "STATS") body = renderStats(S.room, t);
   }
-  app.innerHTML = header() + body; 
+  const html = header() + body;
+  // Anti-flicker : on ne re-render que si le contenu a réellement changé.
+  // Préserve le focus/curseur des inputs ET le slider en cours de manipulation.
+  if (app.__html === html) return;
+
+  const active = document.activeElement;
+  const activeId = active && active.id ? active.id : null;
+  const selStart = active && 'selectionStart' in active ? active.selectionStart : null;
+  const selEnd = active && 'selectionEnd' in active ? active.selectionEnd : null;
+
+  app.innerHTML = html;
+  app.__html = html;
+
+  // Animation d'entrée uniquement lors d'un VRAI changement d'écran
+  const viewKey = S.screen === "HOME" ? "HOME" : (S.room ? S.room.phase : "");
+  if (viewKey !== lastViewKey) {
+    lastViewKey = viewKey;
+    const root = app.lastElementChild;
+    if (root) root.classList.add("view-enter");
+  }
+
+  if (activeId) {
+    const n = document.getElementById(activeId);
+    if (n) { try { n.focus({ preventScroll: true }); if (selStart != null && n.setSelectionRange) n.setSelectionRange(selStart, selEnd); } catch (e) {} }
+  }
+
+  if (afterRenderHook) afterRenderHook();
 }
