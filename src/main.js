@@ -8,13 +8,8 @@ window.toggleRules = UI.toggleRules;
 
 function bindInputs() {
   const g = id => document.getElementById(id);
-  
-  // Utilisation de sessionStorage ici
-  const ni = g("nameI"); 
-  if (ni) ni.oninput = e => { S.name = e.target.value; sessionStorage.setItem('thermo_name', S.name); };
-  
-  const ji = g("joinI"); 
-  if (ji) ji.oninput = e => S.joinCode = e.target.value.toUpperCase();
+  const ni = g("nameI"); if (ni) ni.oninput = e => { S.name = e.target.value; sessionStorage.setItem('thermo_name', S.name); };
+  const ji = g("joinI"); if (ji) ji.oninput = e => S.joinCode = e.target.value.toUpperCase();
   
   if (g("createB")) g("createB").onclick = Game.createRoom;
   if (g("joinB")) g("joinB").onclick = Game.joinRoom;
@@ -22,7 +17,6 @@ function bindInputs() {
   if (g("voteB")) g("voteB").onclick = Game.vote;
   if (g("nextB")) g("nextB").onclick = Game.nextRound;
   if (g("restartB")) g("restartB").onclick = Game.restart;
-  if (g("jokerB")) g("jokerB").onclick = Game.useJoker;
   
   const sl = g("slider"); 
   if (sl) {
