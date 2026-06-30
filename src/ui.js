@@ -50,7 +50,9 @@ export function updateThermometerColor(val) {
   }
   const color = `rgb(${r},${g},${b})`;
   fill.style.width = `calc(${val}% - 16px)`; fill.style.background = color; fill.style.boxShadow = `0 0 40px ${color}`;
-  if (sv) { sv.textContent = val + "%"; sv.style.color = color; sv.style.textShadow = `0 4px 30px rgba(${r},${g},${b},0.9)`; }
+    const bub = document.getElementById("thumb-bubble");
+  if (bub) { bub.textContent = val + "%"; bub.style.left = val + "%"; bub.style.background = color; bub.style.borderTopColor = color; }
+
 }
 
 const btnPrimary = "w-full py-4 px-8 rounded-2xl btn-gold font-extrabold text-lg shadow-[0_0_35px_rgba(251,191,36,0.5)] active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wider";
