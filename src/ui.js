@@ -10,7 +10,14 @@ export function toast(msg, ok=false) {
 
 export function toggleRules() {
   const modal = document.getElementById('rulesModal');
-  if(modal) modal.classList.toggle('hidden');
+if (!modal) return;
+  if (modal.classList.contains('hidden')) {
+    modal.classList.remove('hidden');
+    requestAnimationFrame(() => modal.classList.add('sheet-open'));
+  } else {
+    modal.classList.remove('sheet-open');
+    setTimeout(() => modal.classList.add('hidden'), 320);
+  }
 }
 
 export function getAvatarGradient(name) {
