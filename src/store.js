@@ -27,7 +27,6 @@ export let QUESTIONS = {
   Hardcore: [...BANK.Hardcore]
 };
 
-// Utilisation de sessionStorage pour isoler chaque onglet
 export const S = { 
   screen: "HOME", code: null, pid: null, room: null, 
   name: sessionStorage.getItem('thermo_name') || "", 
