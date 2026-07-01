@@ -191,7 +191,6 @@ function renderVoting(r, t) {
         
         <div class="relative h-20 rounded-full bg-black/80 shadow-[inset_0_5px_15px_rgba(0,0,0,0.5)] border-2 border-white/10 flex items-center px-2">
           <div id="fill" class="absolute left-2 h-16 rounded-full pointer-events-none" style="width: calc(${S.voteValue}% - 16px); background: ${t.b1}; transition: none !important;"></div>
-          <!-- CORRECTION FOCUS : Les onpointerup, ontouchend et onmouseup retirent le blocage tactile immédiatement après le glissement -->
           <input type="range" id="slider" min="0" max="100" value="${S.voteValue}" class="thermo-slider absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" style="touch-action: pan-x;" onpointerup="this.blur()" ontouchend="this.blur()" onmouseup="this.blur()" />
           <div id="thumb-bubble" class="thumb-bubble font-display pointer-events-none z-20" style="left:${S.voteValue}%;background:${t.b1};border-top-color:${t.b1}; transition: none !important;">${S.voteValue}%</div>
         </div>
@@ -209,30 +208,36 @@ function renderReveal(r, t) {
   
   let myStatsHtml = "";
   if (S.pid !== res.targetId && myVote !== undefined) {
-      const myDiff = Math.abs(myVote - res.targetVote);
+      const myDiff = Math.abs(myVote - res.average);
       myStatsHtml = `
         <div class="mt-4 w-full p-4 bg-black/40 border border-white/10 rounded-2xl flex justify-between items-center shadow-inner">
           <span class="text-white/60 text-xs font-bold uppercase tracking-wider">Ton Estimation : <b class="text-white text-sm">${myVote}%</b></span>
-          <span class="text-orange-400 text-xs font-bold uppercase tracking-wider">Ton Écart : <b class="text-white text-sm">${myDiff} pts</b></span>
+          <span class="text-cyan-400 text-xs font-bold uppercase tracking-wider">Ton Écart : <b class="text-white text-sm">${myDiff} pts</b></span>
         </div>
       `;
   }
 
-  let alcoholVerdictHtml = "";
-  if (res.thomasShot) {
-    alcoholVerdictHtml = `
-      <div class="w-full bg-red-600/40 border border-red-500 rounded-2xl p-4 text-center text-white font-bold shadow-lg animate-pulse">
-        🚨 🤯 CUL SEC POUR ${res.targetName.toUpperCase()} ! <br>
-        <span class="text-xs text-white/80 font-medium normal-case">Il s'est voilé la face avec ${res.thomasDiff} pts d'écart avec le groupe.</span>
-      </div>`;
+  // 1. VERDICT DE LA CIBLE
+  let targetVerdictHtml = "";
+  if (res.targetShot) {
+    targetVerdictHtml = `<div class="w-full bg-red-600/40 border border-red-500 rounded-2xl p-4 text-center text-white font-bold shadow-lg animate-pulse">🚨 🤯 CUL SEC POUR ${esc(res.targetName).toUpperCase()} ! <br><span class="text-xs text-white/80 font-medium normal-case">Déni total (${res.targetDiff} pts d'écart).</span></div>`;
+  } else if (res.targetSips > 0) {
+    targetVerdictHtml = `<div class="w-full bg-yellow-500/20 border border-yellow-500/40 rounded-2xl p-4 text-center text-yellow-200 font-bold shadow-md">🎯 ${esc(res.targetName)} PREND ${res.targetSips} GORGÉE${res.targetSips > 1 ? 'S' : ''} <br><span class="text-xs text-white/60 font-medium normal-case">${res.targetDiff} pts d'écart avec le groupe.</span></div>`;
   } else {
-    const loserNames = res.losers && res.losers.length > 0 ? res.losers.map(l => l.name).join(" et ") : "Personne";
-    alcoholVerdictHtml = `
-      <div class="w-full bg-orange-500/20 border border-orange-500/40 rounded-2xl p-4 text-center text-orange-200 font-bold shadow-md">
-        📉 🍻 ${loserNames} ! <br>
-        <span class="text-white font-black uppercase text-lg tracking-wide block mt-1">VOUS PRENEZ 2 GORGÉES</span>
-        <span class="text-xs text-white/60 font-medium normal-case block mt-1">Vous étiez les plus loin de la note de ${esc(res.targetName)}.</span>
-      </div>`;
+    targetVerdictHtml = `<div class="w-full bg-emerald-500/20 border border-emerald-500/40 rounded-2xl p-4 text-center text-emerald-200 font-bold shadow-md">✨ ${esc(res.targetName)} est sauvé(e) ! <br><span class="text-xs text-white/60 font-medium normal-case">Très proche de la réalité. 0 gorgée !</span></div>`;
+  }
+
+  // 2. VERDICT DU GROUPE (Liste dynamique selon les nouvelles tranches)
+  let groupVerdictHtml = "";
+  const penalizedGroup = (res.groupResults || []).filter(p => p.sips > 0 || p.shot).sort((a,b) => b.diff - a.diff);
+  if (penalizedGroup.length === 0) {
+    groupVerdictHtml = `<div class="w-full bg-emerald-500/20 border border-emerald-500/40 rounded-2xl p-3 text-center text-emerald-200 font-bold shadow-md mt-3">✨ Le groupe est resté soudé ! 0 gorgée.</div>`;
+  } else {
+    const listHtml = penalizedGroup.map(p => {
+      const penalty = p.shot ? "CUL SEC" : `${p.sips} gorgée${p.sips > 1 ? 's' : ''}`;
+      return `<div class="flex justify-between items-center text-sm border-b border-white/10 last:border-0 py-1.5"><span class="font-bold text-white">${esc(p.name)} <span class="text-white/40 text-[10px] font-normal">(${p.diff} pts d'erreur)</span></span> <span class="text-orange-300 font-black">${penalty}</span></div>`;
+    }).join("");
+    groupVerdictHtml = `<div class="w-full bg-orange-500/20 border border-orange-500/40 rounded-2xl p-4 text-left text-white shadow-md mt-3"><span class="block text-center text-orange-300 font-black uppercase text-[10px] tracking-widest mb-2">Pénalités du groupe 🍻</span>${listHtml}</div>`;
   }
 
   const recapList = connectedArr(r).map(p => {
@@ -241,7 +246,7 @@ function renderReveal(r, t) {
        return `<div class="flex justify-between items-center p-3 border-b border-white/5 last:border-0 ${isTarget ? 'bg-white/5 rounded-xl border-none mb-1' : ''}">
          <div class="flex items-center gap-3">
            <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-black text-white" style="background:${getAvatarGradient(p.name)}">${esc((p.name || "A")[0].toUpperCase())}</div>
-           <span class="text-sm font-bold text-white/80">${esc(p.name)} ${isTarget ? '(Note Réelle)' : ''}</span>
+           <span class="text-sm font-bold text-white/80">${esc(p.name)} ${isTarget ? '(La Cible)' : ''}</span>
          </div>
          <span class="font-black text-lg ${isTarget ? 'text-yellow-400' : 'text-white'}">${v !== undefined ? v + '%' : '---'}</span>
        </div>`;
@@ -256,15 +261,14 @@ function renderReveal(r, t) {
     </div>
   ` : "";
 
-  // CORRECTION ANIMATION (Anti-Bug Invisible) : Si l'animation est déjà terminée, on n'applique pas les classes opacity-0
   const detCls = S.animDone ? "flex flex-col gap-4" : "opacity-0 transition-opacity duration-700 flex flex-col gap-4";
   const blurCls = S.animDone ? "" : "blur-xl opacity-0 transition-all duration-[2000ms]";
   const avgVal = S.animDone ? `${res.average}%` : "0%";
 
   return `<div class="flex-1 flex flex-col gap-5 animate-up pb-8">
-    <div class="text-center pt-2"><p class="text-white/40 text-[10px] font-black uppercase tracking-widest">Comparaison des évaluations</p><h2 class="text-3xl font-black text-white tracking-tight mt-0.5">${esc(res.targetName)} face au groupe</h2></div>
+    <div class="text-center pt-2"><p class="text-white/40 text-[10px] font-black uppercase tracking-widest">Le verdict social</p><h2 class="text-3xl font-black text-white tracking-tight mt-0.5">${esc(res.targetName)} face au groupe</h2></div>
     
-    <div class="text-center animate-pop my-1 h-20 flex items-center justify-center"><span id="reveal-avg" class="font-display text-white font-black leading-none drop-shadow-[0_15px_40px_rgba(255,255,255,0.8)] ${blurCls} text-[24vw]">${avgVal}</span></div>
+    <div class="text-center animate-pop my-1 h-20 flex items-center justify-center"><span id="reveal-avg" class="font-display text-cyan-400 font-black leading-none drop-shadow-[0_15px_40px_rgba(34,211,238,0.8)] ${blurCls} text-[24vw]">${avgVal}</span></div>
     
     <div id="reveal-details" class="${detCls}">
       <div class="glass-card border rounded-3xl p-6 flex flex-col items-center shadow-2xl bg-black/70 border-white/10">
@@ -276,13 +280,14 @@ function renderReveal(r, t) {
           </div>
           <div class="w-px h-12 bg-white/10"></div>
           <div class="flex flex-col text-center">
-            <span class="text-white/40 text-[10px] font-black uppercase tracking-widest mb-0.5">Note de ${esc(res.targetName)}</span>
+            <span class="text-white/40 text-[10px] font-black uppercase tracking-widest mb-0.5">Note de la cible</span>
             <span class="text-4xl font-display font-black text-yellow-400 drop-shadow-md">${res.targetVote}%</span>
           </div>
         </div>
         
         <div class="w-full h-px bg-white/10 my-4"></div>
-        ${alcoholVerdictHtml}
+        ${targetVerdictHtml}
+        ${groupVerdictHtml}
         ${myStatsHtml}
       </div>
       
@@ -310,12 +315,20 @@ function renderStats(r, t) {
       <div class="absolute -top-10 -right-10 text-9xl opacity-10 blur-sm">👑</div>
       <span class="text-yellow-400 text-[10px] font-black uppercase tracking-widest block mb-2 relative z-10">Grand vainqueur</span>
       <p class="text-5xl font-black text-white relative z-10 drop-shadow-md">${esc(rk.winner.name)}</p>
+      <p class="text-white/80 text-sm mt-3 font-black uppercase tracking-widest relative z-10 bg-black/60 inline-block px-4 py-2 rounded-full border border-white/10">Le plus lucide : ${rk.winner.score} pts d'erreur !</p>
     </div>
     
     <div class="bg-black/80 backdrop-blur-xl rounded-[2rem] p-8 text-center shadow-[0_15px_50px_rgba(239,68,68,0.3)] border-2 border-red-500/50 relative overflow-hidden mt-4">
       <div class="absolute -top-10 -left-10 text-9xl opacity-10 blur-sm">🤡</div>
       <span class="text-red-400 text-[10px] font-black uppercase tracking-widest block mb-2 relative z-10">Dernière place</span>
       <p class="text-5xl font-black text-white relative z-10 drop-shadow-md">${esc(rk.loser.name)}</p>
+      <p class="text-white/80 text-sm mt-3 font-black uppercase tracking-widest relative z-10 bg-black/60 inline-block px-4 py-2 rounded-full border border-white/10">Le gros mouton : ${rk.loser.score} pts dans le vent !</p>
+    </div>
+
+    <!-- NOUVEAU BANDEAU : POUVOIR DU VAINQUEUR -->
+    <div class="bg-gradient-to-br from-purple-600/50 to-pink-600/50 backdrop-blur-xl rounded-[2rem] p-6 text-center shadow-[0_15px_50px_rgba(168,85,247,0.3)] border-2 border-purple-400/50 relative overflow-hidden mt-2">
+      <span class="text-purple-300 text-[10px] font-black uppercase tracking-widest block mb-1 relative z-10">La Sentence Finale ⚖️</span>
+      <p class="text-lg font-black text-white relative z-10 drop-shadow-md leading-snug">👑 <b>${esc(rk.winner.name)}</b> a tout pouvoir pour donner un gage ou imposer un cul sec à 🤡 <b>${esc(rk.loser.name)}</b> !</p>
     </div>
     
     <div class="mt-6">
@@ -343,7 +356,6 @@ export function render() {
   const active = document.activeElement;
   const activeId = active && active.id ? active.id : null;
   
-  // CORRECTION FOCUS : On ne bloque le rendu que si la phase du jeu n'a pas changé. Cela évite d'être coincé sur la page de vote !
   const viewKey = S.screen === "HOME" ? "HOME" : (S.room ? S.room.phase : "");
   if (activeId === "slider" && viewKey === lastViewKey) return; 
 
