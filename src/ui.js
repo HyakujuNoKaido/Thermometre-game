@@ -100,7 +100,7 @@ function renderHome(t) {
 }
 
 function renderLobby(r, t) { 
-  const isHost = S.pid === r.hostId; const ps = playersArr(r); const me = r.players[S.pid]; const myJoker = JOKERS[me.joker]; const others = connectedArr(r).filter(p => p.id !== S.pid);
+  const isHost = S.pid === r.hostId; const ps = playersArr(r); const me = r.players[S.pid]; const myJoker = JOKERS[me.joker];
   const currentMax = r.maxRounds || 10;
   
   let roundsSelectorUi = "";
@@ -120,7 +120,7 @@ function renderLobby(r, t) {
        : `<span class="text-emerald-400 font-black block text-lg mb-1 drop-shadow-md">Équipe prête au combat</span>`;
   const guestWaitingText = !isHost && connectedArr(r).length >= 2 
        ? `<span class="text-white/50 font-bold text-sm mt-1 animate-pulse block">En attente du signal de l'hôte...</span>` : "";
-  const hostControls = isHost ? `<button id="startB" class="${btnPrimary} mt-3" ${connectedArr(r).length < 2 ? 'disabled' : ''}>Lancer la partie</button>` : "";
+  const hostControls = isHost ? `<button id="startB" class="${btnPrimary} mt-3">Lancer la partie</button>` : "";
 
   return `<div class="flex-1 flex flex-col gap-4 animate-up pb-8">
     
@@ -168,7 +168,7 @@ function renderLobby(r, t) {
 }
 
 function renderVoting(r, t) { 
-  const q = r.question; const voted = (r.votes || {})[S.pid] !== undefined; const conn = connectedArr(r).length; const vc = Object.keys(r.votes || {}).length;
+  const q = r.question; const voted = (r.votes || {})[S.pid] !== undefined;
   const roundCounter = r.maxRounds > 0 ? `Question ${r.round} / ${r.maxRounds}` : `Question ${r.round}`;
   const amTarget = q.targetId === S.pid;
   
@@ -183,13 +183,13 @@ function renderVoting(r, t) {
          <span class="px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-white/10 border border-white/20 text-white shadow-inner">${roundCounter}</span>
       </div>
       <div class="mt-6">
-        ${amTarget ? `<span class="text-yellow-400 font-black text-xs uppercase tracking-widest block mb-3 animate-pulse drop-shadow-md">Cible désignée</span>` : ``}
+        ${amTarget ? `<span class="text-yellow-400 font-black text-xs uppercase tracking-widest block mb-3 animate-pulse drop-shadow-md">Évalue-toi toi-même ! 🤫</span>` : ``}
         <p class="text-2xl font-bold leading-relaxed text-white drop-shadow-lg">"${esc(q.text)}"</p>
       </div>
     </div>
     ${!voted ? `
       <div class="glass-card rounded-3xl p-6 flex flex-col gap-6 shadow-2xl border border-white/20 bg-black/60">
-        <div class="flex justify-between items-end"><span class="font-black text-white/50 text-[10px] uppercase tracking-widest">${amTarget ? 'Saisie de la valeur exacte' : 'Estimation personnelle'}</span><span id="sv" class="text-7xl font-display font-black text-white drop-shadow-xl">${S.voteValue}%</span></div>
+        <div class="flex justify-between items-end"><span class="font-black text-white/50 text-[10px] uppercase tracking-widest">${amTarget ? 'Sois honnête' : 'Tu penses à combien ?'}</span><span id="sv" class="text-7xl font-display font-black text-white drop-shadow-xl">${S.voteValue}%</span></div>
         
         <div class="relative h-20 rounded-full bg-black/80 shadow-[inset_0_5px_15px_rgba(0,0,0,0.5)] border-2 border-white/10 flex items-center px-2">
           <div id="fill" class="absolute left-2 h-16 rounded-full pointer-events-none" style="width: calc(${S.voteValue}% - 16px); background: ${t.b1}; transition: none !important;"></div>
@@ -206,91 +206,91 @@ function renderVoting(r, t) {
 function renderReveal(r, t) { 
   const res = r.result; if (!res) return "";
   const isHost = S.pid === r.hostId; 
-  
   const myVote = (r.votes || {})[S.pid];
+  
   let myStatsHtml = "";
-  if (S.pid === res.targetId) {
-      myStatsHtml = `<div class="mt-5 p-4 bg-yellow-500/20 border-2 border-yellow-500/50 rounded-2xl text-center shadow-[0_0_25px_rgba(250,204,21,0.2)] text-yellow-300 font-black uppercase tracking-widest text-xs">Cible du tour</div>`;
-  } else if (myVote !== undefined) {
+  if (S.pid !== res.targetId && myVote !== undefined) {
       const myDiff = Math.abs(myVote - res.targetVote);
-      const colorClass = myDiff <= 15 ? 'text-emerald-400' : (myDiff > 35 ? 'text-red-500' : 'text-orange-400');
       myStatsHtml = `
-        <div class="mt-5 w-full p-5 bg-black/80 border-2 border-white/10 rounded-2xl flex justify-between items-center shadow-inner">
-          <div class="flex flex-col text-left">
-            <span class="text-white/50 text-[10px] font-black uppercase tracking-widest mb-1">Estimation transmise</span>
-            <span class="text-white font-display font-black text-3xl">${myVote}%</span>
-          </div>
-          <div class="flex flex-col text-right">
-            <span class="text-white/50 text-[10px] font-black uppercase tracking-widest mb-1">Ton Écart</span>
-            <span class="${colorClass} font-display font-black text-3xl">${myDiff} pts</span>
-          </div>
+        <div class="mt-4 w-full p-4 bg-black/40 border border-white/10 rounded-2xl flex justify-between items-center shadow-inner">
+          <span class="text-white/60 text-xs font-bold uppercase tracking-wider">Ton Estimation : <b class="text-white text-sm">${myVote}%</b></span>
+          <span class="text-orange-400 text-xs font-bold uppercase tracking-wider">Ton Écart : <b class="text-white text-sm">${myDiff} pts</b></span>
         </div>
       `;
   }
 
-  const sortedPlayers = connectedArr(r).sort((a, b) => {
-      if(a.id === res.targetId) return -1; if(b.id === res.targetId) return 1; return 0;
-  });
-  
-  const recapList = sortedPlayers.map(p => {
+  // Construction graphique de la règle d'alcool appliquée sur l'écran
+  let alcoholVerdictHtml = "";
+  if (res.thomasShot) {
+    alcoholVerdictHtml = `
+      <div class="w-full bg-red-600/40 border border-red-500 rounded-2xl p-4 text-center text-white font-bold shadow-lg animate-pulse">
+        🚨 🤯 CUL SEC POUR ${res.targetName.toUpperCase()} ! <br>
+        <span class="text-xs text-white/80 font-medium normal-case">Il s'est totalement voilé la face avec un écart de ${res.thomasDiff}% avec le groupe.</span>
+      </div>`;
+  } else {
+    const loserNames = res.losers ? res.losers.map(l => l.name).join(" et ") : "Personne";
+    alcoholVerdictHtml = `
+      <div class="w-full bg-orange-500/20 border border-orange-500/40 rounded-2xl p-4 text-center text-orange-200 font-bold shadow-md">
+        📉 🍻 ${loserNames} se sont le plus éloignés ! <br>
+        <span class="text-white font-black uppercase text-lg tracking-wide block mt-1">Chacun prend 2 GORGÉES</span>
+      </div>`;
+  }
+
+  const recapList = connectedArr(r).map(p => {
        const v = (r.votes || {})[p.id];
        const isTarget = p.id === res.targetId;
-       let voteText = v !== undefined ? `${v}%` : "En attente";
-       if(isTarget) voteText = `${res.targetVote}%`;
-       
-       return `<div class="flex justify-between items-center p-3 border-b border-white/5 last:border-0 ${isTarget ? 'bg-white/5 rounded-xl border-none mb-2' : ''}">
+       return `<div class="flex justify-between items-center p-3 border-b border-white/5 last:border-0 ${isTarget ? 'bg-white/5 rounded-xl border-none mb-1' : ''}">
          <div class="flex items-center gap-3">
-           <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-black text-white ring-1 ring-white/30" style="background:${getAvatarGradient(p.name)}">${esc((p.name || "A")[0].toUpperCase())}</div>
-           <span class="text-sm font-bold ${isTarget ? 'text-white' : 'text-white/80'}">${esc(p.name)} ${isTarget ? '(Cible)' : ''}</span>
+           <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-black text-white" style="background:${getAvatarGradient(p.name)}">${esc((p.name || "A")[0].toUpperCase())}</div>
+           <span class="text-sm font-bold text-white/80">${esc(p.name)} ${isTarget ? '(Note Réelle)' : ''}</span>
          </div>
-         <span class="font-black text-lg ${isTarget ? 'text-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.8)]' : 'text-white'}">${voteText}</span>
+         <span class="font-black text-lg ${isTarget ? 'text-yellow-400' : 'text-white'}">${v !== undefined ? v + '%' : '---'}</span>
        </div>`;
   }).join("");
 
-  let sipsSentence = ""; let glowColor = "";
-  if (res.isClose) {
-      sipsSentence = `<span class="text-yellow-400 font-black block text-4xl uppercase tracking-tighter mt-1 drop-shadow-[0_0_25px_rgba(250,204,21,1)]">ÉCART MINIME<br><span class="text-xl text-white mt-2 block drop-shadow-md">Groupe pénalisé : ${res.sips} unité${res.sips > 1 ? 's' : ''}</span></span>`;
-      glowColor = "border-yellow-400/60 shadow-[0_0_80px_rgba(250,204,21,0.3)] bg-black/80";
-  } else {
-      sipsSentence = `<span class="text-red-500 font-black block text-4xl uppercase tracking-tighter mt-1 drop-shadow-[0_0_25px_rgba(239,68,68,1)]">ÉCART MAJEUR<br><span class="text-xl text-white mt-2 block drop-shadow-md">${esc(res.drinkerName)} pénalisé : ${res.sips} unité${res.sips > 1 ? 's' : ''}</span></span>`;
-      glowColor = "border-red-500/60 shadow-[0_0_80px_rgba(239,68,68,0.3)] bg-black/80";
-  }
-
   const hostControls = isHost ? `
-    <div class="flex flex-col gap-3 mt-4 w-full animate-fade">
+    <div class="flex flex-col gap-3 mt-4 w-full">
       <button id="nextB" class="${btnPrimary}">${r.maxRounds > 0 && r.round >= r.maxRounds ? 'Tableau final' : 'Question suivante'}</button>
-      <button onclick="window.endGame();" class="w-full py-4 px-6 rounded-2xl bg-red-600/30 hover:bg-red-600/50 border border-red-500/50 text-red-200 font-black text-xs uppercase tracking-widest transition-all shadow-md" style="touch-action: manipulation;">
-        Mettre fin à la partie
+      <button onclick="window.endGame();" class="w-full py-3.5 px-6 rounded-2xl bg-red-600/20 hover:bg-red-600/40 border border-red-500/30 text-red-300 font-bold text-xs uppercase tracking-widest transition-all shadow-md" style="touch-action: manipulation;">
+        Terminer la session
       </button>
     </div>
   ` : "";
 
-  return `<div class="flex-1 flex flex-col gap-6 animate-up pb-8">
-    <div class="text-center pt-2"><p class="text-white/50 text-[10px] font-black uppercase tracking-widest shadow-sm">Évaluation du groupe concernant</p><h2 class="text-4xl font-black uppercase text-white tracking-tight mt-1 drop-shadow-lg">${esc(res.targetName)}</h2></div>
+  return `<div class="flex-1 flex flex-col gap-5 animate-up pb-8">
+    <div class="text-center pt-2"><p class="text-white/40 text-[10px] font-black uppercase tracking-widest">Comparaison des évaluations</p><h2 class="text-3xl font-black text-white tracking-tight mt-0.5">${esc(res.targetName)} face au groupe</h2></div>
     
-    <div class="text-center animate-pop my-2 h-24 flex items-center justify-center"><span id="reveal-avg" class="font-display text-white font-black leading-none drop-shadow-[0_15px_40px_rgba(255,255,255,0.8)] blur-xl opacity-0 transition-all duration-[2000ms] text-[28vw]">0%</span></div>
+    <div class="text-center animate-pop my-1 h-20 flex items-center justify-center"><span id="reveal-avg" class="font-display text-white font-black leading-none drop-shadow-[0_15px_40px_rgba(255,255,255,0.8)] blur-xl opacity-0 transition-all duration-[2000ms] text-[24vw]">0%</span></div>
     
-    <div id="reveal-details" class="opacity-0 transition-opacity duration-700 flex flex-col gap-6">
-      <div class="glass-card border-2 rounded-3xl p-7 flex flex-col items-center text-center gap-5 ${glowColor}">
+    <div id="reveal-details" class="opacity-0 transition-opacity duration-700 flex flex-col gap-4">
+      <div class="glass-card border rounded-3xl p-6 flex flex-col items-center shadow-2xl bg-black/70 border-white/10">
+        
         <div class="flex w-full justify-around items-center">
-          <div class="flex flex-col"><span class="text-white/50 text-[10px] font-black uppercase tracking-widest mb-1">La Moyenne</span><span class="text-5xl font-display font-black text-white drop-shadow-xl">${res.average}%</span></div>
-          <div class="w-px h-16 bg-white/20"></div>
-          <div class="flex flex-col"><span class="text-white/50 text-[10px] font-black uppercase tracking-widest mb-1">Valeur Réelle</span><span class="text-5xl font-display font-black text-white drop-shadow-xl">${res.targetVote}%</span></div>
+          <div class="flex flex-col text-center">
+            <span class="text-white/40 text-[10px] font-black uppercase tracking-widest mb-0.5">La Moyenne</span>
+            <span class="text-4xl font-display font-black text-cyan-400 drop-shadow-md">${res.average}%</span>
+          </div>
+          <div class="w-px h-12 bg-white/10"></div>
+          <div class="flex flex-col text-center">
+            <span class="text-white/40 text-[10px] font-black uppercase tracking-widest mb-0.5">Note de ${esc(res.targetName)}</span>
+            <span class="text-4xl font-display font-black text-yellow-400 drop-shadow-md">${res.targetVote}%</span>
+          </div>
         </div>
-        <div class="w-full h-px bg-white/20"></div>
-        <div class="text-center leading-relaxed font-bold text-lg w-full bg-black/50 p-5 rounded-2xl border border-white/10 shadow-inner">${sipsSentence}</div>
+        
+        <div class="w-full h-px bg-white/10 my-4"></div>
+        ${alcoholVerdictHtml}
         ${myStatsHtml}
       </div>
       
-      <div class="w-full glass-card bg-black/60 rounded-3xl p-6 border border-white/20 shadow-2xl">
-        <h4 class="text-[10px] text-white/50 font-black uppercase tracking-widest mb-4 text-center">Positionnements enregistrés</h4>
-        <div class="max-h-48 overflow-y-auto scroll pr-2">
+      <div class="w-full glass-card bg-black/60 rounded-3xl p-5 border border-white/10 shadow-xl">
+        <h4 class="text-[10px] text-white/40 font-black uppercase tracking-widest mb-3 text-center">Scores individuels</h4>
+        <div class="max-h-44 overflow-y-auto scroll pr-2">
           ${recapList}
         </div>
       </div>
       
-      <div class="w-full glass-card bg-black/50 rounded-3xl p-6 text-center flex flex-col items-center justify-center shadow-2xl border border-white/20 mt-2">
-         <span class="text-white/70 font-bold mb-1">${isHost ? "Décision attendue de l'hôte" : "<svg class='w-6 h-6 text-white/50 animate-spin inline-block mb-2' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15'></path></svg><br>En attente de l'action suivante..."}</span>
+      <div class="w-full glass-card bg-black/50 rounded-3xl p-5 text-center flex flex-col items-center justify-center shadow-xl border border-white/10">
+         <span class="text-white/60 text-xs font-bold mb-1">${isHost ? "Action requise du gérant" : "En attente du prochain tour..."}</span>
          ${hostControls}
       </div>
     </div>
@@ -300,24 +300,22 @@ function renderReveal(r, t) {
 function renderStats(r, t) { 
   const rk = r.ranking; const isHost = S.pid === r.hostId;
   return `<div class="flex-1 flex flex-col gap-6 animate-up pb-8">
-    <div class="text-center pt-4"><h2 class="text-5xl font-black mb-2 text-white tracking-tighter drop-shadow-xl">FIN DE LA PARTIE</h2></div>
+    <div class="text-center pt-4"><h2 class="text-5xl font-black mb-2 text-white tracking-tighter drop-shadow-xl">FIN DE SESSION</h2></div>
     
     <div class="bg-black/80 backdrop-blur-xl rounded-[2rem] p-8 text-center shadow-[0_15px_50px_rgba(250,204,21,0.3)] border-2 border-yellow-500/50 relative overflow-hidden mt-4">
       <div class="absolute -top-10 -right-10 text-9xl opacity-10 blur-sm">👑</div>
-      <span class="text-yellow-400 text-[10px] font-black uppercase tracking-widest block mb-2 relative z-10">Premier classement</span>
+      <span class="text-yellow-400 text-[10px] font-black uppercase tracking-widest block mb-2 relative z-10">Grand vainqueur</span>
       <p class="text-5xl font-black text-white relative z-10 drop-shadow-md">${esc(rk.winner.name)}</p>
-      <p class="text-white/80 text-sm mt-3 font-black uppercase tracking-widest relative z-10 bg-black/60 inline-block px-4 py-2 rounded-full border border-white/10">${rk.winner.score} pts d'écart cumulés</p>
     </div>
     
     <div class="bg-black/80 backdrop-blur-xl rounded-[2rem] p-8 text-center shadow-[0_15px_50px_rgba(239,68,68,0.3)] border-2 border-red-500/50 relative overflow-hidden mt-4">
       <div class="absolute -top-10 -left-10 text-9xl opacity-10 blur-sm">🤡</div>
-      <span class="text-red-400 text-[10px] font-black uppercase tracking-widest block mb-2 relative z-10">Dernier classement</span>
+      <span class="text-red-400 text-[10px] font-black uppercase tracking-widest block mb-2 relative z-10">Dernière place</span>
       <p class="text-5xl font-black text-white relative z-10 drop-shadow-md">${esc(rk.loser.name)}</p>
-      <p class="text-white/80 text-sm mt-3 font-black uppercase tracking-widest relative z-10 bg-black/60 inline-block px-4 py-2 rounded-full border border-white/10">${rk.loser.score} pts d'écart cumulés</p>
     </div>
     
     <div class="mt-6">
-      ${isHost ? `<button id="restartB" class="${btnPrimary} py-5 text-xl">Nouvelle session</button>` : `<div class="glass-card bg-black/60 rounded-3xl p-6 text-center text-white/70 font-black uppercase tracking-widest shadow-2xl border border-white/20">Session clôturée</div>`}
+      ${isHost ? `<button id="restartB" class="${btnPrimary} py-5 text-xl">Relancer une session</button>` : `<div class="glass-card bg-black/60 rounded-3xl p-6 text-center text-white/70 font-black uppercase tracking-widest shadow-2xl border border-white/20">Session clôturée</div>`}
     </div>
   </div>`; 
 }
