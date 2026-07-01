@@ -77,7 +77,11 @@ function header() {
     </div>
     <div class="flex gap-2 items-center">
       ${!S.room ? `<button onclick="window.toggleRules()" class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white font-black border border-white/30 active:scale-95 transition-transform shadow-lg">?</button>` : ""}
-      ${S.room && S.code ? `<span class="text-xs font-bold bg-black/40 backdrop-blur-md border border-white/20 px-3 py-1.5 rounded-full shadow-inner text-white">${t.emoji} ${S.room.mode}</span> <button onclick="window.quitGame()" class="px-3 py-1.5 rounded-full bg-red-500/20 text-red-400 font-bold border border-red-500/40 text-xs active:scale-95 transition-transform shadow-lg">🚪</button>` : ""}
+      ${S.room && S.code ? `
+        <span class="text-xs font-black bg-emerald-500 text-white px-3 py-1.5 rounded-full shadow-md tracking-wider">🎯 ${S.code}</span> 
+        <span class="text-xs font-bold bg-black/40 backdrop-blur-md border border-white/20 px-3 py-1.5 rounded-full shadow-inner text-white">${t.emoji} ${S.room.mode}</span> 
+        <button onclick="window.quitGame()" class="px-3 py-1.5 rounded-full bg-red-500/20 text-red-400 font-bold border border-red-500/40 text-xs active:scale-95 transition-transform shadow-lg">🚪</button>
+      ` : ""}
     </div>
   </header>`; 
 }
