@@ -20,7 +20,7 @@ function bindInputs() {
 
   const sl = g("slider");
   if (sl) {
-    sl.value = S.voteValue; // CORRECTION : Restaure la valeur exacte après refresh
+    sl.value = S.voteValue; 
     UI.updateThermometerColor(S.voteValue);
     let lastStep = Math.round(S.voteValue / 10);
     sl.oninput = e => {
@@ -38,19 +38,28 @@ UI.onAfterRender(function() {
   if (S.room && S.room.phase === "REVEAL" && !S.animDone) {
     S.animDone = true;
     const avgEl = document.getElementById("reveal-avg");
-    if (avgEl) {
-      let current = 0; const target = S.room.result.average;
+    const detailsEl = document.getElementById("reveal-details");
+    
+    // CORRECTION : Animation ultra sécurisée qui ne fige plus jamais
+    if (avgEl && detailsEl) {
+      let current = 0; 
+      const target = Number(S.room.result?.average) || 0;
+      
       const interval = setInterval(() => {
-        current += target / 40;
+        current += Math.max(1, target / 40);
         if (current >= target) {
+          current = target;
           clearInterval(interval);
-          document.getElementById("reveal-details").classList.remove("opacity-0");
-          if (S.room.result.diff <= 15 && typeof confetti === 'function') confetti({ particleCount: 150 });
-          if (S.room.result.diff > 35) document.body.classList.add('shake-violent');
+          detailsEl.classList.remove("opacity-0");
+          
+          // Nouvelles règles : Tremblement de l'écran SI la cible prend un CUL SEC
+          if (S.room.result?.thomasShot) {
+             document.body.classList.add('shake-violent');
+          }
         }
         avgEl.textContent = Math.round(current) + "%";
         avgEl.classList.remove("opacity-0", "blur-xl");
-      }, 50);
+      }, 40);
     }
   } else if (S.room && S.room.phase !== "REVEAL") {
     S.animDone = false;
