@@ -100,6 +100,37 @@ export async function changeMaxRounds(num) { if(S.pid !== S.room.hostId) return;
 export function pickMode(m) { S.pendingMode = m; render(); }
 export async function chooseMode(m) { vibrate(10); await S.roomRef.update({ mode: m }); }
 
+/* --- GESTION DES JOKERS --- */
+export async function toggleJoker() {
+  const me = S.room.players[S.pid];
+  if (!me) return;
+  vibrate(10);
+  await S.roomRef.update({ [`players/${S.pid}/jokerUsed`]: !me.jokerUsed });
+}
+
+export async function cycleJoker(pid) {
+  if (S.pid !== S.room.hostId) return;
+  vibrate(10);
+  const p = S.room.players[pid];
+  if (!p) return;
+  const keys = Object.keys(JOKERS);
+  let idx = keys.indexOf(p.joker);
+  idx = (idx + 1) % keys.length;
+  await S.roomRef.update({ [`players/${pid}/joker`]: keys[idx] });
+}
+
+export async function randomizeJokers() {
+  if (S.pid !== S.room.hostId) return;
+  vibrate(20);
+  const updates = {};
+  Object.keys(S.room.players).forEach(id => {
+    updates[`players/${id}/joker`] = rand(Object.keys(JOKERS));
+    updates[`players/${id}/jokerUsed`] = false;
+  });
+  await S.roomRef.update(updates);
+}
+/* -------------------------- */
+
 async function promoteHostIfNeeded() { 
   const r = S.room; if (!r || !r.players || promoting || r.hostId === S.pid) return; 
   const host = r.players[r.hostId];
@@ -107,10 +138,7 @@ async function promoteHostIfNeeded() {
     const conn = connectedArr(r).sort((a, b) => a.id < b.id ? -1 : 1); 
     if (conn.length > 0 && conn[0].id === S.pid) { 
       promoting = true;
-      try {
-        await S.roomRef.update({ hostId: S.pid }); 
-        toast("Vous êtes le nouvel hôte de la partie", true); 
-      } catch(e) {} finally { promoting = false; }
+      try { await S.roomRef.update({ hostId: S.pid }); toast("Vous êtes le nouvel hôte de la partie", true); } catch(e) {} finally { promoting = false; }
     } 
   } 
 }
@@ -123,14 +151,12 @@ export async function startRound() {
   const expectedVoters = {}; connectedArr(r).forEach(p => expectedVoters[p.id] = true);
   
   const upd = { phase: "VOTING", round: (r.round || 0) + 1, question: {text: qText, targetId: t.id, targetName: t.name}, expectedVoters, votes: null, result: null, startedAt: ServerValue.TIMESTAMP };
-  Object.keys(r.players).forEach(id => { upd[`players/${id}/dbl`] = false; });
   await S.roomRef.update(upd);
 }
 
 export async function nextRound() { const r = S.room; if (r.maxRounds > 0 && r.round >= r.maxRounds) return endGame(); startRound(); }
 export async function vote() { vibrate([30, 50]); await db.ref(`rooms/${S.code}/votes/${S.pid}`).set(Number(S.voteValue)); }
 
-// Fonction pour évaluer les gorgées selon l'écart (Tranches de 10%)
 function getPenalty(diff) {
   if (diff <= 10) return { sips: 0, shot: false };
   if (diff <= 20) return { sips: 1, shot: false };
@@ -154,57 +180,36 @@ export async function hostAutoReveal() {
     const tid = r.question.targetId; 
     const tv = votes[tid] !== undefined ? votes[tid] : 50; 
     
-    // 1. LA VÉRITÉ = Moyenne du groupe
     const nonTargetVotes = Object.keys(votes).filter(id => id !== tid).map(id => votes[id]);
     const average = nonTargetVotes.length > 0 
       ? Math.round(nonTargetVotes.reduce((a, b) => a + b, 0) / nonTargetVotes.length) 
       : 50;
     
-    // 2. Punition de la Cible
     const targetDiff = Math.abs(tv - average);
     const targetPenalty = getPenalty(targetDiff);
 
-    // 3. Punition du Groupe
     const groupResults = [];
     Object.keys(votes).forEach(id => {
       if (id === tid || !r.players[id]) return;
       const diff = Math.abs(votes[id] - average);
       const penalty = getPenalty(diff);
-      groupResults.push({
-        id,
-        name: r.players[id].name,
-        diff,
-        sips: penalty.sips,
-        shot: penalty.shot
-      });
+      groupResults.push({ id, name: r.players[id].name, diff, sips: penalty.sips, shot: penalty.shot });
     });
 
     const result = { 
-      average: average, 
-      targetVote: tv, 
-      targetName: r.question.targetName || "La cible", 
-      targetId: tid, 
-      targetDiff: targetDiff,
-      targetSips: targetPenalty.sips,
-      targetShot: targetPenalty.shot, 
+      average: average, targetVote: tv, targetName: r.question.targetName || "La cible", 
+      targetId: tid, targetDiff: targetDiff, targetSips: targetPenalty.sips, targetShot: targetPenalty.shot, 
       groupResults: groupResults
     };
     
     const updates = { phase: "REVEAL", result: result };
 
-    // Ajout des écarts au compteur de points de chaque joueur
     updates[`players/${tid}/score`] = (r.players[tid].score || 0) + targetDiff;
-    groupResults.forEach(p => {
-      updates[`players/${p.id}/score`] = (r.players[p.id].score || 0) + p.diff;
-    });
+    groupResults.forEach(p => { updates[`players/${p.id}/score`] = (r.players[p.id].score || 0) + p.diff; });
     
     await S.roomRef.update(updates);
 
-  } catch (err) {
-    console.error("Erreur mécanique de calcul :", err);
-  } finally {
-    revealing = false;
-  }
+  } catch (err) { console.error("Erreur mécanique :", err); } finally { revealing = false; }
 }
 
 export async function endGame() { 
