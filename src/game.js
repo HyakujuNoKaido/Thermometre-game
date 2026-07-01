@@ -28,7 +28,7 @@ export async function createRoom() {
   try {
     let code; for (let i=0; i<5; i++) { code = genCode(); const s = await db.ref("rooms/" + code).get(); if (!s.exists()) break; }
     const pid = genId();
-    await db.ref("rooms/" + code).set({ mode: S.pendingMode, phase: "LOBBY", round: 0, hostId: pid, maxRounds: 10, timer: 0, createdAt: ServerValue.TIMESTAMP, players: { [pid]: { name: S.name.trim().slice(0, 20), joker: rand(Object.keys(JOKERS)), score: 0, jokerUsed: false, connected: true } } });
+    await db.ref("rooms/" + code).set({ mode: S.pendingMode, phase: "LOBBY", round: 0, hostId: pid, maxRounds: 10, timer: 0, createdAt: ServerValue.TIMESTAMP, players: { [pid]: { name: S.name.trim().slice(0, 20), joker: rand(Object.keys(JOKERS)), score: 0, jokerConsumed: false, jokerActive: false, connected: true } } });
     sessionStorage.setItem('thermo_code', code); sessionStorage.setItem('thermo_pid', pid);
     enterRoom(code, pid);
   } catch(e) { toast("Erreur de connexion au serveur."); } finally { S.isLoading = false; if (!S.room) render(); }
@@ -54,18 +54,15 @@ export async function joinRoom() {
       toast("Te revoilà dans la partie !", true);
     } else {
       pid = genId();
-      const newPlayer = { name: S.name.trim().slice(0, 20), joker: rand(Object.keys(JOKERS)), score: 0, jokerUsed: false, connected: true };
+      const newPlayer = { name: S.name.trim().slice(0, 20), joker: rand(Object.keys(JOKERS)), score: 0, jokerConsumed: false, jokerActive: false, connected: true };
       const updates = { [`players/${pid}`]: newPlayer };
       
-      if (room.phase === "VOTING" && room.expectedVoters) {
-        updates[`expectedVoters/${pid}`] = true;
-      }
+      if (room.phase === "VOTING" && room.expectedVoters) updates[`expectedVoters/${pid}`] = true;
       await db.ref("rooms/" + code).update(updates);
       toast("Bienvenue dans le salon !", true);
     }
 
-    sessionStorage.setItem('thermo_code', code); 
-    sessionStorage.setItem('thermo_pid', pid);
+    sessionStorage.setItem('thermo_code', code); sessionStorage.setItem('thermo_pid', pid);
     enterRoom(code, pid);
   } catch (e) { toast("Erreur réseau."); } finally { S.isLoading = false; if (!S.room) render(); }
 }
@@ -78,9 +75,7 @@ function enterRoom(code, pid) {
     const room = snap.val();
     if (!room || !room.players || !room.players[S.pid]) { detach(); S.screen = "HOME"; S.room = null; toast("Salon fermé ou déconnexion."); render(); return; }
     S.room = room; S.screen = "ROOM"; 
-    promoteHostIfNeeded(); 
-    hostAutoReveal(); 
-    render();
+    promoteHostIfNeeded(); hostAutoReveal(); render();
   });
 }
 
@@ -103,9 +98,37 @@ export async function chooseMode(m) { vibrate(10); await S.roomRef.update({ mode
 /* --- GESTION DES JOKERS --- */
 export async function toggleJoker() {
   const me = S.room.players[S.pid];
-  if (!me) return;
+  if (!me || me.jokerConsumed || !me.joker) return;
   vibrate(10);
-  await S.roomRef.update({ [`players/${S.pid}/jokerUsed`]: !me.jokerUsed });
+  await S.roomRef.update({ [`players/${S.pid}/jokerActive`]: !me.jokerActive });
+}
+
+export async function stealJoker(targetId) {
+  const r = S.room;
+  const targetP = r.players[targetId];
+  if (!targetP || targetP.jokerConsumed || !targetP.joker) return toast("Impossible de voler ce joueur.");
+  vibrate(20);
+  await S.roomRef.update({
+    [`players/${S.pid}/joker`]: targetP.joker,
+    [`players/${S.pid}/jokerActive`]: false,
+    [`players/${S.pid}/jokerConsumed`]: false,
+    [`players/${targetId}/joker`]: null,
+    [`players/${targetId}/jokerActive`]: false,
+    [`players/${targetId}/jokerConsumed`]: true
+  });
+  toast("Pouvoir volé avec succès ! 🥷", true);
+}
+
+export async function randomizeJokers() {
+  if (S.pid !== S.room.hostId) return;
+  vibrate(20);
+  const updates = {};
+  Object.keys(S.room.players).forEach(id => {
+    updates[`players/${id}/joker`] = rand(Object.keys(JOKERS));
+    updates[`players/${id}/jokerConsumed`] = false;
+    updates[`players/${id}/jokerActive`] = false;
+  });
+  await S.roomRef.update(updates);
 }
 
 export async function cycleJoker(pid) {
@@ -116,18 +139,7 @@ export async function cycleJoker(pid) {
   const keys = Object.keys(JOKERS);
   let idx = keys.indexOf(p.joker);
   idx = (idx + 1) % keys.length;
-  await S.roomRef.update({ [`players/${pid}/joker`]: keys[idx] });
-}
-
-export async function randomizeJokers() {
-  if (S.pid !== S.room.hostId) return;
-  vibrate(20);
-  const updates = {};
-  Object.keys(S.room.players).forEach(id => {
-    updates[`players/${id}/joker`] = rand(Object.keys(JOKERS));
-    updates[`players/${id}/jokerUsed`] = false;
-  });
-  await S.roomRef.update(updates);
+  await S.roomRef.update({ [`players/${pid}/joker`]: keys[idx], [`players/${pid}/jokerConsumed`]: false, [`players/${pid}/jokerActive`]: false });
 }
 /* -------------------------- */
 
@@ -151,6 +163,8 @@ export async function startRound() {
   const expectedVoters = {}; connectedArr(r).forEach(p => expectedVoters[p.id] = true);
   
   const upd = { phase: "VOTING", round: (r.round || 0) + 1, question: {text: qText, targetId: t.id, targetName: t.name}, expectedVoters, votes: null, result: null, startedAt: ServerValue.TIMESTAMP };
+  // On remet l'activation à false pour le nouveau tour
+  Object.keys(r.players).forEach(id => { upd[`players/${id}/jokerActive`] = false; });
   await S.roomRef.update(upd);
 }
 
@@ -177,36 +191,85 @@ export async function hostAutoReveal() {
     
     revealing = true; 
 
+    // Enregistrement des Jokers activés ce tour
+    const usedJokersLog = [];
+    Object.keys(r.players).forEach(id => {
+       const p = r.players[id];
+       if (p.jokerActive && p.joker && !p.jokerConsumed) {
+          usedJokersLog.push({ id, name: p.name, joker: p.joker });
+       }
+    });
+
+    const hasJoker = (id, jName) => {
+        const p = r.players[id];
+        return p && p.jokerActive && p.joker === jName && !p.jokerConsumed;
+    };
+
     const tid = r.question.targetId; 
     const tv = votes[tid] !== undefined ? votes[tid] : 50; 
     
+    // 1. LA VÉRITÉ = Moyenne du groupe
     const nonTargetVotes = Object.keys(votes).filter(id => id !== tid).map(id => votes[id]);
-    const average = nonTargetVotes.length > 0 
-      ? Math.round(nonTargetVotes.reduce((a, b) => a + b, 0) / nonTargetVotes.length) 
-      : 50;
+    const average = nonTargetVotes.length > 0 ? Math.round(nonTargetVotes.reduce((a, b) => a + b, 0) / nonTargetVotes.length) : 50;
     
+    // 2. Punition de la Cible
     const targetDiff = Math.abs(tv - average);
     const targetPenalty = getPenalty(targetDiff);
+    let targetSips = targetPenalty.sips;
+    let targetShot = targetPenalty.shot;
+    let targetMsg = "";
 
+    // Effet des Jokers sur la cible
+    if (hasJoker(tid, "SHIELD") || hasJoker(tid, "MIRROR")) {
+        targetSips = 0; targetShot = false; targetMsg = "Intouchable grâce au pouvoir !";
+    } else if (hasJoker(tid, "DOUBLE")) {
+        targetSips *= 2; 
+        targetMsg = targetDiff <= 10 ? "Pari réussi (0 gorgée) !" : "Pari raté, gorgées doublées !";
+    } else {
+        if (targetDiff <= 10) targetMsg = "Lucidité parfaite";
+        else if (targetDiff <= 20) targetMsg = "Léger déni";
+        else if (targetDiff <= 30) targetMsg = "À l'ouest";
+        else if (targetDiff <= 40) targetMsg = "Gros déni";
+        else targetMsg = "Voilage de face total";
+    }
+
+    // 3. Punition du Groupe
     const groupResults = [];
     Object.keys(votes).forEach(id => {
       if (id === tid || !r.players[id]) return;
       const diff = Math.abs(votes[id] - average);
-      const penalty = getPenalty(diff);
+      let penalty = getPenalty(diff);
+      
+      // Effet des Jokers sur les autres joueurs
+      if (hasJoker(id, "SHIELD") || hasJoker(id, "MIRROR")) {
+          penalty.sips = 0; penalty.shot = false;
+      } else if (hasJoker(id, "DOUBLE")) {
+          penalty.sips *= 2;
+      }
+
       groupResults.push({ id, name: r.players[id].name, diff, sips: penalty.sips, shot: penalty.shot });
     });
 
     const result = { 
       average: average, targetVote: tv, targetName: r.question.targetName || "La cible", 
-      targetId: tid, targetDiff: targetDiff, targetSips: targetPenalty.sips, targetShot: targetPenalty.shot, 
-      groupResults: groupResults
+      targetId: tid, targetDiff: targetDiff, targetSips: targetSips, targetShot: targetShot, targetMsg: targetMsg,
+      groupResults: groupResults, usedJokersLog: usedJokersLog
     };
     
     const updates = { phase: "REVEAL", result: result };
 
+    // Ajout des écarts au compteur de points de chaque joueur
     updates[`players/${tid}/score`] = (r.players[tid].score || 0) + targetDiff;
     groupResults.forEach(p => { updates[`players/${p.id}/score`] = (r.players[p.id].score || 0) + p.diff; });
     
+    // Consommation définitive des Jokers activés ce tour
+    Object.keys(r.players).forEach(id => {
+       if (r.players[id].jokerActive && !r.players[id].jokerConsumed) {
+          updates[`players/${id}/jokerConsumed`] = true;
+          updates[`players/${id}/jokerActive`] = false;
+       }
+    });
+
     await S.roomRef.update(updates);
 
   } catch (err) { console.error("Erreur mécanique :", err); } finally { revealing = false; }
@@ -222,6 +285,12 @@ export async function endGame() {
 export async function restart() { 
   const r = S.room; if (S.pid !== r.hostId) return; 
   const upd = { phase: "LOBBY", round: 0, votes: null, result: null, ranking: null };
-  Object.keys(r.players).forEach(id => { upd[`players/${id}/score`] = 0; upd[`players/${id}/jokerUsed`] = false; }); 
+  // Lors d'un restart, on redonne de nouveaux jokers neufs à tout le monde
+  Object.keys(r.players).forEach(id => { 
+      upd[`players/${id}/score`] = 0; 
+      upd[`players/${id}/jokerConsumed`] = false; 
+      upd[`players/${id}/jokerActive`] = false; 
+      upd[`players/${id}/joker`] = rand(Object.keys(JOKERS));
+  }); 
   await S.roomRef.update(upd); 
 }
