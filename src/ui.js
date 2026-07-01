@@ -120,10 +120,9 @@ function renderLobby(r, t) {
        : `<span class="text-emerald-400 font-black block text-lg mb-1 drop-shadow-md">Équipe prête au combat</span>`;
   const guestWaitingText = !isHost && connectedArr(r).length >= 2 
        ? `<span class="text-white/50 font-bold text-sm mt-1 animate-pulse block">En attente du signal de l'hôte...</span>` : "";
-  const hostControls = isHost ? `<button id="startB" class="${btnPrimary} mt-3">Lancer la partie</button>` : "";
+  const hostControls = isHost ? `<button id="startB" class="${btnPrimary} mt-3" ${connectedArr(r).length < 2 ? 'disabled' : ''}>Lancer la partie</button>` : "";
 
   return `<div class="flex-1 flex flex-col gap-4 animate-up pb-8">
-    
     <div class="glass-card rounded-3xl p-5 text-center border border-white/20 bg-black/50 shadow-xl flex flex-col items-center justify-center gap-1">
       <span class="text-[10px] font-black uppercase tracking-widest text-white/40">Code du salon</span>
       <span class="text-4xl font-display font-black text-emerald-400 tracking-widest my-1 select-all">${S.code}</span>
@@ -163,7 +162,6 @@ function renderLobby(r, t) {
        ${guestWaitingText}
        ${hostControls}
     </div>
-
   </div>`;
 }
 
@@ -193,7 +191,8 @@ function renderVoting(r, t) {
         
         <div class="relative h-20 rounded-full bg-black/80 shadow-[inset_0_5px_15px_rgba(0,0,0,0.5)] border-2 border-white/10 flex items-center px-2">
           <div id="fill" class="absolute left-2 h-16 rounded-full pointer-events-none" style="width: calc(${S.voteValue}% - 16px); background: ${t.b1}; transition: none !important;"></div>
-          <input type="range" id="slider" min="0" max="100" value="${S.voteValue}" class="thermo-slider absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" style="touch-action: pan-x;" />
+          <!-- CORRECTION FOCUS : Les onpointerup, ontouchend et onmouseup retirent le blocage tactile immédiatement après le glissement -->
+          <input type="range" id="slider" min="0" max="100" value="${S.voteValue}" class="thermo-slider absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" style="touch-action: pan-x;" onpointerup="this.blur()" ontouchend="this.blur()" onmouseup="this.blur()" />
           <div id="thumb-bubble" class="thumb-bubble font-display pointer-events-none z-20" style="left:${S.voteValue}%;background:${t.b1};border-top-color:${t.b1}; transition: none !important;">${S.voteValue}%</div>
         </div>
 
@@ -219,20 +218,20 @@ function renderReveal(r, t) {
       `;
   }
 
-  // Construction graphique de la règle d'alcool appliquée sur l'écran
   let alcoholVerdictHtml = "";
   if (res.thomasShot) {
     alcoholVerdictHtml = `
       <div class="w-full bg-red-600/40 border border-red-500 rounded-2xl p-4 text-center text-white font-bold shadow-lg animate-pulse">
         🚨 🤯 CUL SEC POUR ${res.targetName.toUpperCase()} ! <br>
-        <span class="text-xs text-white/80 font-medium normal-case">Il s'est totalement voilé la face avec un écart de ${res.thomasDiff}% avec le groupe.</span>
+        <span class="text-xs text-white/80 font-medium normal-case">Il s'est voilé la face avec ${res.thomasDiff} pts d'écart avec le groupe.</span>
       </div>`;
   } else {
-    const loserNames = res.losers ? res.losers.map(l => l.name).join(" et ") : "Personne";
+    const loserNames = res.losers && res.losers.length > 0 ? res.losers.map(l => l.name).join(" et ") : "Personne";
     alcoholVerdictHtml = `
       <div class="w-full bg-orange-500/20 border border-orange-500/40 rounded-2xl p-4 text-center text-orange-200 font-bold shadow-md">
-        📉 🍻 ${loserNames} se sont le plus éloignés ! <br>
-        <span class="text-white font-black uppercase text-lg tracking-wide block mt-1">Chacun prend 2 GORGÉES</span>
+        📉 🍻 ${loserNames} ! <br>
+        <span class="text-white font-black uppercase text-lg tracking-wide block mt-1">VOUS PRENEZ 2 GORGÉES</span>
+        <span class="text-xs text-white/60 font-medium normal-case block mt-1">Vous étiez les plus loin de la note de ${esc(res.targetName)}.</span>
       </div>`;
   }
 
@@ -257,12 +256,17 @@ function renderReveal(r, t) {
     </div>
   ` : "";
 
+  // CORRECTION ANIMATION (Anti-Bug Invisible) : Si l'animation est déjà terminée, on n'applique pas les classes opacity-0
+  const detCls = S.animDone ? "flex flex-col gap-4" : "opacity-0 transition-opacity duration-700 flex flex-col gap-4";
+  const blurCls = S.animDone ? "" : "blur-xl opacity-0 transition-all duration-[2000ms]";
+  const avgVal = S.animDone ? `${res.average}%` : "0%";
+
   return `<div class="flex-1 flex flex-col gap-5 animate-up pb-8">
     <div class="text-center pt-2"><p class="text-white/40 text-[10px] font-black uppercase tracking-widest">Comparaison des évaluations</p><h2 class="text-3xl font-black text-white tracking-tight mt-0.5">${esc(res.targetName)} face au groupe</h2></div>
     
-    <div class="text-center animate-pop my-1 h-20 flex items-center justify-center"><span id="reveal-avg" class="font-display text-white font-black leading-none drop-shadow-[0_15px_40px_rgba(255,255,255,0.8)] blur-xl opacity-0 transition-all duration-[2000ms] text-[24vw]">0%</span></div>
+    <div class="text-center animate-pop my-1 h-20 flex items-center justify-center"><span id="reveal-avg" class="font-display text-white font-black leading-none drop-shadow-[0_15px_40px_rgba(255,255,255,0.8)] ${blurCls} text-[24vw]">${avgVal}</span></div>
     
-    <div id="reveal-details" class="opacity-0 transition-opacity duration-700 flex flex-col gap-4">
+    <div id="reveal-details" class="${detCls}">
       <div class="glass-card border rounded-3xl p-6 flex flex-col items-center shadow-2xl bg-black/70 border-white/10">
         
         <div class="flex w-full justify-around items-center">
@@ -339,7 +343,9 @@ export function render() {
   const active = document.activeElement;
   const activeId = active && active.id ? active.id : null;
   
-  if (activeId === "slider") return; 
+  // CORRECTION FOCUS : On ne bloque le rendu que si la phase du jeu n'a pas changé. Cela évite d'être coincé sur la page de vote !
+  const viewKey = S.screen === "HOME" ? "HOME" : (S.room ? S.room.phase : "");
+  if (activeId === "slider" && viewKey === lastViewKey) return; 
 
   const selStart = active && 'selectionStart' in active ? active.selectionStart : null;
   const selEnd = active && 'selectionEnd' in active ? active.selectionEnd : null;
@@ -347,7 +353,6 @@ export function render() {
   app.innerHTML = html;
   app.__html = html;
 
-  const viewKey = S.screen === "HOME" ? "HOME" : (S.room ? S.room.phase : "");
   if (viewKey !== lastViewKey) {
     lastViewKey = viewKey;
     const root = app.lastElementChild;
