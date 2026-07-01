@@ -18,10 +18,11 @@ function bindInputs() {
   if (g("nextB")) g("nextB").onclick = Game.nextRound;
   if (g("restartB")) g("restartB").onclick = Game.restart;
 
-  const sl = g("slider");
+const sl = g("slider");
   if (sl) {
-    UI.updateThermometerColor(sl.value);
-    let lastStep = Math.round(sl.value / 10);
+    sl.value = S.voteValue; // CORRECTION : Restaure la valeur exacte après refresh
+    UI.updateThermometerColor(S.voteValue);
+    let lastStep = Math.round(S.voteValue / 10);
     sl.oninput = e => {
       S.voteValue = e.target.value;
       UI.updateThermometerColor(e.target.value);
@@ -29,7 +30,6 @@ function bindInputs() {
       if (step !== lastStep) { lastStep = step; if (navigator.vibrate) try { navigator.vibrate(8); } catch (_) {} }
     };
   }
-}
 
 UI.onAfterRender(function() {
   bindInputs();
