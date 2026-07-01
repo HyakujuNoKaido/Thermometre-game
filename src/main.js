@@ -40,30 +40,29 @@ UI.onAfterRender(function() {
     const avgEl = document.getElementById("reveal-avg");
     const detailsEl = document.getElementById("reveal-details");
     
-    // CORRECTION : Animation ultra sécurisée qui ne fige plus jamais
     if (avgEl && detailsEl) {
       let current = 0; 
       const target = Number(S.room.result?.average) || 0;
       
-      const interval = setInterval(() => {
-        current += Math.max(1, target / 40);
-        if (current >= target) {
-          current = target;
-          clearInterval(interval);
+      if (target === 0) {
+          avgEl.textContent = "0%";
+          avgEl.classList.remove("opacity-0", "blur-xl");
           detailsEl.classList.remove("opacity-0");
-          
-          // Nouvelles règles : Tremblement de l'écran SI la cible prend un CUL SEC
-          if (S.room.result?.thomasShot) {
-             document.body.classList.add('shake-violent');
-          }
-        }
-        avgEl.textContent = Math.round(current) + "%";
-        avgEl.classList.remove("opacity-0", "blur-xl");
-      }, 40);
+      } else {
+          const interval = setInterval(() => {
+            current += Math.max(1, target / 40);
+            if (current >= target) {
+              current = target;
+              clearInterval(interval);
+              detailsEl.classList.remove("opacity-0");
+            }
+            avgEl.textContent = Math.round(current) + "%";
+            avgEl.classList.remove("opacity-0", "blur-xl");
+          }, 30);
+      }
     }
   } else if (S.room && S.room.phase !== "REVEAL") {
     S.animDone = false;
-    document.body.classList.remove('shake-violent');
   }
 });
 
