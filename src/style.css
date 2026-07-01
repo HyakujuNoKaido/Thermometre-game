@@ -1,4 +1,4 @@
-@import url('[https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700;800&family=Outfit:wght@700;900&display=swap](https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700;800&family=Outfit:wght@700;900&display=swap)');
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&family=Outfit:wght@700;900&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -13,12 +13,13 @@ html, body {
   position: fixed;  /* Fixe l'app pour éviter les sauts */
   margin: 0;
   background: #040B16;
-  font-family: 'Baloo 2', cursive, sans-serif;
+  font-family: 'Nunito', sans-serif;
   color: #fff;
   -webkit-font-smoothing: antialiased;
 }
 
 * { -webkit-tap-highlight-color: transparent; }
+.font-roast { font-family: 'Nunito', sans-serif; }
 .font-display { font-family: 'Outfit', sans-serif; }
 
 /* Safe areas (notch) */
