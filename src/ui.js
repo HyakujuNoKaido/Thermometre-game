@@ -10,7 +10,7 @@ export function toast(msg, ok=false) {
 
 export function toggleRules() {
   const modal = document.getElementById('rulesModal');
-if (!modal) return;
+  if (!modal) return;
   if (modal.classList.contains('hidden')) {
     modal.classList.remove('hidden');
     requestAnimationFrame(() => modal.classList.add('sheet-open'));
@@ -52,7 +52,7 @@ export function updateThermometerColor(val) {
   fill.style.width = `calc(${val}% - 16px)`; fill.style.background = color; fill.style.boxShadow = `0 0 40px ${color}`;
   const bub = document.getElementById("thumb-bubble");
   if (bub) { bub.textContent = val + "%"; bub.style.left = val + "%"; bub.style.background = color; bub.style.borderTopColor = color; }
-  if (sv) sv.textContent = val + "%"; // CORRECTION : Le gros texte se met maintenant à jour
+  if (sv) sv.textContent = val + "%";
 }
 
 const btnPrimary = "w-full py-4 px-8 rounded-2xl btn-gold font-extrabold text-lg shadow-[0_0_35px_rgba(251,191,36,0.5)] active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wider";
@@ -83,6 +83,20 @@ function header() {
       ` : ""}
     </div>
   </header>`; 
+}
+
+function renderHome(t) { 
+  return `<div class="flex-1 flex flex-col justify-center animate-up pb-8">
+    <div class="glass-card rounded-[2rem] p-7 flex flex-col gap-6 mb-6 shadow-[0_15px_40px_rgba(0,0,0,0.6)] border border-white/20">
+      <div class="flex flex-col gap-2"><label class="text-white/70 font-black text-xs uppercase tracking-widest ml-1">Ton p'tit blaze 👀</label><input id="nameI" maxlength="15" placeholder="Ex: Alex" value="${esc(S.name)}" class="w-full bg-black/60 border-2 border-white/10 rounded-2xl px-5 py-4 text-xl font-bold outline-none focus:border-white/60 transition-colors placeholder:text-white/20 text-white shadow-inner"/></div>
+      <div class="flex flex-col gap-2"><label class="text-white/70 font-black text-xs uppercase tracking-widest ml-1">Choisis la Vibe 🔥</label><div class="grid grid-cols-3 gap-3">${modeBtns(S.pendingMode, "pickMode")}</div></div>
+      <button id="createB" class="${btnPrimary} mt-2" ${S.isLoading ? 'disabled' : ''}>${S.isLoading ? 'Création...' : 'Créer le salon 🚀'}</button>
+    </div>
+    <div class="glass-card rounded-[2rem] p-3 flex flex-row gap-3 items-center shadow-xl border border-white/10">
+      <input id="joinI" maxlength="4" placeholder="CODE" value="${esc(S.joinCode)}" class="flex-1 min-w-0 bg-transparent border-none px-4 py-2 text-3xl font-display font-black tracking-[0.3em] text-center uppercase outline-none placeholder:text-white/10 placeholder:tracking-normal text-white"/>
+      <button id="joinB" class="shrink-0 py-3 px-8 rounded-xl bg-white/10 border border-white/30 font-black uppercase tracking-wider hover:bg-white/20 active:scale-95 transition-all text-white shadow-lg" ${S.isLoading ? 'disabled' : ''}>Go 🍻</button>
+    </div>
+  </div>`; 
 }
 
 function renderLobby(r, t) { 
@@ -119,7 +133,7 @@ function renderLobby(r, t) {
     </div>
 
     <div class="glass-card rounded-3xl p-5 flex items-center gap-4 shadow-xl border border-white/10 bg-black/40">
-      <div class="w-14 h-14 shrink-0 rounded-2xl flex items-center justify-center text-3xl shadow-lg" style="background:linear-gradient(135deg,${t.from},${t.to})">${myJoker ? myJoker.icon : '🎴'}</div>
+      <div class="w-14 h-14 shrink-0 rounded-2xl flex items-center justify-center text-3xl shadow-lg text-white" style="background:linear-gradient(135deg,${t.from},${t.to})">${myJoker ? myJoker.icon : '🎴'}</div>
       <div class="flex flex-col min-w-0">
         <span class="text-[10px] font-black uppercase tracking-widest text-white/60">Ton pouvoir secret 🃏</span>
         <span class="text-lg font-black text-white leading-tight">${myJoker ? esc(myJoker.name) : 'Aucun'}</span>
@@ -153,63 +167,6 @@ function renderLobby(r, t) {
   </div>`;
 }
 
-function renderLobby(r, t) { 
-  const isHost = S.pid === r.hostId; const ps = playersArr(r); const me = r.players[S.pid]; const myJoker = JOKERS[me.joker]; const others = connectedArr(r).filter(p => p.id !== S.pid);
-  const currentMax = r.maxRounds || 10;
-  
-  let roundsSelectorUi = "";
-  if (isHost) {
-    roundsSelectorUi = `
-      <div class="glass-card rounded-3xl p-5 flex flex-col gap-3 shadow-xl border border-white/10 bg-black/40">
-        <h2 class="text-[10px] font-black uppercase tracking-widest text-white/60 ml-1">Nombre de questions</h2>
-        <div class="grid grid-cols-4 gap-2">
-          ${[5, 10, 15, 0].map(num => `<button onclick="window.changeMaxRounds(${num})" class="py-3 rounded-xl font-black border-2 transition-all ${currentMax === num || (num === 0 && r.maxRounds === 0) ? 'bg-white/30 border-white shadow-[0_0_20px_rgba(255,255,255,0.4)] text-white' : 'bg-black/40 border-white/5 text-white/40 hover:bg-white/10'}">${num === 0 ? '♾️' : num}</button>`).join("")}
-        </div>
-      </div>
-    `;
-  }
-
-  const waitingText = connectedArr(r).length < 2 
-       ? `<span class="text-white/70 font-bold block mb-1"><span class="animate-spin inline-block text-xl">⏳</span> Rameute l'équipe... (1/2 min)</span>`
-       : `<span class="text-emerald-400 font-black block text-lg mb-1 drop-shadow-md">✅ L'équipe est parée !</span>`;
-  const guestWaitingText = !isHost && connectedArr(r).length >= 2 
-       ? `<span class="text-white/50 font-bold text-sm mt-1 animate-pulse block">On attend le lancement du boss...</span>` : "";
-  const hostControls = isHost ? `<button id="startB" class="${btnPrimary} mt-3" ${connectedArr(r).length < 2 ? 'disabled' : ''}>🚀 Let's Go !</button>` : "";
-
-  return `<div class="glass-card rounded-3xl p-5 flex items-center gap-4 shadow-xl border border-white/10 bg-black/40">
-      <div class="w-14 h-14 shrink-0 rounded-2xl flex items-center justify-center text-3xl shadow-lg" style="background:linear-gradient(135deg,${t.from},${t.to})">${myJoker ? myJoker.icon : '🎴'}</div>
-      <div class="flex flex-col min-w-0">
-        <span class="text-[10px] font-black uppercase tracking-widest text-white/60">Ton pouvoir secret 🃏</span>
-        <span class="text-lg font-black text-white leading-tight">${myJoker ? esc(myJoker.name) : 'Aucun'}</span>
-        <span class="text-xs text-white/60 font-medium leading-snug">${myJoker ? esc(myJoker.desc) : ''}</span>
-      </div>
-    </div>
-    
-    ${isHost ? `<div class="glass-card rounded-3xl p-5 flex flex-col gap-3 shadow-xl border border-white/10 bg-black/40"><h2 class="text-[10px] font-black uppercase tracking-widest text-white/60 ml-1">Vibe de la partie</h2><div class="grid grid-cols-3 gap-2">${modeBtns(r.mode, "chooseMode")}</div></div>` : ""}
-    ${roundsSelectorUi}
-    
-    <div class="glass-card rounded-3xl p-5 flex flex-col gap-4 shadow-xl border border-white/10 bg-black/40">
-      <h2 class="text-[10px] font-black uppercase tracking-widest text-white/60 ml-1">L'équipe (${ps.length}) 🍻</h2>
-      <div class="flex flex-col gap-3 max-h-48 overflow-y-auto scroll pr-2">
-        ${ps.map(p => `
-          <div class="flex items-center justify-between p-3 rounded-2xl bg-black/60 border border-white/10 shadow-md">
-            <div class="flex items-center gap-3">
-              <div class="w-12 h-12 rounded-full flex items-center justify-center font-black text-white text-lg ring-2 ring-white/30 ring-offset-2 ring-offset-[#040B16]" style="background:${getAvatarGradient(p.name)}">${esc((p.name || "A")[0].toUpperCase())}</div>
-              <span class="font-bold text-white text-lg">${esc(p.name)} ${p.id === S.pid ? '<span class="text-white/40 text-[10px] uppercase tracking-widest ml-2 bg-white/10 px-2 py-1 rounded-full">C\'est toi</span>' : ''}</span>
-            </div>
-          </div>
-        `).join("")}
-      </div>
-    </div>
-
-    <div class="glass-card rounded-3xl p-6 text-center flex flex-col shadow-2xl border-white/20 bg-black/50">
-       ${waitingText}
-       ${guestWaitingText}
-       ${hostControls}
-    </div>
-  </div>`; 
-}
-
 function renderVoting(r, t) { 
   const q = r.question; const voted = (r.votes || {})[S.pid] !== undefined; const conn = connectedArr(r).length; const vc = Object.keys(r.votes || {}).length;
   const roundCounter = r.maxRounds > 0 ? `Question ${r.round} / ${r.maxRounds}` : `Question ${r.round}`;
@@ -234,7 +191,6 @@ function renderVoting(r, t) {
       <div class="glass-card rounded-3xl p-6 flex flex-col gap-6 shadow-2xl border border-white/20 bg-black/60">
         <div class="flex justify-between items-end"><span class="font-black text-white/50 text-[10px] uppercase tracking-widest">${amTarget ? 'Sois honnête' : 'Tu penses à combien ?'}</span><span id="sv" class="text-7xl font-display font-black text-white drop-shadow-xl">${S.voteValue}%</span></div>
         
-        <!-- CORRECTION : Réinsertion de la jauge avec le curseur fonctionnel -->
         <div class="relative h-20 rounded-full bg-black/80 shadow-[inset_0_5px_15px_rgba(0,0,0,0.5)] border-2 border-white/10 flex items-center px-2">
           <div id="fill" class="absolute left-2 h-16 rounded-full transition-all pointer-events-none" style="width: calc(${S.voteValue}% - 16px); background: ${t.b1};"></div>
           <input type="range" id="slider" min="0" max="100" value="${S.voteValue}" class="thermo-slider absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
@@ -251,7 +207,6 @@ function renderReveal(r, t) {
   const res = r.result; if (!res) return "";
   const isHost = S.pid === r.hostId; 
   
-  // 1. Calcul de TES statistiques individuelles
   const myVote = (r.votes || {})[S.pid];
   let myStatsHtml = "";
   if (S.pid === res.targetId) {
@@ -273,7 +228,6 @@ function renderReveal(r, t) {
       `;
   }
 
-  // 2. Le Récapitulatif de tous les votes
   const sortedPlayers = connectedArr(r).sort((a, b) => {
       if(a.id === res.targetId) return -1; if(b.id === res.targetId) return 1; return 0;
   });
@@ -293,7 +247,6 @@ function renderReveal(r, t) {
        </div>`;
   }).join("");
 
-  // 3. Affichage du verdict (Qui boit)
   let sipsSentence = ""; let glowColor = "";
   if (res.isClose) {
       sipsSentence = `<span class="text-yellow-400 font-black block text-4xl uppercase tracking-tighter mt-1 drop-shadow-[0_0_25px_rgba(250,204,21,1)]">DANS LE MILLE 🎯<br><span class="text-xl text-white mt-2 block drop-shadow-md">La team boit ${res.sips} gorgée${res.sips > 1 ? 's' : ''} 🍻</span></span>`;
@@ -303,7 +256,6 @@ function renderReveal(r, t) {
       glowColor = "border-red-500/60 shadow-[0_0_80px_rgba(239,68,68,0.3)] bg-black/80";
   }
 
-  // 4. Interface unifiée pour l'Hôte et les Joueurs
   const hostControls = isHost ? `
     <div class="flex gap-3 mt-4 w-full animate-fade">
       <button id="nextB" class="${btnPrimary} flex-grow">${r.maxRounds > 0 && r.round >= r.maxRounds ? '🏁 Le Classement' : 'Enchaîner ! ➡️'}</button>
@@ -336,7 +288,7 @@ function renderReveal(r, t) {
       </div>
       
       <div class="w-full glass-card bg-black/50 rounded-3xl p-6 text-center flex flex-col items-center justify-center shadow-2xl border border-white/20 mt-2">
-         <span class="text-white/70 font-bold mb-1">${isHost ? "T'es le boss, lance la suite quand t'es prêt 👇" : "<span class='animate-pulse text-2xl inline-block'>⏳</span><br>On attend le boss pour la suite..."}</span>
+         <span class="text-white/70 font-bold mb-1">${isHost ? "T'es le boss, lance la suite quand t'es prêt 👇" : "<svg class='w-6 h-6 text-white/50 animate-spin inline-block mb-2' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15'></path></svg><br>On attend le boss pour la suite..."}</span>
          ${hostControls}
       </div>
     </div>
@@ -387,7 +339,6 @@ export function render() {
   const active = document.activeElement;
   const activeId = active && active.id ? active.id : null;
   
-  // CORRECTION CRITIQUE : Si le joueur est en train de toucher le slider, on empêche le rechargement de couper l'action !
   if (activeId === "slider") return; 
 
   const selStart = active && 'selectionStart' in active ? active.selectionStart : null;
@@ -396,34 +347,6 @@ export function render() {
   app.innerHTML = html;
   app.__html = html;
 
-  const viewKey = S.screen === "HOME" ? "HOME" : (S.room ? S.room.phase : "");
-  if (viewKey !== lastViewKey) {
-    lastViewKey = viewKey;
-    const root = app.lastElementChild;
-    if (root) root.classList.add("view-enter");
-  }
-
-  if (activeId) {
-    const n = document.getElementById(activeId);
-    if (n) { try { n.focus({ preventScroll: true }); if (selStart != null && n.setSelectionRange) n.setSelectionRange(selStart, selEnd); } catch (e) {} }
-  }
-
-  if (afterRenderHook) afterRenderHook();
-}
-  const html = header() + body;
-  // Anti-flicker : on ne re-render que si le contenu a réellement changé.
-  // Préserve le focus/curseur des inputs ET le slider en cours de manipulation.
-  if (app.__html === html) return;
-
-  const active = document.activeElement;
-  const activeId = active && active.id ? active.id : null;
-  const selStart = active && 'selectionStart' in active ? active.selectionStart : null;
-  const selEnd = active && 'selectionEnd' in active ? active.selectionEnd : null;
-
-  app.innerHTML = html;
-  app.__html = html;
-
-  // Animation d'entrée uniquement lors d'un VRAI changement d'écran
   const viewKey = S.screen === "HOME" ? "HOME" : (S.room ? S.room.phase : "");
   if (viewKey !== lastViewKey) {
     lastViewKey = viewKey;
