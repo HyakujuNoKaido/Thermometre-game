@@ -3,9 +3,18 @@ import BANK from './data/questions.json';
 export const GEMINI_API_KEY = "AQ.Ab8RN6IB_6U4QMMkAf7W_tFyngxZv3X12jImgPfSGYpmMFp-cQ";
 
 export const THEMES = {
-  Chill: { base:"#040B16", b1:"#00F0FF", b2:"#0038FF", glow:"rgba(0,240,255,.5)", from:"#67e8f9", to:"#3b82f6", label:"Chill", icon: `<svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" class="w-10 h-10"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 10.5b-.5-1.5-1.5-1.5h-3.75l1.5-2.25c.5-.75 0-1.5-.75-1.5H12V3c0-.75-.75-1.5-1.5-1.5S9 2.25 9 3v2.25H6.75c-.75 0-1.25.75-.75 1.5l1.5 2.25H3.75c-1 0-1.5 1-1.5 1.5v3.75l2.25 1.5c.75.5 1.5 0 1.5-.75V12h2.25v2.25c0 .75-.75 1.5-1.5 1.5h-3.75c-.75 0-1.5.5-1.5 1.5s.75 1.5 1.5 1.5h3.75l-1.5 2.25c-.5.75 0 1.5.75 1.5H12v2.25c0 .75.75 1.5 1.5 1.5s1.5-.75 1.5-1.5V20.25h2.25c.75 0 1.25-.75.75-1.5l-1.5-2.25h3.75c1 0 1.5-1 1.5-1.5v-3.75l-2.25-1.5c-.75-.5-1.5 0-1.5.75V12h-2.25V9.75c0-.75.75-1.5 1.5-1.5h3.75c.75 0 1.5-.5 1.5-1.5z"></path></svg>` },
-  Spicy: { base:"#1A0505", b1:"#FF5C00", b2:"#FF003C", glow:"rgba(255,92,0,.5)", from:"#facc15", to:"#f97316", label:"Spicy", icon: `<svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" class="w-10 h-10"><path stroke-linecap="round" stroke-linejoin="round" d="M15.362 5.214A8.252 8.252 0 0 1 12 21 8.25 8.25 0 0 1 6.038 7.047 8.287 8.287 0 0 0 9 9.601a8.983 8.983 0 0 1 3.361-6.867 8.21 8.21 0 0 0 3 2.48Z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M12 18a3.75 3.75 0 0 0 .495-7.468 5.99 5.99 0 0 0-1.925 3.547 5.975 5.975 0 0 1-2.133-1.001A3.75 3.75 0 0 0 12 18Z"></path></svg>` },
-  Hardcore: { base:"#0A0012", b1:"#9D00FF", b2:"#FF003C", glow:"rgba(157,0,255,.5)", from:"#e879f9", to:"#dc2626", label:"Hardcore", icon: `<svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" class="w-10 h-10"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"></path></svg>` }
+  Chill: { 
+    base:"#040B16", b1:"#00F0FF", b2:"#0038FF", glow:"rgba(0,240,255,.5)", from:"#67e8f9", to:"#3b82f6", label:"Chill", 
+    icon: `<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" class="w-10 h-10"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v18M3 12h18m-3-6L6 18M6 6l12 12"></path></svg>` 
+  },
+  Spicy: { 
+    base:"#1A0505", b1:"#FF5C00", b2:"#FF003C", glow:"rgba(255,92,0,.5)", from:"#facc15", to:"#f97316", label:"Spicy", 
+    icon: `<svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" class="w-10 h-10"><path stroke-linecap="round" stroke-linejoin="round" d="M15.362 5.214A8.252 8.252 0 0 1 12 21 8.25 8.25 0 0 1 6.038 7.047 8.287 8.287 0 0 0 9 9.601a8.983 8.983 0 0 1 3.361-6.867 8.21 8.21 0 0 0 3 2.48Z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M12 18a3.75 3.75 0 0 0 .495-7.468 5.99 5.99 0 0 0-1.925 3.547 5.975 5.975 0 0 1-2.133-1.001A3.75 3.75 0 0 0 12 18Z"></path></svg>` 
+  },
+  Hardcore: { 
+    base:"#0A0012", b1:"#9D00FF", b2:"#FF003C", glow:"rgba(157,0,255,.5)", from:"#e879f9", to:"#dc2626", label:"Hardcore", 
+    icon: `<svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" class="w-10 h-10"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"></path></svg>` 
+  }
 };
 
 export const JOKERS = {
