@@ -77,5 +77,3 @@ html, body {
 #rulesModal { opacity: 0; transition: opacity .3s ease; }
 #rulesModal.sheet-open { opacity: 1; }
 
-
-```
