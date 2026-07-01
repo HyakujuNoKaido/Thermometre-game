@@ -202,33 +202,29 @@ export async function hostAutoReveal() {
     
     const expectedIds = Object.keys(r.expectedVoters || {}); 
     const votes = r.votes || {};
-    const missing = expectedIds.filter(id => r.players[id] && r.players[id].connected !== false && votes[id] === undefined);
+    
+    // On compte combien de personnes ont réellement voté
+    const voters = Object.keys(votes);
+    
+    // Si personne n'a voté, on attend
+    if (voters.length === 0) return;
+
+    // SECURITÉ : On déclenche le reveal si au moins 50% des gens ont voté 
+    // OU si tout le monde a voté. Cela évite le plantage si quelqu'un a quitté.
+    const allExpected = expectedIds.length;
+    const progress = voters.length / allExpected;
+
+    // On attend que tout le monde ait voté, mais si un joueur est déconnecté (connected: false), 
+    // on ne l'attend pas.
+    const missing = expectedIds.filter(id => 
+        r.players[id] && 
+        r.players[id].connected !== false && 
+        votes[id] === undefined
+    );
+
     if (missing.length > 0) return; 
     
     revealing = true; 
-
-    const usedJokersLog = [];
-    const jokerShotVictims = [];
-
-    Object.keys(r.players).forEach(id => {
-       const p = r.players[id];
-       if (p.jokerActive && p.joker && !p.jokerConsumed) {
-          usedJokersLog.push({ id, name: p.name, joker: p.joker });
-          
-          // Capture de la cible du Cul Sec (SHOT)
-          if (p.joker === "SHOT" && p.shotTarget) {
-            const victim = r.players[p.shotTarget];
-            if (victim) {
-              jokerShotVictimsHtml.push({ id: p.shotTarget, name: victim.name });
-            }
-          }
-       }
-    });
-
-    const hasJoker = (id, jName) => {
-        const p = r.players[id];
-        return p && p.jokerActive && p.joker === jName && !p.jokerConsumed;
-    };
 
     const tid = r.question.targetId; 
     const tv = votes[tid] !== undefined ? votes[tid] : 50; 
@@ -241,6 +237,12 @@ export async function hostAutoReveal() {
     let targetSips = targetPenalty.sips;
     let targetShot = targetPenalty.shot;
     let targetMsg = "";
+
+    // Logique des Jokers
+    const hasJoker = (id, jName) => {
+        const p = r.players[id];
+        return p && p.jokerActive && p.joker === jName && !p.jokerConsumed;
+    };
 
     if (hasJoker(tid, "SHIELD") || hasJoker(tid, "MIRROR")) {
         targetSips = 0; targetShot = false; targetMsg = "Intouchable grâce au pouvoir !";
@@ -272,7 +274,7 @@ export async function hostAutoReveal() {
     const result = { 
       average: average, targetVote: tv, targetName: r.question.targetName || "La cible", 
       targetId: tid, targetDiff: targetDiff, targetSips: targetSips, targetShot: targetShot, targetMsg: targetMsg,
-      groupResults: groupResults, usedJokersLog: usedJokersLog, jokerShotVictims: jokerShotVictims
+      groupResults: groupResults
     };
     
     const updates = { phase: "REVEAL", result: result };
@@ -280,22 +282,22 @@ export async function hostAutoReveal() {
     updates[`players/${tid}/score`] = (r.players[tid].score || 0) + targetDiff;
     groupResults.forEach(p => { updates[`players/${p.id}/score`] = (r.players[p.id].score || 0) + p.diff; });
     
-    // Si un joueur reçoit un cul sec par pouvoir, on lui met une pénalité fixe au classement
-    jokerShotVictims.forEach(v => {
-      updates[`players/${v.id}/score`] = (r.players[v.id].score || 0) + 25;
-    });
-
+    // Marquer les jokers comme consommés
     Object.keys(r.players).forEach(id => {
        if (r.players[id].jokerActive && !r.players[id].jokerConsumed) {
           updates[`players/${id}/jokerConsumed`] = true;
           updates[`players/${id}/jokerActive`] = false;
-          updates[`players/${id}/shotTarget`] = null;
        }
     });
 
     await S.roomRef.update(updates);
 
-  } catch (err) { console.error("Erreur mécanique :", err); } finally { revealing = false; }
+  } catch (err) { 
+    console.error("Erreur mécanique :", err); 
+    revealing = false; // Important pour débloquer en cas d'erreur
+  } finally { 
+    revealing = false; 
+  }
 }
 
 export async function endGame() { 
