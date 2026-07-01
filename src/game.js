@@ -15,7 +15,6 @@ export async function tryReconnect() {
         S.name = snap.val().players[pid].name;
         await db.ref(`rooms/${code}/players/${pid}`).update({ connected: true });
         enterRoom(code, pid); 
-        toast("Connexion restaurée ✨", true); 
         return true;
       }
     } catch(e) {}
@@ -24,7 +23,7 @@ export async function tryReconnect() {
 }
 
 export async function createRoom() {
-  if (!S.name.trim()) return toast("Veuillez saisir un pseudonyme valide. 🛑"); 
+  if (!S.name.trim()) return toast("Veuillez saisir un pseudonyme valide."); 
   if (S.isLoading) return; vibrate(20); S.isLoading = true; render(); 
   try {
     let code; for (let i=0; i<5; i++) { code = genCode(); const s = await db.ref("rooms/" + code).get(); if (!s.exists()) break; }
@@ -36,54 +35,42 @@ export async function createRoom() {
 }
 
 export async function joinRoom() {
-  if (!S.name.trim()) return toast("Veuillez saisir un pseudonyme valide. 🛑");
+  if (!S.name.trim()) return toast("Veuillez saisir un pseudonyme valide.");
   const code = (S.joinCode || "").toUpperCase().trim(); 
   if (S.isLoading) return; vibrate(20); S.isLoading = true; render();
   try {
     const snap = await db.ref("rooms/" + code).get(); 
-    if (!snap.exists()) return toast("Salon introuvable. 🕵️‍♂️");
+    if (!snap.exists()) return toast("Salon introuvable.");
     const room = snap.val();
     
-    // RECONNAISSANCE DU JOUEUR (Cas du refresh ou reconnexions manuelles)
+    // CORRECTION : Permet de reprendre sa place en cas de bug navigateur
     const existingPlayerPair = Object.entries(room.players || {}).find(
       ([id, p]) => p.name.toLowerCase() === S.name.trim().toLowerCase()
     );
 
     let pid;
     if (existingPlayerPair) {
-      // RÉCUPÉRATION DE PROFIL : Le joueur revient dans son ancienne case
       pid = existingPlayerPair[0];
       await db.ref(`rooms/${code}/players/${pid}`).update({ connected: true });
-      toast("Te revoilà dans la partie ! ⚡", true);
+      toast("Te revoilà dans la partie !", true);
     } else {
-      // NOUVEAU JOUEUR ABSOLU
+      // NOUVEAU JOUEUR EN COURS DE PARTIE
       pid = genId();
-      const newPlayer = { 
-        name: S.name.trim().slice(0, 20), 
-        joker: rand(Object.keys(JOKERS)), 
-        score: 0, 
-        jokerUsed: false, 
-        connected: true 
-      };
-      
+      const newPlayer = { name: S.name.trim().slice(0, 20), joker: rand(Object.keys(JOKERS)), score: 0, jokerUsed: false, connected: true };
       const updates = { [`players/${pid}`]: newPlayer };
-      // Gestion de l'intégration si une question est déjà en cours de vote
+      
+      // S'il rejoint pendant un vote, il est ajouté aux votants requis
       if (room.phase === "VOTING" && room.expectedVoters) {
         updates[`expectedVoters/${pid}`] = true;
       }
       await db.ref("rooms/" + code).update(updates);
-      toast("Bienvenue dans le salon ! 🍻", true);
+      toast("Bienvenue dans le salon !", true);
     }
 
     sessionStorage.setItem('thermo_code', code); 
     sessionStorage.setItem('thermo_pid', pid);
     enterRoom(code, pid);
-  } catch (e) { 
-    toast("Erreur réseau."); 
-  } finally { 
-    S.isLoading = false; 
-    if (!S.room) render(); 
-  }
+  } catch (e) { toast("Erreur réseau."); } finally { S.isLoading = false; if (!S.room) render(); }
 }
 
 function enterRoom(code, pid) {
@@ -92,7 +79,7 @@ function enterRoom(code, pid) {
   S.roomRef = db.ref("rooms/" + code);
   S.roomRef.on("value", snap => { 
     const room = snap.val();
-    if (!room || !room.players || !room.players[S.pid]) { detach(); S.screen = "HOME"; S.room = null; toast("Salon déconnecté."); render(); return; }
+    if (!room || !room.players || !room.players[S.pid]) { detach(); S.screen = "HOME"; S.room = null; toast("Salon fermé ou déconnexion."); render(); return; }
     S.room = room; S.screen = "ROOM"; 
     promoteHostIfNeeded(); 
     hostAutoReveal(); 
@@ -107,11 +94,7 @@ function detach() {
 }
 
 export async function quitGame() { 
-  try {
-    if (S.code && S.pid) {
-      await db.ref(`rooms/${S.code}/players/${S.pid}`).remove(); 
-    }
-  } catch(e) {}
+  try { if (S.code && S.pid) await db.ref(`rooms/${S.code}/players/${S.pid}`).remove(); } catch(e) {}
   detach(); S.screen = "HOME"; render(); 
 }
 
@@ -123,15 +106,13 @@ export async function chooseMode(m) { vibrate(10); await S.roomRef.update({ mode
 async function promoteHostIfNeeded() { 
   const r = S.room; if (!r || !r.players || promoting || r.hostId === S.pid) return; 
   const host = r.players[r.hostId];
-  
-  // SÉCURITÉ REFRESH : On ne change d'hôte QUE si le compte de l'ancien gérant a été supprimé (clic sur Quitter)
   if (!host) { 
     const conn = connectedArr(r).sort((a, b) => a.id < b.id ? -1 : 1); 
     if (conn.length > 0 && conn[0].id === S.pid) { 
       promoting = true;
       try {
         await S.roomRef.update({ hostId: S.pid }); 
-        toast("Vous êtes le nouvel hôte de la partie 👑", true); 
+        toast("Vous êtes le nouvel hôte de la partie", true); 
       } catch(e) {} finally { promoting = false; }
     } 
   } 
@@ -160,7 +141,8 @@ export async function hostAutoReveal() {
     const expectedIds = Object.keys(r.expectedVoters || {}); 
     const votes = r.votes || {};
     
-    const missing = expectedIds.filter(id => r.players[id] && votes[id] === undefined);
+    // CORRECTION MAJEURE : On ignore les joueurs qui ont rafraîchi ou fermé le jeu. La partie n'est plus bloquée.
+    const missing = expectedIds.filter(id => r.players[id] && r.players[id].connected !== false && votes[id] === undefined);
     if (missing.length > 0) return; 
     
     revealing = true; 
