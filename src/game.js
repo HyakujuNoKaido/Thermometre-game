@@ -3,6 +3,7 @@ import { db, ServerValue } from './firebase.js';
 import { render, toast } from './ui.js';
 
 let revealing = false;
+let promoting = false; // Verrou de sécurité pour couper les requêtes en boucle sur mobile
 
 export async function tryReconnect() {
   const code = sessionStorage.getItem('thermo_code'); 
@@ -59,7 +60,10 @@ function enterRoom(code, pid) {
   S.roomRef.on("value", snap => { 
     const room = snap.val();
     if (!room || !room.players || !room.players[S.pid]) { detach(); S.screen = "HOME"; S.room = null; toast("Tu as quitté le salon."); render(); return; }
-    S.room = room; S.screen = "ROOM"; promoteHostIfNeeded(); hostAutoReveal(); render();
+    S.room = room; S.screen = "ROOM"; 
+    promoteHostIfNeeded(); 
+    hostAutoReveal(); 
+    render();
   });
 }
 
@@ -70,7 +74,11 @@ function detach() {
 }
 
 export async function quitGame() { 
-  await db.ref(`rooms/${S.code}/players/${S.pid}`).remove(); 
+  try {
+    if (S.code && S.pid) {
+      await db.ref(`rooms/${S.code}/players/${S.pid}`).remove(); 
+    }
+  } catch(e) {}
   detach(); 
   S.screen = "HOME"; 
   render(); 
@@ -83,18 +91,28 @@ export async function changeMaxRounds(num) { if(S.pid !== S.room.hostId) return;
 export function pickMode(m) { S.pendingMode = m; render(); }
 export async function chooseMode(m) { vibrate(10); await S.roomRef.update({ mode: m }); }
 
-// LE CORRECTIF EST ICI : Gère la déconnexion ET le retrait volontaire du boss
+// CORRECTIF SÉCURISÉ : Plus aucun freeze possible sur mobile lors d'un changement de boss
 async function promoteHostIfNeeded() { 
   const r = S.room; 
-  if (!r || !r.players) return; 
+  if (!r || !r.players || promoting) return; 
   
+  // Si l'état local indique que JE suis déjà enregistré comme chef, on coupe immédiatement !
+  if (r.hostId === S.pid) return;
+
   const host = r.players[r.hostId];
-  // Si le boss a disparu de la BDD (quitté) OU s'il est hors ligne
+  // Si le chef actuel n'existe plus ou s'est déconnecté
   if (!host || host.connected === false) { 
     const conn = connectedArr(r).sort((a, b) => a.id < b.id ? -1 : 1); 
     if (conn.length > 0 && conn[0].id === S.pid) { 
-      await S.roomRef.update({ hostId: S.pid }); 
-      toast("L'ancien boss s'est taillé, c'est TOI le chef maintenant 👑", true); 
+      promoting = true;
+      try {
+        await S.roomRef.update({ hostId: S.pid }); 
+        toast("L'ancien boss s'est taillé, c'est TOI le chef maintenant 👑", true); 
+      } catch(e) {
+        console.error("Échec de la promotion automatique de l'hôte:", e);
+      } finally {
+        promoting = false;
+      }
     } 
   } 
 }
@@ -114,7 +132,7 @@ export async function startRound() {
 export async function nextRound() { const r = S.room; if (r.maxRounds > 0 && r.round >= r.maxRounds) return endGame(); startRound(); }
 export async function vote() { vibrate([30, 50]); await db.ref(`rooms/${S.code}/votes/${S.pid}`).set(Number(S.voteValue)); }
 
-export async function hostAutoReveal() { 
+export async function hostAutoReveal() {  
   try {
     const r = S.room; 
     if (!r || r.phase !== "VOTING" || S.pid !== r.hostId || revealing) return;
