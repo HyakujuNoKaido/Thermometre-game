@@ -70,17 +70,16 @@ function header() {
   const t = theme();
   return `<header class="flex justify-between items-center mb-6 pt-2">
     <div class="flex items-center gap-3">
-      <div class="p-2.5 rounded-2xl shadow-[0_10px_20px_rgba(0,0,0,0.5)]" style="background:linear-gradient(135deg,${t.from},${t.to})">
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"></path><path d="M12 7v5"></path></svg>
+      <div class="p-2.5 rounded-2xl shadow-[0_10px_20px_rgba(0,0,0,0.5)] flex items-center justify-center text-white" style="background:linear-gradient(135deg,${t.from},${t.to})">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M12 7v5"></path></svg>
       </div>
       <h1 class="text-3xl font-extrabold tracking-tighter text-white drop-shadow-md">Le <span style="background:linear-gradient(90deg,${t.from},${t.to});-webkit-background-clip:text;background-clip:text;color:transparent">Thermo</span>mètre</h1>
     </div>
     <div class="flex gap-2 items-center">
-      ${!S.room ? `<button onclick="window.toggleRules()" class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white font-black border border-white/30 active:scale-95 transition-transform shadow-lg">?</button>` : ""}
+      ${!S.room ? `<button onclick="window.toggleRules()" class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white font-black border border-white/30 active:scale-95 transition-transform shadow-lg"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></button>` : ""}
       ${S.room && S.code ? `
-        <span class="text-xs font-black bg-emerald-500 text-white px-3 py-1.5 rounded-full shadow-md tracking-wider">🎯 ${S.code}</span> 
-        <span class="text-xs font-bold bg-black/40 backdrop-blur-md border border-white/20 px-3 py-1.5 rounded-full shadow-inner text-white">${t.emoji} ${S.room.mode}</span> 
-        <button onclick="window.quitGame()" class="px-3 py-1.5 rounded-full bg-red-500/20 text-red-400 font-bold border border-red-500/40 text-xs active:scale-95 transition-transform shadow-lg">🚪</button>
+        <span class="text-xs font-black bg-emerald-500 text-white px-3 py-1.5 rounded-full shadow-md tracking-wider flex items-center gap-1"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"></path></svg> ${S.code}</span> 
+        <button onclick="window.quitGame()" class="px-3 py-1.5 rounded-full bg-red-500/20 text-red-400 font-bold border border-red-500/40 text-xs active:scale-95 transition-transform shadow-lg flex items-center"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg></button>
       ` : ""}
     </div>
   </header>`; 
@@ -218,7 +217,7 @@ function renderVoting(r, t) {
   
   const waitingList = connectedArr(r).map(p => {
       const hasVoted = (r.votes || {})[p.id] !== undefined;
-      return `<div class="flex items-center justify-between p-3 rounded-2xl border-2 transition-all ${hasVoted ? 'bg-white/10 border-white/20 shadow-lg scale-[1.02]' : 'bg-black/40 border-transparent opacity-60'}"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full flex items-center justify-center font-black text-white ring-2 ring-white/20" style="background:${getAvatarGradient(p.name)}">${esc((p.name || "A")[0].toUpperCase())}</div><span class="font-bold text-white text-lg">${esc(p.name)}</span></div><div>${hasVoted ? '<span class="text-2xl filter drop-shadow-[0_0_10px_rgba(255,255,255,1)]">✅</span>' : '<span class="animate-pulse text-2xl opacity-50">⏳</span>'}</div></div>`;
+      return `<div class="flex items-center justify-between p-3 rounded-2xl border-2 transition-all ${hasVoted ? 'bg-white/10 border-white/20 shadow-lg scale-[1.02]' : 'bg-black/40 border-transparent opacity-60'}"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full flex items-center justify-center font-black text-white ring-2 ring-white/20" style="background:${getAvatarGradient(p.name)}">${esc((p.name || "A")[0].toUpperCase())}</div><span class="font-bold text-white text-lg">${esc(p.name)}</span></div><div>${hasVoted ? '<svg class="w-6 h-6 text-emerald-400 drop-shadow-md" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>' : '<svg class="w-6 h-6 text-white/50 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>'}</div></div>`;
   }).join("");
   
   return `<div class="flex-1 flex flex-col justify-center gap-6 animate-up pb-8">
@@ -233,11 +232,17 @@ function renderVoting(r, t) {
     </div>
     ${!voted ? `
       <div class="glass-card rounded-3xl p-6 flex flex-col gap-6 shadow-2xl border border-white/20 bg-black/60">
-        <div class="flex justify-between items-end"><span class="font-black text-white/50 text-[10px] uppercase tracking-widest">${amTarget ? 'Sois honnête 🤫' : 'Tu penses à combien ? 🤔'}</span><span id="sv" class="text-7xl font-display font-black text-white drop-shadow-xl">${S.voteValue}%</span></div>
-        <div class="relative h-20 rounded-full bg-black/80 shadow-[inset_0_5px_15px_rgba(0,0,0,0.5)] border-2 border-white/10 flex items-center px-2"><div id="thumb-bubble" class="thumb-bubble font-display" style="left:${S.voteValue}%;background:${t.b1};border-top-color:${t.b1}">${S.voteValue}%</div>
+        <div class="flex justify-between items-end"><span class="font-black text-white/50 text-[10px] uppercase tracking-widest">${amTarget ? 'Sois honnête' : 'Tu penses à combien ?'}</span><span id="sv" class="text-7xl font-display font-black text-white drop-shadow-xl">${S.voteValue}%</span></div>
+        
+        <!-- CORRECTION : Réinsertion de la jauge avec le curseur fonctionnel -->
+        <div class="relative h-20 rounded-full bg-black/80 shadow-[inset_0_5px_15px_rgba(0,0,0,0.5)] border-2 border-white/10 flex items-center px-2">
+          <div id="fill" class="absolute left-2 h-16 rounded-full transition-all pointer-events-none" style="width: calc(${S.voteValue}% - 16px); background: ${t.b1};"></div>
+          <input type="range" id="slider" min="0" max="100" value="${S.voteValue}" class="thermo-slider absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+          <div id="thumb-bubble" class="thumb-bubble font-display pointer-events-none z-20" style="left:${S.voteValue}%;background:${t.b1};border-top-color:${t.b1}">${S.voteValue}%</div>
+        </div>
 
       </div>
-      <button id="voteB" class="${btnPrimary}">Je lock mon vote 🔒</button>
+      <button id="voteB" class="${btnPrimary}">Je lock mon vote <svg class="w-5 h-5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg></button>
     ` : `<div class="glass-card rounded-3xl p-6 flex flex-col gap-4 shadow-2xl border border-white/10 bg-black/40"><div class="flex flex-col gap-3 max-h-[50vh] overflow-y-auto scroll pr-2">${waitingList}</div></div>`}
   </div>`; 
 }
@@ -376,6 +381,35 @@ export function render() {
     else if (S.room.phase === "REVEAL") body = renderReveal(S.room, t);
     else if (S.room.phase === "STATS") body = renderStats(S.room, t);
   }
+  const html = header() + body;
+  if (app.__html === html) return;
+
+  const active = document.activeElement;
+  const activeId = active && active.id ? active.id : null;
+  
+  // CORRECTION CRITIQUE : Si le joueur est en train de toucher le slider, on empêche le rechargement de couper l'action !
+  if (activeId === "slider") return; 
+
+  const selStart = active && 'selectionStart' in active ? active.selectionStart : null;
+  const selEnd = active && 'selectionEnd' in active ? active.selectionEnd : null;
+
+  app.innerHTML = html;
+  app.__html = html;
+
+  const viewKey = S.screen === "HOME" ? "HOME" : (S.room ? S.room.phase : "");
+  if (viewKey !== lastViewKey) {
+    lastViewKey = viewKey;
+    const root = app.lastElementChild;
+    if (root) root.classList.add("view-enter");
+  }
+
+  if (activeId) {
+    const n = document.getElementById(activeId);
+    if (n) { try { n.focus({ preventScroll: true }); if (selStart != null && n.setSelectionRange) n.setSelectionRange(selStart, selEnd); } catch (e) {} }
+  }
+
+  if (afterRenderHook) afterRenderHook();
+}
   const html = header() + body;
   // Anti-flicker : on ne re-render que si le contenu a réellement changé.
   // Préserve le focus/curseur des inputs ET le slider en cours de manipulation.
