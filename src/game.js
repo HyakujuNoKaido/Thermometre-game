@@ -79,28 +79,29 @@ function enterRoom(code, pid) {
   });
 }
 
-function detach() {
-  if (S.roomRef) { S.roomRef.off(); S.roomRef = null; }
-  sessionStorage.removeItem('thermo_code'); sessionStorage.removeItem('thermo_pid');
-  S.code = null; S.pid = null; history.replaceState(null, "", window.location.pathname);
-}
-
-export async function quitGame() { 
-  try { if (S.code && S.pid) await db.ref(`rooms/${S.code}/players/${S.pid}`).remove(); } catch(e) {}
-  detach(); S.screen = "HOME"; render(); 
-}
-
-export async function kickPlayer(id) { await db.ref(`rooms/${S.code}/players/${id}`).remove(); }
-export async function changeMaxRounds(num) { if(S.pid !== S.room.hostId) return; await S.roomRef.update({ maxRounds: num }); }
-export function pickMode(m) { S.pendingMode = m; render(); }
-export async function chooseMode(m) { vibrate(10); await S.roomRef.update({ mode: m }); }
-
-/* --- GESTION DES JOKERS --- */
+// GESTION DES JOKERS ET CIBLAGES
 export async function toggleJoker() {
   const me = S.room.players[S.pid];
   if (!me || me.jokerConsumed || !me.joker) return;
   vibrate(10);
   await S.roomRef.update({ [`players/${S.pid}/jokerActive`]: !me.jokerActive });
+}
+
+export async function assignShotTarget(targetId) {
+  vibrate(20);
+  await S.roomRef.update({
+    [`players/${S.pid}/shotTarget`]: targetId,
+    [`players/${S.pid}/jokerActive`]: true
+  });
+  toast("Cible du cul sec verrouillée ! 🥃", true);
+}
+
+export async function cancelShotTarget() {
+  vibrate(10);
+  await S.roomRef.update({
+    [`players/${S.pid}/shotTarget`]: null,
+    [`players/${S.pid}/jokerActive`]: false
+  });
 }
 
 export async function stealJoker(targetId) {
@@ -127,6 +128,7 @@ export async function randomizeJokers() {
     updates[`players/${id}/joker`] = rand(Object.keys(JOKERS));
     updates[`players/${id}/jokerConsumed`] = false;
     updates[`players/${id}/jokerActive`] = false;
+    updates[`players/${id}/shotTarget`] = null;
   });
   await S.roomRef.update(updates);
 }
@@ -139,9 +141,24 @@ export async function cycleJoker(pid) {
   const keys = Object.keys(JOKERS);
   let idx = keys.indexOf(p.joker);
   idx = (idx + 1) % keys.length;
-  await S.roomRef.update({ [`players/${pid}/joker`]: keys[idx], [`players/${pid}/jokerConsumed`]: false, [`players/${pid}/jokerActive`]: false });
+  await S.roomRef.update({ [`players/${pid}/joker`]: keys[idx], [`players/${pid}/jokerConsumed`]: false, [`players/${pid}/jokerActive`]: false, [`players/${pid}/shotTarget`]: null });
 }
-/* -------------------------- */
+
+function detach() {
+  if (S.roomRef) { S.roomRef.off(); S.roomRef = null; }
+  sessionStorage.removeItem('thermo_code'); sessionStorage.removeItem('thermo_pid');
+  S.code = null; S.pid = null; history.replaceState(null, "", window.location.pathname);
+}
+
+export async function quitGame() { 
+  try { if (S.code && S.pid) await db.ref(`rooms/${S.code}/players/${S.pid}`).remove(); } catch(e) {}
+  detach(); S.screen = "HOME"; render(); 
+}
+
+export async function kickPlayer(id) { await db.ref(`rooms/${S.code}/players/${id}`).remove(); }
+export async function changeMaxRounds(num) { if(S.pid !== S.room.hostId) return; await S.roomRef.update({ maxRounds: num }); }
+export function pickMode(m) { S.pendingMode = m; render(); }
+export async function chooseMode(m) { vibrate(10); await S.roomRef.update({ mode: m }); }
 
 async function promoteHostIfNeeded() { 
   const r = S.room; if (!r || !r.players || promoting || r.hostId === S.pid) return; 
@@ -163,7 +180,6 @@ export async function startRound() {
   const expectedVoters = {}; connectedArr(r).forEach(p => expectedVoters[p.id] = true);
   
   const upd = { phase: "VOTING", round: (r.round || 0) + 1, question: {text: qText, targetId: t.id, targetName: t.name}, expectedVoters, votes: null, result: null, startedAt: ServerValue.TIMESTAMP };
-  // On remet l'activation à false pour le nouveau tour
   Object.keys(r.players).forEach(id => { upd[`players/${id}/jokerActive`] = false; });
   await S.roomRef.update(upd);
 }
@@ -191,12 +207,21 @@ export async function hostAutoReveal() {
     
     revealing = true; 
 
-    // Enregistrement des Jokers activés ce tour
     const usedJokersLog = [];
+    const jokerShotVictims = [];
+
     Object.keys(r.players).forEach(id => {
        const p = r.players[id];
        if (p.jokerActive && p.joker && !p.jokerConsumed) {
           usedJokersLog.push({ id, name: p.name, joker: p.joker });
+          
+          // Capture de la cible du Cul Sec (SHOT)
+          if (p.joker === "SHOT" && p.shotTarget) {
+            const victim = r.players[p.shotTarget];
+            if (victim) {
+              jokerShotVictimsHtml.push({ id: p.shotTarget, name: victim.name });
+            }
+          }
        }
     });
 
@@ -208,18 +233,15 @@ export async function hostAutoReveal() {
     const tid = r.question.targetId; 
     const tv = votes[tid] !== undefined ? votes[tid] : 50; 
     
-    // 1. LA VÉRITÉ = Moyenne du groupe
     const nonTargetVotes = Object.keys(votes).filter(id => id !== tid).map(id => votes[id]);
     const average = nonTargetVotes.length > 0 ? Math.round(nonTargetVotes.reduce((a, b) => a + b, 0) / nonTargetVotes.length) : 50;
     
-    // 2. Punition de la Cible
     const targetDiff = Math.abs(tv - average);
     const targetPenalty = getPenalty(targetDiff);
     let targetSips = targetPenalty.sips;
     let targetShot = targetPenalty.shot;
     let targetMsg = "";
 
-    // Effet des Jokers sur la cible
     if (hasJoker(tid, "SHIELD") || hasJoker(tid, "MIRROR")) {
         targetSips = 0; targetShot = false; targetMsg = "Intouchable grâce au pouvoir !";
     } else if (hasJoker(tid, "DOUBLE")) {
@@ -233,40 +255,41 @@ export async function hostAutoReveal() {
         else targetMsg = "Voilage de face total";
     }
 
-    // 3. Punition du Groupe
     const groupResults = [];
     Object.keys(votes).forEach(id => {
       if (id === tid || !r.players[id]) return;
       const diff = Math.abs(votes[id] - average);
       let penalty = getPenalty(diff);
       
-      // Effet des Jokers sur les autres joueurs
       if (hasJoker(id, "SHIELD") || hasJoker(id, "MIRROR")) {
           penalty.sips = 0; penalty.shot = false;
       } else if (hasJoker(id, "DOUBLE")) {
           penalty.sips *= 2;
       }
-
       groupResults.push({ id, name: r.players[id].name, diff, sips: penalty.sips, shot: penalty.shot });
     });
 
     const result = { 
       average: average, targetVote: tv, targetName: r.question.targetName || "La cible", 
       targetId: tid, targetDiff: targetDiff, targetSips: targetSips, targetShot: targetShot, targetMsg: targetMsg,
-      groupResults: groupResults, usedJokersLog: usedJokersLog
+      groupResults: groupResults, usedJokersLog: usedJokersLog, jokerShotVictims: jokerShotVictims
     };
     
     const updates = { phase: "REVEAL", result: result };
 
-    // Ajout des écarts au compteur de points de chaque joueur
     updates[`players/${tid}/score`] = (r.players[tid].score || 0) + targetDiff;
     groupResults.forEach(p => { updates[`players/${p.id}/score`] = (r.players[p.id].score || 0) + p.diff; });
     
-    // Consommation définitive des Jokers activés ce tour
+    // Si un joueur reçoit un cul sec par pouvoir, on lui met une pénalité fixe au classement
+    jokerShotVictims.forEach(v => {
+      updates[`players/${v.id}/score`] = (r.players[v.id].score || 0) + 25;
+    });
+
     Object.keys(r.players).forEach(id => {
        if (r.players[id].jokerActive && !r.players[id].jokerConsumed) {
           updates[`players/${id}/jokerConsumed`] = true;
           updates[`players/${id}/jokerActive`] = false;
+          updates[`players/${id}/shotTarget`] = null;
        }
     });
 
@@ -285,11 +308,11 @@ export async function endGame() {
 export async function restart() { 
   const r = S.room; if (S.pid !== r.hostId) return; 
   const upd = { phase: "LOBBY", round: 0, votes: null, result: null, ranking: null };
-  // Lors d'un restart, on redonne de nouveaux jokers neufs à tout le monde
   Object.keys(r.players).forEach(id => { 
       upd[`players/${id}/score`] = 0; 
       upd[`players/${id}/jokerConsumed`] = false; 
       upd[`players/${id}/jokerActive`] = false; 
+      upd[`players/${id}/shotTarget`] = null; 
       upd[`players/${id}/joker`] = rand(Object.keys(JOKERS));
   }); 
   await S.roomRef.update(upd); 
