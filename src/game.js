@@ -1,9 +1,9 @@
-import { S, GEMINI_API_KEY, QUESTIONS, JOKERS, THEMES, BANK, ROASTS, rand, genId, genCode, esc, connectedArr, playersArr, vibrate } from './store.js';
+import { S, QUESTIONS, JOKERS, rand, genId, genCode, connectedArr, playersArr, vibrate } from './store.js';
 import { db, ServerValue } from './firebase.js';
 import { render, toast } from './ui.js';
 
 let revealing = false;
-let promoting = false; // Verrou de sécurité pour couper les requêtes en boucle sur mobile
+let promoting = false;
 
 export async function tryReconnect() {
   const code = sessionStorage.getItem('thermo_code'); 
@@ -15,7 +15,7 @@ export async function tryReconnect() {
         S.name = snap.val().players[pid].name;
         await db.ref(`rooms/${code}/players/${pid}`).update({ connected: true });
         enterRoom(code, pid); 
-        toast("T'es de retour ! ✨", true); 
+        toast("Connexion restaurée", true); 
         return true;
       }
     } catch(e) {}
@@ -24,7 +24,7 @@ export async function tryReconnect() {
 }
 
 export async function createRoom() {
-  if (!S.name.trim()) return toast("Eh, tu dois mettre un blaze pour jouer ! 🛑"); 
+  if (!S.name.trim()) return toast("Veuillez saisir un pseudonyme valide."); 
   if (S.isLoading) return; vibrate(20); S.isLoading = true; render(); 
   try {
     let code; for (let i=0; i<5; i++) { code = genCode(); const s = await db.ref("rooms/" + code).get(); if (!s.exists()) break; }
@@ -32,19 +32,19 @@ export async function createRoom() {
     await db.ref("rooms/" + code).set({ mode: S.pendingMode, phase: "LOBBY", round: 0, hostId: pid, maxRounds: 10, timer: 0, createdAt: ServerValue.TIMESTAMP, players: { [pid]: { name: S.name.trim().slice(0, 20), joker: rand(Object.keys(JOKERS)), score: 0, jokerUsed: false, connected: true } } });
     sessionStorage.setItem('thermo_code', code); sessionStorage.setItem('thermo_pid', pid);
     enterRoom(code, pid);
-  } catch(e) { toast("Erreur de connexion."); } finally { S.isLoading = false; if (!S.room) render(); }
+  } catch(e) { toast("Erreur de connexion au serveur."); } finally { S.isLoading = false; if (!S.room) render(); }
 }
 
 export async function joinRoom() {
-  if (!S.name.trim()) return toast("Eh, tu dois mettre un blaze pour jouer ! 🛑");
+  if (!S.name.trim()) return toast("Veuillez saisir un pseudonyme valide.");
   const code = (S.joinCode || "").toUpperCase().trim(); 
   if (S.isLoading) return; vibrate(20); S.isLoading = true; render();
   try {
     const snap = await db.ref("rooms/" + code).get(); 
-    if (!snap.exists()) return toast("Code introuvable. T'es sûr de toi ? 🤔");
+    if (!snap.exists()) return toast("Salon introuvable.");
     const room = snap.val();
     const nameExists = Object.values(room.players || {}).some(p => p.name.toLowerCase() === S.name.trim().toLowerCase());
-    if (nameExists) return toast("Ce pseudo est déjà pris dans la partie ! 👯");
+    if (nameExists) return toast("Ce pseudonyme est déjà actif dans ce salon.");
     
     const pid = genId();
     await db.ref(`rooms/${code}/players/${pid}`).set({ name: S.name.trim().slice(0, 20), joker: rand(Object.keys(JOKERS)), score: 0, jokerUsed: false, connected: true });
@@ -59,7 +59,7 @@ function enterRoom(code, pid) {
   S.roomRef = db.ref("rooms/" + code);
   S.roomRef.on("value", snap => { 
     const room = snap.val();
-    if (!room || !room.players || !room.players[S.pid]) { detach(); S.screen = "HOME"; S.room = null; toast("Tu as quitté le salon."); render(); return; }
+    if (!room || !room.players || !room.players[S.pid]) { detach(); S.screen = "HOME"; S.room = null; toast("Salon fermé ou déconnexion."); render(); return; }
     S.room = room; S.screen = "ROOM"; 
     promoteHostIfNeeded(); 
     hostAutoReveal(); 
@@ -79,47 +79,32 @@ export async function quitGame() {
       await db.ref(`rooms/${S.code}/players/${S.pid}`).remove(); 
     }
   } catch(e) {}
-  detach(); 
-  S.screen = "HOME"; 
-  render(); 
+  detach(); S.screen = "HOME"; render(); 
 }
 
-export async function kickPlayer(id) { await db.ref(`rooms/${S.code}/players/${id}`).remove(); toast("Joueur viré 🚪"); }
-export async function stealJoker(id) { const r = S.room; await S.roomRef.update({ [`players/${S.pid}/joker`]: r.players[id].joker, [`players/${id}/joker`]: r.players[S.pid].joker }); toast("Pouvoir volé en scred ! 🥷", true); }
-export async function selectJoker(k) { vibrate(10); await S.roomRef.update({ [`players/${S.pid}/joker`]: k }); }
+export async function kickPlayer(id) { await db.ref(`rooms/${S.code}/players/${id}`).remove(); }
 export async function changeMaxRounds(num) { if(S.pid !== S.room.hostId) return; await S.roomRef.update({ maxRounds: num }); }
 export function pickMode(m) { S.pendingMode = m; render(); }
 export async function chooseMode(m) { vibrate(10); await S.roomRef.update({ mode: m }); }
 
-// CORRECTIF SÉCURISÉ : Plus aucun freeze possible sur mobile lors d'un changement de boss
 async function promoteHostIfNeeded() { 
-  const r = S.room; 
-  if (!r || !r.players || promoting) return; 
-  
-  // Si l'état local indique que JE suis déjà enregistré comme chef, on coupe immédiatement !
-  if (r.hostId === S.pid) return;
-
+  const r = S.room; if (!r || !r.players || promoting || r.hostId === S.pid) return; 
   const host = r.players[r.hostId];
-  // Si le chef actuel n'existe plus ou s'est déconnecté
   if (!host || host.connected === false) { 
     const conn = connectedArr(r).sort((a, b) => a.id < b.id ? -1 : 1); 
     if (conn.length > 0 && conn[0].id === S.pid) { 
       promoting = true;
       try {
         await S.roomRef.update({ hostId: S.pid }); 
-        toast("L'ancien boss s'est taillé, c'est TOI le chef maintenant 👑", true); 
-      } catch(e) {
-        console.error("Échec de la promotion automatique de l'hôte:", e);
-      } finally {
-        promoting = false;
-      }
+        toast("Vous êtes le nouvel hôte de la partie", true); 
+      } catch(e) {} finally { promoting = false; }
     } 
   } 
 }
 
 export async function startRound() {
   const r = S.room; if (S.pid !== r.hostId) return;
-  if (connectedArr(r).length < 2) return toast("Rameute au moins un pote pour jouer !");
+  if (connectedArr(r).length < 2) return toast("Il faut au moins 2 joueurs connectés.");
   vibrate(50);
   const t = rand(connectedArr(r)); const qText = rand(QUESTIONS[r.mode]).replace(/{name}/g, t.name);
   const expectedVoters = {}; connectedArr(r).forEach(p => expectedVoters[p.id] = true);
@@ -139,54 +124,64 @@ export async function hostAutoReveal() {
     
     const expectedIds = Object.keys(r.expectedVoters || {}); 
     const votes = r.votes || {};
-    const missing = expectedIds.filter(id => r.players[id] && r.players[id].connected && votes[id] === undefined);
+    
+    // CORRECTIF SÉCURITÉ REFRESH : On attend tout le monde présent, même si un joueur refresh
+    const missing = expectedIds.filter(id => r.players[id] && votes[id] === undefined);
     if (missing.length > 0) return; 
     
     revealing = true; 
 
-    const tid = r.question.targetId; 
-    const nonTargetVotes = Object.keys(votes).filter(id => id !== tid).map(id => votes[id]);
-    const pool = nonTargetVotes.length > 0 ? nonTargetVotes : [50]; 
-    
-    const average = Math.round(pool.reduce((a, b) => a + b, 0) / pool.length); 
+    const tid = r.question.targetId; // L'ID de la cible (ex: Thomas)
     const tv = votes[tid] !== undefined ? votes[tid] : 50; 
-    const diff = Math.abs(tv - average);
     
-    const isClose = diff <= 15; 
-    let sips = diff > 45 ? 4 : (diff > 25 ? 2 : 1); 
-    if (r.mode === "Hardcore") sips += 1;
+    // Calcul de la moyenne du groupe (tous les votes SAUF la cible)
+    const nonTargetVotes = Object.keys(votes).filter(id => id !== tid).map(id => votes[id]);
+    const average = nonTargetVotes.length > 0 
+      ? Math.round(nonTargetVotes.reduce((a, b) => a + b, 0) / nonTargetVotes.length) 
+      : 50;
     
-    const targetPlayer = r.players[tid] || {};
-    const dbl = !!targetPlayer.dbl;
-    
-    const finalSips = isClose ? (dbl ? 2 : 1) : (dbl ? sips * 2 : sips);
-    const finalDrinker = isClose ? "others" : tid;
-    const finalDrinkerName = isClose ? "La team" : (r.question.targetName || "La cible");
+    // Règle "Se voiler la face" : Écart entre la note de la cible et la moyenne du groupe >= 30%
+    const thomasDiff = Math.abs(tv - average);
+    const thomasShot = thomasDiff >= 30;
+
+    // Calcul des écarts individuels par rapport au score donné par la cible
+    const playersDifs = Object.keys(votes)
+      .filter(id => id !== tid && r.players[id])
+      .map(id => ({
+        id,
+        name: r.players[id].name,
+        diff: Math.abs(votes[id] - tv)
+      }))
+      .sort((a, b) => b.diff - a.diff); // Plus grand écart en premier
+
+    // Les 2 joueurs qui se sont le plus éloignés
+    const losers = playersDifs.slice(0, 2);
 
     const result = { 
-      average: average || 0, 
-      targetVote: tv || 0, 
-      targetName: r.question.targetName || "Inconnu", 
-      targetId: tid || "", 
-      diff: diff || 0, 
-      isClose: isClose, 
-      double: dbl, 
-      sips: finalSips || 1, 
-      drinker: finalDrinker, 
-      drinkerName: finalDrinkerName, 
-      jokerUsed: false, 
-      shot: false 
+      average: average, 
+      targetVote: tv, 
+      targetName: r.question.targetName || "La cible", 
+      targetId: tid, 
+      thomasDiff: thomasDiff,
+      thomasShot: thomasShot, 
+      losers: losers
     };
     
-    await S.roomRef.update({ 
+    // Application des pénalités au score global (les points grimpent si on perd)
+    const updates = {
       phase: "REVEAL", 
-      result: result, 
-      [`players/${tid}/score`]: (targetPlayer.score || 0) + diff 
+      result: result,
+      [`players/${tid}/score`]: (r.players[tid].score || 0) + (thomasShot ? 20 : 0)
+    };
+
+    losers.forEach(l => {
+      updates[`players/${l.id}/score`] = (r.players[l.id].score || 0) + 10;
     });
+    
+    await S.roomRef.update(updates);
 
   } catch (err) {
-    console.error("Erreur critique lors du calcul des votes :", err);
-    toast("Aïe, un petit bug de calcul ! On retente...", false);
+    console.error("Erreur mécanique de calcul :", err);
   } finally {
     revealing = false;
   }
@@ -196,13 +191,12 @@ export async function endGame() {
   const r = S.room; if (!r) return;
   const ranked = playersArr(r).sort((a, b) => a.score - b.score);
   const w = ranked[0]; const l = ranked[ranked.length - 1]; 
-  const roast = (l ? rand(ROASTS) : "").replace(/{name}/g, l ? l.name : "");
-  await S.roomRef.update({ phase: "STATS", ranking: { winner: { name: w.name, score: w.score }, loser: { name: l.name, score: l.score }, all: ranked.map(p => ({ id: p.id, name: p.name, score: p.score })) }, roast }); 
+  await S.roomRef.update({ phase: "STATS", ranking: { winner: { name: w.name, score: w.score }, loser: { name: l.name, score: l.score }, all: ranked.map(p => ({ id: p.id, name: p.name, score: p.score })) } }); 
 }
 
 export async function restart() { 
   const r = S.room; if (S.pid !== r.hostId) return; 
-  const upd = { phase: "LOBBY", round: 0, votes: null, result: null, ranking: null, roast: null };
-  Object.keys(r.players).forEach(id => { upd[`players/${id}/score`] = 0; upd[`players/${id}/jokerUsed`] = false; upd[`players/${id}/dbl`] = false; }); 
+  const upd = { phase: "LOBBY", round: 0, votes: null, result: null, ranking: null };
+  Object.keys(r.players).forEach(id => { upd[`players/${id}/score`] = 0; upd[`players/${id}/jokerUsed`] = false; }); 
   await S.roomRef.update(upd); 
 }
