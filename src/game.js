@@ -43,7 +43,6 @@ export async function joinRoom() {
     if (!snap.exists()) return toast("Salon introuvable.");
     const room = snap.val();
     
-    // CORRECTION : Permet de reprendre sa place en cas de bug navigateur
     const existingPlayerPair = Object.entries(room.players || {}).find(
       ([id, p]) => p.name.toLowerCase() === S.name.trim().toLowerCase()
     );
@@ -54,12 +53,10 @@ export async function joinRoom() {
       await db.ref(`rooms/${code}/players/${pid}`).update({ connected: true });
       toast("Te revoilà dans la partie !", true);
     } else {
-      // NOUVEAU JOUEUR EN COURS DE PARTIE
       pid = genId();
       const newPlayer = { name: S.name.trim().slice(0, 20), joker: rand(Object.keys(JOKERS)), score: 0, jokerUsed: false, connected: true };
       const updates = { [`players/${pid}`]: newPlayer };
       
-      // S'il rejoint pendant un vote, il est ajouté aux votants requis
       if (room.phase === "VOTING" && room.expectedVoters) {
         updates[`expectedVoters/${pid}`] = true;
       }
@@ -133,6 +130,15 @@ export async function startRound() {
 export async function nextRound() { const r = S.room; if (r.maxRounds > 0 && r.round >= r.maxRounds) return endGame(); startRound(); }
 export async function vote() { vibrate([30, 50]); await db.ref(`rooms/${S.code}/votes/${S.pid}`).set(Number(S.voteValue)); }
 
+// Fonction pour évaluer les gorgées selon l'écart (Tranches de 10%)
+function getPenalty(diff) {
+  if (diff <= 10) return { sips: 0, shot: false };
+  if (diff <= 20) return { sips: 1, shot: false };
+  if (diff <= 30) return { sips: 2, shot: false };
+  if (diff <= 40) return { sips: 3, shot: false };
+  return { sips: 0, shot: true };
+}
+
 export async function hostAutoReveal() {  
   try {
     const r = S.room; 
@@ -140,8 +146,6 @@ export async function hostAutoReveal() {
     
     const expectedIds = Object.keys(r.expectedVoters || {}); 
     const votes = r.votes || {};
-    
-    // CORRECTION MAJEURE : On ignore les joueurs qui ont rafraîchi ou fermé le jeu. La partie n'est plus bloquée.
     const missing = expectedIds.filter(id => r.players[id] && r.players[id].connected !== false && votes[id] === undefined);
     if (missing.length > 0) return; 
     
@@ -150,43 +154,48 @@ export async function hostAutoReveal() {
     const tid = r.question.targetId; 
     const tv = votes[tid] !== undefined ? votes[tid] : 50; 
     
+    // 1. LA VÉRITÉ = Moyenne du groupe
     const nonTargetVotes = Object.keys(votes).filter(id => id !== tid).map(id => votes[id]);
     const average = nonTargetVotes.length > 0 
       ? Math.round(nonTargetVotes.reduce((a, b) => a + b, 0) / nonTargetVotes.length) 
       : 50;
     
-    const thomasDiff = Math.abs(tv - average);
-    const thomasShot = thomasDiff >= 30;
+    // 2. Punition de la Cible
+    const targetDiff = Math.abs(tv - average);
+    const targetPenalty = getPenalty(targetDiff);
 
-    const playersDifs = Object.keys(votes)
-      .filter(id => id !== tid && r.players[id])
-      .map(id => ({
+    // 3. Punition du Groupe
+    const groupResults = [];
+    Object.keys(votes).forEach(id => {
+      if (id === tid || !r.players[id]) return;
+      const diff = Math.abs(votes[id] - average);
+      const penalty = getPenalty(diff);
+      groupResults.push({
         id,
         name: r.players[id].name,
-        diff: Math.abs(votes[id] - tv)
-      }))
-      .sort((a, b) => b.diff - a.diff);
-
-    const losers = playersDifs.slice(0, 2);
+        diff,
+        sips: penalty.sips,
+        shot: penalty.shot
+      });
+    });
 
     const result = { 
       average: average, 
       targetVote: tv, 
       targetName: r.question.targetName || "La cible", 
       targetId: tid, 
-      thomasDiff: thomasDiff,
-      thomasShot: thomasShot, 
-      losers: losers
+      targetDiff: targetDiff,
+      targetSips: targetPenalty.sips,
+      targetShot: targetPenalty.shot, 
+      groupResults: groupResults
     };
     
-    const updates = {
-      phase: "REVEAL", 
-      result: result,
-      [`players/${tid}/score`]: (r.players[tid].score || 0) + (thomasShot ? 20 : 0)
-    };
+    const updates = { phase: "REVEAL", result: result };
 
-    losers.forEach(l => {
-      updates[`players/${l.id}/score`] = (r.players[l.id].score || 0) + 10;
+    // Ajout des écarts au compteur de points de chaque joueur
+    updates[`players/${tid}/score`] = (r.players[tid].score || 0) + targetDiff;
+    groupResults.forEach(p => {
+      updates[`players/${p.id}/score`] = (r.players[p.id].score || 0) + p.diff;
     });
     
     await S.roomRef.update(updates);
