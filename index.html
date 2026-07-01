@@ -21,7 +21,6 @@
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 </head>
 <body class="selection:bg-white/30">
 
@@ -42,11 +41,11 @@
     <h2 class="text-2xl font-black mb-4 text-white">Comment jouer ? 🍻</h2>
     <div class="text-white/80 space-y-3 text-sm font-medium leading-relaxed max-h-[60vh] overflow-y-auto scroll pr-2">
       <p><b>1.</b> L'hôte lance la partie et choisit l'ambiance.</p>
-      <p><b>2.</b> Une question apparaît ciblant un joueur.</p>
-      <p><b>3.</b> <b>La cible</b> vote honnêtement sur le curseur.</p>
-      <p><b>4.</b> <b>Les autres joueurs</b> doivent deviner le vote.</p>
-      <p><b>5. Le Verdict :</b> Si l'écart est grand, la cible boit. S'il est proche, tous les autres boivent !</p>
-      <p><b>🃏 Les Jokers :</b> Chaque joueur a un pouvoir unique.</p>
+      <p><b>2.</b> <b>La cible</b> s'évalue elle-même sur le curseur secrètement.</p>
+      <p><b>3.</b> <b>Le groupe</b> vote également pour estimer la cible.</p>
+      <p><b>4. La Vérité :</b> C'est la <u>moyenne</u> des votes du groupe ! La majorité a toujours raison.</p>
+      <p><b>5. Le Verdict (Double Peine) :</b> Plus votre vote s'éloigne de la moyenne du groupe (par tranches de 10%), plus vous buvez. La cible, ET les 2 joueurs du groupe les plus à l'ouest trinquent ! <i>(Écart de 40% = CUL SEC 🚨)</i></p>
+      <p><b>🃏 Les Pouvoirs :</b> Chaque joueur possède un Joker à usage unique. Utilisez-le stratégiquement avant de valider votre vote pour vous protéger, attaquer ou voler !</p>
     </div>
     <button onclick="toggleRules()" class="w-full mt-6 py-3.5 rounded-xl bg-white/10 border border-white/20 font-bold active:scale-95 transition-transform text-white">J'ai compris !</button>
   </div>
