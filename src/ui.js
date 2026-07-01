@@ -68,6 +68,18 @@ function modeBtns(cur, fn) {
 
 function header() { 
   const t = theme();
+  let jokerBadge = "";
+  if (S.room && S.pid && S.room.phase !== "LOBBY" && S.room.players && S.room.players[S.pid]) {
+      const me = S.room.players[S.pid];
+      const myJoker = JOKERS[me.joker];
+      if (myJoker) {
+          jokerBadge = `
+          <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full ${me.jokerUsed ? 'bg-black/40 border border-white/10 opacity-50' : 'bg-purple-600/30 border border-purple-500/50 shadow-[0_0_15px_rgba(168,85,247,0.3)]'} text-xs font-bold text-white transition-all">
+              <span class="w-4 h-4">${myJoker.icon}</span> <span class="hidden sm:inline">${esc(myJoker.name)}</span> ${me.jokerUsed ? 'Utilisé' : 'Prêt'}
+          </div>`;
+      }
+  }
+
   return `<header class="flex justify-between items-center mb-6 pt-2">
     <div class="flex items-center gap-3">
       <div class="p-2.5 rounded-2xl shadow-[0_10px_20px_rgba(0,0,0,0.5)] flex items-center justify-center text-white" style="background:linear-gradient(135deg,${t.from},${t.to})">
@@ -76,6 +88,7 @@ function header() {
       <h1 class="text-3xl font-extrabold tracking-tighter text-white drop-shadow-md">Le <span style="background:linear-gradient(90deg,${t.from},${t.to});-webkit-background-clip:text;background-clip:text;color:transparent">Thermo</span>mètre</h1>
     </div>
     <div class="flex gap-2 items-center">
+      ${jokerBadge}
       ${!S.room ? `<button onclick="window.toggleRules()" class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white font-black border border-white/30 active:scale-95 transition-transform shadow-lg"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></button>` : ""}
       ${S.room && S.code ? `
         <span class="text-xs font-black bg-emerald-500 text-white px-3 py-1.5 rounded-full shadow-md tracking-wider flex items-center gap-1"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"></path></svg> ${S.code}</span> 
@@ -115,6 +128,26 @@ function renderLobby(r, t) {
     `;
   }
 
+  const jokerSection = isHost ? `
+    <div class="glass-card rounded-3xl p-5 flex flex-col gap-3 shadow-xl border border-purple-500/30 bg-black/40 relative overflow-hidden">
+      <div class="absolute -right-4 -top-4 w-24 h-24 bg-purple-500/20 blur-2xl rounded-full"></div>
+      <div class="flex justify-between items-center z-10">
+         <h2 class="text-[10px] font-black uppercase tracking-widest text-purple-300 ml-1">Distribution des Pouvoirs</h2>
+         <button onclick="window.randomizeJokers()" class="text-[10px] bg-purple-500/20 text-purple-200 px-3 py-1.5 rounded-full border border-purple-500/40 active:scale-95 transition-transform font-bold">Tout Mélanger 🎲</button>
+      </div>
+      <p class="text-xs text-white/50 mb-1 z-10 font-medium">Appuyez sur l'icône d'un joueur plus bas pour changer son pouvoir manuellement.</p>
+    </div>
+  ` : `
+    <div class="glass-card rounded-3xl p-5 flex items-center gap-4 shadow-xl border border-white/10 bg-black/40">
+      <div class="w-14 h-14 shrink-0 rounded-2xl flex items-center justify-center text-white shadow-lg bg-purple-600/30 border border-purple-500/50">${myJoker ? myJoker.icon : ''}</div>
+      <div class="flex flex-col min-w-0">
+        <span class="text-[10px] font-black uppercase tracking-widest text-purple-300">Ton pouvoir secret</span>
+        <span class="text-lg font-black text-white leading-tight">${myJoker ? esc(myJoker.name) : 'Aucun'}</span>
+        <span class="text-xs text-white/60 font-medium leading-snug">${myJoker ? esc(myJoker.desc) : ''}</span>
+      </div>
+    </div>
+  `;
+
   const waitingText = connectedArr(r).length < 2 
        ? `<span class="text-white/70 font-bold block mb-1"><svg class="w-5 h-5 animate-spin inline-block mr-1 align-middle" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg> En attente de joueurs...</span>`
        : `<span class="text-emerald-400 font-black block text-lg mb-1 drop-shadow-md">Équipe prête au combat</span>`;
@@ -131,14 +164,7 @@ function renderLobby(r, t) {
       </span>
     </div>
 
-    <div class="glass-card rounded-3xl p-5 flex items-center gap-4 shadow-xl border border-white/10 bg-black/40">
-      <div class="w-14 h-14 shrink-0 rounded-2xl flex items-center justify-center text-white shadow-lg" style="background:linear-gradient(135deg,${t.from},${t.to})">${myJoker ? myJoker.icon : ''}</div>
-      <div class="flex flex-col min-w-0">
-        <span class="text-[10px] font-black uppercase tracking-widest text-white/60">Privilège tactique</span>
-        <span class="text-lg font-black text-white leading-tight">${myJoker ? esc(myJoker.name) : 'Aucun'}</span>
-        <span class="text-xs text-white/60 font-medium leading-snug">${myJoker ? esc(myJoker.desc) : ''}</span>
-      </div>
-    </div>
+    ${jokerSection}
     
     ${isHost ? `<div class="glass-card rounded-3xl p-5 flex flex-col gap-3 shadow-xl border border-white/10 bg-black/40"><h2 class="text-[10px] font-black uppercase tracking-widest text-white/60 ml-1">Configuration du salon</h2><div class="grid grid-cols-3 gap-2">${modeBtns(r.mode, "chooseMode")}</div></div>` : ""}
     ${roundsSelectorUi}
@@ -151,6 +177,9 @@ function renderLobby(r, t) {
             <div class="flex items-center gap-3">
               <div class="w-12 h-12 rounded-full flex items-center justify-center font-black text-white text-lg ring-2 ring-white/30 ring-offset-2 ring-offset-[#040B16]" style="background:${getAvatarGradient(p.name)}">${esc((p.name || "A")[0].toUpperCase())}</div>
               <span class="font-bold text-white text-lg">${esc(p.name)} ${p.id === S.pid ? '<span class="text-white/40 text-[10px] uppercase tracking-widest ml-2 bg-white/10 px-2 py-1 rounded-full">Moi</span>' : ''}</span>
+            </div>
+            <div class="flex items-center gap-2">
+              ${isHost ? `<button onclick="window.cycleJoker('${p.id}')" class="w-10 h-10 rounded-full bg-purple-500/20 border border-purple-500/40 flex items-center justify-center text-white shadow-inner active:scale-90 transition-transform" title="Changer le joker">${JOKERS[p.joker]?.icon || '🎴'}</button>` : `<div class="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/50">${JOKERS[p.joker]?.icon || '🎴'}</div>`}
             </div>
           </div>
         `).join("")}
@@ -170,6 +199,17 @@ function renderVoting(r, t) {
   const roundCounter = r.maxRounds > 0 ? `Question ${r.round} / ${r.maxRounds}` : `Question ${r.round}`;
   const amTarget = q.targetId === S.pid;
   
+  const me = r.players[S.pid];
+  const myJoker = JOKERS[me.joker];
+  let jokerActionHtml = "";
+  if (myJoker && !voted) {
+      if (!me.jokerUsed) {
+          jokerActionHtml = `<button onclick="window.toggleJoker()" class="w-full py-4 rounded-2xl bg-gradient-to-r from-purple-600/40 to-pink-600/40 border border-purple-500/50 text-white font-black uppercase tracking-wider flex items-center justify-center gap-2 mb-4 shadow-[0_0_20px_rgba(168,85,247,0.3)] active:scale-95 transition-all"><span class="w-6 h-6">${myJoker.icon}</span> Activer mon pouvoir (${esc(myJoker.name)})</button>`;
+      } else {
+          jokerActionHtml = `<button onclick="window.toggleJoker()" class="w-full py-4 rounded-2xl bg-white/5 border border-white/10 text-white/50 font-bold uppercase tracking-wider flex items-center justify-center gap-2 mb-4 active:scale-95 transition-all"><span class="w-5 h-5 opacity-50">${myJoker.icon}</span> Pouvoir activé (Annuler)</button>`;
+      }
+  }
+
   const waitingList = connectedArr(r).map(p => {
       const hasVoted = (r.votes || {})[p.id] !== undefined;
       return `<div class="flex items-center justify-between p-3 rounded-2xl border-2 transition-all ${hasVoted ? 'bg-white/10 border-white/20 shadow-lg scale-[1.02]' : 'bg-black/40 border-transparent opacity-60'}"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full flex items-center justify-center font-black text-white ring-2 ring-white/20" style="background:${getAvatarGradient(p.name)}">${esc((p.name || "A")[0].toUpperCase())}</div><span class="font-bold text-white text-lg">${esc(p.name)}</span></div><div>${hasVoted ? '<svg class="w-6 h-6 text-emerald-400 drop-shadow-md" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>' : '<svg class="w-6 h-6 text-white/50 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>'}</div></div>`;
@@ -186,6 +226,7 @@ function renderVoting(r, t) {
       </div>
     </div>
     ${!voted ? `
+      ${jokerActionHtml}
       <div class="glass-card rounded-3xl p-6 flex flex-col gap-6 shadow-2xl border border-white/20 bg-black/60">
         <div class="flex justify-between items-end"><span class="font-black text-white/50 text-[10px] uppercase tracking-widest">${amTarget ? 'Sois honnête' : 'Tu penses à combien ?'}</span><span id="sv" class="text-7xl font-display font-black text-white drop-shadow-xl">${S.voteValue}%</span></div>
         
@@ -217,7 +258,6 @@ function renderReveal(r, t) {
       `;
   }
 
-  // 1. VERDICT DE LA CIBLE
   let targetVerdictHtml = "";
   if (res.targetShot) {
     targetVerdictHtml = `<div class="w-full bg-red-600/40 border border-red-500 rounded-2xl p-4 text-center text-white font-bold shadow-lg animate-pulse">🚨 🤯 CUL SEC POUR ${esc(res.targetName).toUpperCase()} ! <br><span class="text-xs text-white/80 font-medium normal-case">Déni total (${res.targetDiff} pts d'écart).</span></div>`;
@@ -227,7 +267,6 @@ function renderReveal(r, t) {
     targetVerdictHtml = `<div class="w-full bg-emerald-500/20 border border-emerald-500/40 rounded-2xl p-4 text-center text-emerald-200 font-bold shadow-md">✨ ${esc(res.targetName)} est sauvé(e) ! <br><span class="text-xs text-white/60 font-medium normal-case">Très proche de la réalité. 0 gorgée !</span></div>`;
   }
 
-  // 2. VERDICT DU GROUPE (Liste dynamique selon les nouvelles tranches)
   let groupVerdictHtml = "";
   const penalizedGroup = (res.groupResults || []).filter(p => p.sips > 0 || p.shot).sort((a,b) => b.diff - a.diff);
   if (penalizedGroup.length === 0) {
@@ -243,10 +282,12 @@ function renderReveal(r, t) {
   const recapList = connectedArr(r).map(p => {
        const v = (r.votes || {})[p.id];
        const isTarget = p.id === res.targetId;
+       const usedBadge = r.players[p.id]?.jokerUsed ? `<span class="bg-purple-500/30 text-purple-200 border border-purple-500/50 px-2 py-0.5 rounded-full text-[9px] font-black uppercase ml-2 flex items-center gap-1"><span class="w-3 h-3">${JOKERS[r.players[p.id].joker]?.icon}</span> Pouvoir</span>` : '';
+
        return `<div class="flex justify-between items-center p-3 border-b border-white/5 last:border-0 ${isTarget ? 'bg-white/5 rounded-xl border-none mb-1' : ''}">
          <div class="flex items-center gap-3">
            <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-black text-white" style="background:${getAvatarGradient(p.name)}">${esc((p.name || "A")[0].toUpperCase())}</div>
-           <span class="text-sm font-bold text-white/80">${esc(p.name)} ${isTarget ? '(La Cible)' : ''}</span>
+           <span class="text-sm font-bold text-white/80 flex items-center">${esc(p.name)} ${isTarget ? '<span class="text-yellow-400/80 text-[10px] ml-1">(La Cible)</span>' : ''} ${usedBadge}</span>
          </div>
          <span class="font-black text-lg ${isTarget ? 'text-yellow-400' : 'text-white'}">${v !== undefined ? v + '%' : '---'}</span>
        </div>`;
@@ -325,7 +366,6 @@ function renderStats(r, t) {
       <p class="text-white/80 text-sm mt-3 font-black uppercase tracking-widest relative z-10 bg-black/60 inline-block px-4 py-2 rounded-full border border-white/10">Le gros mouton : ${rk.loser.score} pts dans le vent !</p>
     </div>
 
-    <!-- NOUVEAU BANDEAU : POUVOIR DU VAINQUEUR -->
     <div class="bg-gradient-to-br from-purple-600/50 to-pink-600/50 backdrop-blur-xl rounded-[2rem] p-6 text-center shadow-[0_15px_50px_rgba(168,85,247,0.3)] border-2 border-purple-400/50 relative overflow-hidden mt-2">
       <span class="text-purple-300 text-[10px] font-black uppercase tracking-widest block mb-1 relative z-10">La Sentence Finale ⚖️</span>
       <p class="text-lg font-black text-white relative z-10 drop-shadow-md leading-snug">👑 <b>${esc(rk.winner.name)}</b> a tout pouvoir pour donner un gage ou imposer un cul sec à 🤡 <b>${esc(rk.loser.name)}</b> !</p>
