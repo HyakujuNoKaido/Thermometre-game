@@ -1,3 +1,4 @@
+```css
 @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700;800&family=Outfit:wght@700;900&display=swap');
 
 @tailwind base;
@@ -64,7 +65,7 @@ html, body {
 
 /* UI Components */
 .glass-card { background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02)); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.15); border-top: 1px solid rgba(255, 255, 255, 0.3); border-left: 1px solid rgba(255, 255, 255, 0.2); box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.4); }
-.btn-gold { background: linear-gradient(135deg, #fbbf24, #d97706); box-shadow: 0 0 20px rgba(251, 191, 36, 0.3); transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), box-shadow: 0.3s; color: #000; }
+.btn-gold { background: linear-gradient(135deg, #fbbf24, #d97706); box-shadow: 0 0 20px rgba(251, 191, 36, 0.3); transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s; color: #000; }
 .btn-gold:active { transform: scale(0.95); }
 
 .scroll::-webkit-scrollbar { width: 4px; }
@@ -76,3 +77,5 @@ html, body {
 #rulesModal.sheet-open .sheet { transform: translateY(0); }
 #rulesModal { opacity: 0; transition: opacity .3s ease; }
 #rulesModal.sheet-open { opacity: 1; }
+
+```
