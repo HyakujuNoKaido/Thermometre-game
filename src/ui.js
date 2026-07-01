@@ -72,11 +72,10 @@ function header() {
   if (S.room && S.pid && S.room.phase !== "LOBBY" && S.room.players && S.room.players[S.pid]) {
       const me = S.room.players[S.pid];
       const myJoker = JOKERS[me.joker];
-      if (myJoker) {
-          jokerBadge = `
-          <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full ${me.jokerUsed ? 'bg-black/40 border border-white/10 opacity-50' : 'bg-purple-600/30 border border-purple-500/50 shadow-[0_0_15px_rgba(168,85,247,0.3)]'} text-xs font-bold text-white transition-all">
-              <span class="w-4 h-4">${myJoker.icon}</span> <span class="hidden sm:inline">${esc(myJoker.name)}</span> ${me.jokerUsed ? 'Utilisé' : 'Prêt'}
-          </div>`;
+      if (myJoker && !me.jokerConsumed) {
+          jokerBadge = `<div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full ${me.jokerActive ? 'bg-purple-600 border border-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.6)]' : 'bg-purple-600/30 border border-purple-500/50'} text-xs font-bold text-white transition-all"><span class="w-4 h-4">${myJoker.icon}</span> <span class="hidden sm:inline">${esc(myJoker.name)}</span> ${me.jokerActive ? 'Activé' : 'Prêt'}</div>`;
+      } else if (me.jokerConsumed) {
+          jokerBadge = `<div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/40 border border-white/10 text-xs font-bold text-white/40 transition-all"><span class="w-4 h-4 opacity-50">${myJoker ? myJoker.icon : '🎴'}</span> Épuisé</div>`;
       }
   }
 
@@ -91,7 +90,6 @@ function header() {
       ${jokerBadge}
       ${!S.room ? `<button onclick="window.toggleRules()" class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white font-black border border-white/30 active:scale-95 transition-transform shadow-lg"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></button>` : ""}
       ${S.room && S.code ? `
-        <span class="text-xs font-black bg-emerald-500 text-white px-3 py-1.5 rounded-full shadow-md tracking-wider flex items-center gap-1"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"></path></svg> ${S.code}</span> 
         <button onclick="window.quitGame()" class="px-3 py-1.5 rounded-full bg-red-500/20 text-red-400 font-bold border border-red-500/40 text-xs active:scale-95 transition-transform shadow-lg flex items-center"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg></button>
       ` : ""}
     </div>
@@ -200,14 +198,32 @@ function renderVoting(r, t) {
   const amTarget = q.targetId === S.pid;
   
   const me = r.players[S.pid];
-  const myJoker = JOKERS[me.joker];
+  const myJokerStr = me.joker;
+  const myJoker = JOKERS[myJokerStr];
   let jokerActionHtml = "";
-  if (myJoker && !voted) {
-      if (!me.jokerUsed) {
-          jokerActionHtml = `<button onclick="window.toggleJoker()" class="w-full py-4 rounded-2xl bg-gradient-to-r from-purple-600/40 to-pink-600/40 border border-purple-500/50 text-white font-black uppercase tracking-wider flex items-center justify-center gap-2 mb-4 shadow-[0_0_20px_rgba(168,85,247,0.3)] active:scale-95 transition-all"><span class="w-6 h-6">${myJoker.icon}</span> Activer mon pouvoir (${esc(myJoker.name)})</button>`;
+
+  if (myJoker && !me.jokerConsumed) {
+      if (myJokerStr === "THIEF") {
+          const stealablePlayers = connectedArr(r).filter(p => p.id !== S.pid && p.joker && !p.jokerConsumed);
+          if (stealablePlayers.length > 0) {
+              jokerActionHtml = `<div class="w-full bg-black/60 border border-purple-500/50 rounded-2xl p-4 mb-4 shadow-[0_0_20px_rgba(168,85,247,0.2)]">
+                  <span class="text-purple-400 font-black uppercase tracking-widest text-[10px] block mb-3 flex items-center gap-2"><span class="w-4 h-4">${myJoker.icon}</span> Voler un pouvoir à :</span>
+                  <div class="flex gap-2 overflow-x-auto scroll pb-2">
+                      ${stealablePlayers.map(p => `<button onclick="window.stealJoker('${p.id}')" class="shrink-0 px-4 py-2 bg-purple-600/30 border border-purple-500/50 rounded-xl text-white font-bold text-xs active:scale-95 transition-all">${esc(p.name)}</button>`).join("")}
+                  </div>
+              </div>`;
+          } else {
+              jokerActionHtml = `<div class="w-full bg-black/40 border border-white/10 rounded-2xl p-3 mb-4 text-center text-white/40 text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-2"><span class="w-4 h-4">${myJoker.icon}</span> Personne à voler</div>`;
+          }
       } else {
-          jokerActionHtml = `<button onclick="window.toggleJoker()" class="w-full py-4 rounded-2xl bg-white/5 border border-white/10 text-white/50 font-bold uppercase tracking-wider flex items-center justify-center gap-2 mb-4 active:scale-95 transition-all"><span class="w-5 h-5 opacity-50">${myJoker.icon}</span> Pouvoir activé (Annuler)</button>`;
+          if (!me.jokerActive) {
+              jokerActionHtml = `<button onclick="window.toggleJoker()" class="w-full py-4 rounded-2xl bg-gradient-to-r from-purple-600/40 to-pink-600/40 border border-purple-500/50 text-white font-black uppercase tracking-wider flex items-center justify-center gap-2 mb-4 shadow-[0_0_20px_rgba(168,85,247,0.3)] active:scale-95 transition-all"><span class="w-6 h-6">${myJoker.icon}</span> Activer mon pouvoir (${esc(myJoker.name)})</button>`;
+          } else {
+              jokerActionHtml = `<button onclick="window.toggleJoker()" class="w-full py-4 rounded-2xl bg-white/5 border border-white/10 text-white/50 font-bold uppercase tracking-wider flex items-center justify-center gap-2 mb-4 active:scale-95 transition-all"><span class="w-5 h-5 opacity-50">${myJoker.icon}</span> Pouvoir activé (Annuler)</button>`;
+          }
       }
+  } else if (me.jokerConsumed) {
+      jokerActionHtml = `<div class="w-full bg-black/40 border border-white/10 rounded-2xl p-3 mb-4 flex items-center justify-center gap-2 text-white/40 font-bold uppercase tracking-widest text-[10px]"><span class="w-4 h-4 opacity-50">${myJoker ? myJoker.icon : '🎴'}</span> Pouvoir déjà consommé</div>`;
   }
 
   const waitingList = connectedArr(r).map(p => {
@@ -258,17 +274,28 @@ function renderReveal(r, t) {
       `;
   }
 
+  let jokersLogHtml = "";
+  if (res.usedJokersLog && res.usedJokersLog.length > 0) {
+      jokersLogHtml = res.usedJokersLog.map(log => {
+          const j = JOKERS[log.joker];
+          return `<div class="w-full bg-purple-600/30 border border-purple-500 rounded-2xl p-3 mb-4 text-center text-white font-bold shadow-[0_0_15px_rgba(168,85,247,0.3)] animate-pulse text-sm">
+            <span class="inline-flex items-center gap-1"><span class="w-5 h-5">${j.icon}</span> ${esc(log.name)} a activé ${esc(j.name)} !</span>
+          </div>`;
+      }).join("");
+  }
+
   let targetVerdictHtml = "";
   if (res.targetShot) {
-    targetVerdictHtml = `<div class="w-full bg-red-600/40 border border-red-500 rounded-2xl p-4 text-center text-white font-bold shadow-lg animate-pulse">🚨 🤯 CUL SEC POUR ${esc(res.targetName).toUpperCase()} ! <br><span class="text-xs text-white/80 font-medium normal-case">Déni total (${res.targetDiff} pts d'écart).</span></div>`;
+    targetVerdictHtml = `<div class="w-full bg-red-600/40 border border-red-500 rounded-2xl p-4 text-center text-white font-bold shadow-lg">🚨 🤯 CUL SEC POUR ${esc(res.targetName).toUpperCase()} ! <br><span class="text-xs text-white/80 font-medium normal-case">Déni total (${res.targetDiff} pts d'écart).</span></div>`;
   } else if (res.targetSips > 0) {
-    targetVerdictHtml = `<div class="w-full bg-yellow-500/20 border border-yellow-500/40 rounded-2xl p-4 text-center text-yellow-200 font-bold shadow-md">🎯 ${esc(res.targetName)} PREND ${res.targetSips} GORGÉE${res.targetSips > 1 ? 'S' : ''} <br><span class="text-xs text-white/60 font-medium normal-case">${res.targetDiff} pts d'écart avec le groupe.</span></div>`;
+    targetVerdictHtml = `<div class="w-full bg-yellow-500/20 border border-yellow-500/40 rounded-2xl p-4 text-center text-yellow-200 font-bold shadow-md">🎯 ${esc(res.targetName)} : ${res.targetSips} GORGÉE${res.targetSips > 1 ? 'S' : ''} <br><span class="text-xs text-white/60 font-medium normal-case">${res.targetMsg}</span></div>`;
   } else {
-    targetVerdictHtml = `<div class="w-full bg-emerald-500/20 border border-emerald-500/40 rounded-2xl p-4 text-center text-emerald-200 font-bold shadow-md">✨ ${esc(res.targetName)} est sauvé(e) ! <br><span class="text-xs text-white/60 font-medium normal-case">Très proche de la réalité. 0 gorgée !</span></div>`;
+    targetVerdictHtml = `<div class="w-full bg-emerald-500/20 border border-emerald-500/40 rounded-2xl p-4 text-center text-emerald-200 font-bold shadow-md">✨ ${esc(res.targetName)} : 0 Gorgée <br><span class="text-xs text-white/60 font-medium normal-case">${res.targetMsg}</span></div>`;
   }
 
   let groupVerdictHtml = "";
   const penalizedGroup = (res.groupResults || []).filter(p => p.sips > 0 || p.shot).sort((a,b) => b.diff - a.diff);
+  
   if (penalizedGroup.length === 0) {
     groupVerdictHtml = `<div class="w-full bg-emerald-500/20 border border-emerald-500/40 rounded-2xl p-3 text-center text-emerald-200 font-bold shadow-md mt-3">✨ Le groupe est resté soudé ! 0 gorgée.</div>`;
   } else {
@@ -282,12 +309,10 @@ function renderReveal(r, t) {
   const recapList = connectedArr(r).map(p => {
        const v = (r.votes || {})[p.id];
        const isTarget = p.id === res.targetId;
-       const usedBadge = r.players[p.id]?.jokerUsed ? `<span class="bg-purple-500/30 text-purple-200 border border-purple-500/50 px-2 py-0.5 rounded-full text-[9px] font-black uppercase ml-2 flex items-center gap-1"><span class="w-3 h-3">${JOKERS[r.players[p.id].joker]?.icon}</span> Pouvoir</span>` : '';
-
        return `<div class="flex justify-between items-center p-3 border-b border-white/5 last:border-0 ${isTarget ? 'bg-white/5 rounded-xl border-none mb-1' : ''}">
          <div class="flex items-center gap-3">
            <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-black text-white" style="background:${getAvatarGradient(p.name)}">${esc((p.name || "A")[0].toUpperCase())}</div>
-           <span class="text-sm font-bold text-white/80 flex items-center">${esc(p.name)} ${isTarget ? '<span class="text-yellow-400/80 text-[10px] ml-1">(La Cible)</span>' : ''} ${usedBadge}</span>
+           <span class="text-sm font-bold text-white/80">${esc(p.name)} ${isTarget ? '(La Cible)' : ''}</span>
          </div>
          <span class="font-black text-lg ${isTarget ? 'text-yellow-400' : 'text-white'}">${v !== undefined ? v + '%' : '---'}</span>
        </div>`;
@@ -312,6 +337,7 @@ function renderReveal(r, t) {
     <div class="text-center animate-pop my-1 h-20 flex items-center justify-center"><span id="reveal-avg" class="font-display text-cyan-400 font-black leading-none drop-shadow-[0_15px_40px_rgba(34,211,238,0.8)] ${blurCls} text-[24vw]">${avgVal}</span></div>
     
     <div id="reveal-details" class="${detCls}">
+      ${jokersLogHtml}
       <div class="glass-card border rounded-3xl p-6 flex flex-col items-center shadow-2xl bg-black/70 border-white/10">
         
         <div class="flex w-full justify-around items-center">
