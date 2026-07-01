@@ -61,7 +61,7 @@ function modeBtns(cur, fn) {
   return Object.keys(THEMES).map(m => {
     const t = THEMES[m]; const a = cur === m;
     return `<button onclick="window.${fn}('${m}')" class="flex flex-col items-center gap-2 py-4 rounded-2xl border-2 transition-all duration-300 ${a ? 'border-white/80 scale-105 shadow-[0_0_25px_rgba(255,255,255,0.3)]' : 'bg-black/40 border-white/10 text-white/40 hover:bg-white/10'}" ${a ? `style="background:linear-gradient(135deg, ${t.base}, rgba(0,0,0,0.9)); border-color: ${t.from}"` : ""}>
-      <span class="text-4xl filter drop-shadow-lg">${t.icon}</span><span class="text-[10px] font-black uppercase tracking-widest ${a ? 'text-white' : ''}">${t.label}</span>
+      <span class="text-4xl filter drop-shadow-lg flex items-center justify-center text-white">${t.icon}</span><span class="text-[10px] font-black uppercase tracking-widest ${a ? 'text-white' : ''}">${t.label}</span>
     </button>`;
   }).join(""); 
 }
@@ -88,13 +88,13 @@ function header() {
 function renderHome(t) { 
   return `<div class="flex-1 flex flex-col justify-center animate-up pb-8">
     <div class="glass-card rounded-[2rem] p-7 flex flex-col gap-6 mb-6 shadow-[0_15px_40px_rgba(0,0,0,0.6)] border border-white/20">
-      <div class="flex flex-col gap-2"><label class="text-white/70 font-black text-xs uppercase tracking-widest ml-1">Ton p'tit blaze 👀</label><input id="nameI" maxlength="15" placeholder="Ex: Alex" value="${esc(S.name)}" class="w-full bg-black/60 border-2 border-white/10 rounded-2xl px-5 py-4 text-xl font-bold outline-none focus:border-white/60 transition-colors placeholder:text-white/20 text-white shadow-inner"/></div>
-      <div class="flex flex-col gap-2"><label class="text-white/70 font-black text-xs uppercase tracking-widest ml-1">Choisis la Vibe 🔥</label><div class="grid grid-cols-3 gap-3">${modeBtns(S.pendingMode, "pickMode")}</div></div>
-      <button id="createB" class="${btnPrimary} mt-2" ${S.isLoading ? 'disabled' : ''}>${S.isLoading ? 'Création...' : 'Créer le salon 🚀'}</button>
+      <div class="flex flex-col gap-2"><label class="text-white/70 font-black text-xs uppercase tracking-widest ml-1">Pseudonyme</label><input id="nameI" maxlength="15" placeholder="Ex: Alex" value="${esc(S.name)}" class="w-full bg-black/60 border-2 border-white/10 rounded-2xl px-5 py-4 text-xl font-bold outline-none focus:border-white/60 transition-colors placeholder:text-white/20 text-white shadow-inner"/></div>
+      <div class="flex flex-col gap-2"><label class="text-white/70 font-black text-xs uppercase tracking-widest ml-1">Configuration de l'ambiance</label><div class="grid grid-cols-3 gap-3">${modeBtns(S.pendingMode, "pickMode")}</div></div>
+      <button id="createB" class="${btnPrimary} mt-2" ${S.isLoading ? 'disabled' : ''}>${S.isLoading ? 'Création...' : 'Créer le salon'}</button>
     </div>
     <div class="glass-card rounded-[2rem] p-3 flex flex-row gap-3 items-center shadow-xl border border-white/10">
       <input id="joinI" maxlength="4" placeholder="CODE" value="${esc(S.joinCode)}" class="flex-1 min-w-0 bg-transparent border-none px-4 py-2 text-3xl font-display font-black tracking-[0.3em] text-center uppercase outline-none placeholder:text-white/10 placeholder:tracking-normal text-white"/>
-      <button id="joinB" class="shrink-0 py-3 px-8 rounded-xl bg-white/10 border border-white/30 font-black uppercase tracking-wider hover:bg-white/20 active:scale-95 transition-all text-white shadow-lg" ${S.isLoading ? 'disabled' : ''}>Go 🍻</button>
+      <button id="joinB" class="shrink-0 py-3 px-8 rounded-xl bg-white/10 border border-white/30 font-black uppercase tracking-wider hover:bg-white/20 active:scale-95 transition-all text-white shadow-lg" ${S.isLoading ? 'disabled' : ''}>Rejoindre</button>
     </div>
   </div>`; 
 }
@@ -116,11 +116,11 @@ function renderLobby(r, t) {
   }
 
   const waitingText = connectedArr(r).length < 2 
-       ? `<span class="text-white/70 font-bold block mb-1"><span class="animate-spin inline-block text-xl">⏳</span> Rameute l'équipe... (1/2 min)</span>`
-       : `<span class="text-emerald-400 font-black block text-lg mb-1 drop-shadow-md">✅ L'équipe est parée !</span>`;
+       ? `<span class="text-white/70 font-bold block mb-1"><svg class="w-5 h-5 animate-spin inline-block mr-1 align-middle" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg> En attente de joueurs...</span>`
+       : `<span class="text-emerald-400 font-black block text-lg mb-1 drop-shadow-md">Équipe prête au combat</span>`;
   const guestWaitingText = !isHost && connectedArr(r).length >= 2 
-       ? `<span class="text-white/50 font-bold text-sm mt-1 animate-pulse block">On attend le lancement du boss...</span>` : "";
-  const hostControls = isHost ? `<button id="startB" class="${btnPrimary} mt-3" ${connectedArr(r).length < 2 ? 'disabled' : ''}>🚀 Let's Go !</button>` : "";
+       ? `<span class="text-white/50 font-bold text-sm mt-1 animate-pulse block">En attente du signal de l'hôte...</span>` : "";
+  const hostControls = isHost ? `<button id="startB" class="${btnPrimary} mt-3" ${connectedArr(r).length < 2 ? 'disabled' : ''}>Lancer la partie</button>` : "";
 
   return `<div class="flex-1 flex flex-col gap-4 animate-up pb-8">
     
@@ -133,25 +133,25 @@ function renderLobby(r, t) {
     </div>
 
     <div class="glass-card rounded-3xl p-5 flex items-center gap-4 shadow-xl border border-white/10 bg-black/40">
-      <div class="w-14 h-14 shrink-0 rounded-2xl flex items-center justify-center text-3xl shadow-lg text-white" style="background:linear-gradient(135deg,${t.from},${t.to})">${myJoker ? myJoker.icon : '🎴'}</div>
+      <div class="w-14 h-14 shrink-0 rounded-2xl flex items-center justify-center text-white shadow-lg" style="background:linear-gradient(135deg,${t.from},${t.to})">${myJoker ? myJoker.icon : ''}</div>
       <div class="flex flex-col min-w-0">
-        <span class="text-[10px] font-black uppercase tracking-widest text-white/60">Ton pouvoir secret 🃏</span>
+        <span class="text-[10px] font-black uppercase tracking-widest text-white/60">Privilège tactique</span>
         <span class="text-lg font-black text-white leading-tight">${myJoker ? esc(myJoker.name) : 'Aucun'}</span>
         <span class="text-xs text-white/60 font-medium leading-snug">${myJoker ? esc(myJoker.desc) : ''}</span>
       </div>
     </div>
     
-    ${isHost ? `<div class="glass-card rounded-3xl p-5 flex flex-col gap-3 shadow-xl border border-white/10 bg-black/40"><h2 class="text-[10px] font-black uppercase tracking-widest text-white/60 ml-1">Vibe de la partie</h2><div class="grid grid-cols-3 gap-2">${modeBtns(r.mode, "chooseMode")}</div></div>` : ""}
+    ${isHost ? `<div class="glass-card rounded-3xl p-5 flex flex-col gap-3 shadow-xl border border-white/10 bg-black/40"><h2 class="text-[10px] font-black uppercase tracking-widest text-white/60 ml-1">Configuration du salon</h2><div class="grid grid-cols-3 gap-2">${modeBtns(r.mode, "chooseMode")}</div></div>` : ""}
     ${roundsSelectorUi}
     
     <div class="glass-card rounded-3xl p-5 flex flex-col gap-4 shadow-xl border border-white/10 bg-black/40">
-      <h2 class="text-[10px] font-black uppercase tracking-widest text-white/60 ml-1">L'équipe (${ps.length}) 🍻</h2>
+      <h2 class="text-[10px] font-black uppercase tracking-widest text-white/60 ml-1">Joueurs connectés (${ps.length})</h2>
       <div class="flex flex-col gap-3 max-h-48 overflow-y-auto scroll pr-2">
         ${ps.map(p => `
           <div class="flex items-center justify-between p-3 rounded-2xl bg-black/60 border border-white/10 shadow-md">
             <div class="flex items-center gap-3">
               <div class="w-12 h-12 rounded-full flex items-center justify-center font-black text-white text-lg ring-2 ring-white/30 ring-offset-2 ring-offset-[#040B16]" style="background:${getAvatarGradient(p.name)}">${esc((p.name || "A")[0].toUpperCase())}</div>
-              <span class="font-bold text-white text-lg">${esc(p.name)} ${p.id === S.pid ? '<span class="text-white/40 text-[10px] uppercase tracking-widest ml-2 bg-white/10 px-2 py-1 rounded-full">C\'est toi</span>' : ''}</span>
+              <span class="font-bold text-white text-lg">${esc(p.name)} ${p.id === S.pid ? '<span class="text-white/40 text-[10px] uppercase tracking-widest ml-2 bg-white/10 px-2 py-1 rounded-full">Moi</span>' : ''}</span>
             </div>
           </div>
         `).join("")}
@@ -183,22 +183,22 @@ function renderVoting(r, t) {
          <span class="px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-white/10 border border-white/20 text-white shadow-inner">${roundCounter}</span>
       </div>
       <div class="mt-6">
-        ${amTarget ? `<span class="text-yellow-400 font-black text-xs uppercase tracking-widest block mb-3 animate-pulse drop-shadow-md">👀 C'est TOI la cible !</span>` : ``}
+        ${amTarget ? `<span class="text-yellow-400 font-black text-xs uppercase tracking-widest block mb-3 animate-pulse drop-shadow-md">Cible désignée</span>` : ``}
         <p class="text-2xl font-bold leading-relaxed text-white drop-shadow-lg">"${esc(q.text)}"</p>
       </div>
     </div>
     ${!voted ? `
       <div class="glass-card rounded-3xl p-6 flex flex-col gap-6 shadow-2xl border border-white/20 bg-black/60">
-        <div class="flex justify-between items-end"><span class="font-black text-white/50 text-[10px] uppercase tracking-widest">${amTarget ? 'Sois honnête' : 'Tu penses à combien ?'}</span><span id="sv" class="text-7xl font-display font-black text-white drop-shadow-xl">${S.voteValue}%</span></div>
+        <div class="flex justify-between items-end"><span class="font-black text-white/50 text-[10px] uppercase tracking-widest">${amTarget ? 'Saisie de la valeur exacte' : 'Estimation personnelle'}</span><span id="sv" class="text-7xl font-display font-black text-white drop-shadow-xl">${S.voteValue}%</span></div>
         
         <div class="relative h-20 rounded-full bg-black/80 shadow-[inset_0_5px_15px_rgba(0,0,0,0.5)] border-2 border-white/10 flex items-center px-2">
-          <div id="fill" class="absolute left-2 h-16 rounded-full transition-all pointer-events-none" style="width: calc(${S.voteValue}% - 16px); background: ${t.b1};"></div>
-          <input type="range" id="slider" min="0" max="100" value="${S.voteValue}" class="thermo-slider absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
-          <div id="thumb-bubble" class="thumb-bubble font-display pointer-events-none z-20" style="left:${S.voteValue}%;background:${t.b1};border-top-color:${t.b1}">${S.voteValue}%</div>
+          <div id="fill" class="absolute left-2 h-16 rounded-full pointer-events-none" style="width: calc(${S.voteValue}% - 16px); background: ${t.b1}; transition: none !important;"></div>
+          <input type="range" id="slider" min="0" max="100" value="${S.voteValue}" class="thermo-slider absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" style="touch-action: pan-x;" />
+          <div id="thumb-bubble" class="thumb-bubble font-display pointer-events-none z-20" style="left:${S.voteValue}%;background:${t.b1};border-top-color:${t.b1}; transition: none !important;">${S.voteValue}%</div>
         </div>
 
       </div>
-      <button id="voteB" class="${btnPrimary}">Je lock mon vote <svg class="w-5 h-5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg></button>
+      <button id="voteB" class="${btnPrimary}">Valider la position <svg class="w-5 h-5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg></button>
     ` : `<div class="glass-card rounded-3xl p-6 flex flex-col gap-4 shadow-2xl border border-white/10 bg-black/40"><div class="flex flex-col gap-3 max-h-[50vh] overflow-y-auto scroll pr-2">${waitingList}</div></div>`}
   </div>`; 
 }
@@ -210,18 +210,18 @@ function renderReveal(r, t) {
   const myVote = (r.votes || {})[S.pid];
   let myStatsHtml = "";
   if (S.pid === res.targetId) {
-      myStatsHtml = `<div class="mt-5 p-4 bg-yellow-500/20 border-2 border-yellow-500/50 rounded-2xl text-center shadow-[0_0_25px_rgba(250,204,21,0.2)] text-yellow-300 font-black uppercase tracking-widest text-xs">C'était toi la cible 🎯</div>`;
+      myStatsHtml = `<div class="mt-5 p-4 bg-yellow-500/20 border-2 border-yellow-500/50 rounded-2xl text-center shadow-[0_0_25px_rgba(250,204,21,0.2)] text-yellow-300 font-black uppercase tracking-widest text-xs">Cible du tour</div>`;
   } else if (myVote !== undefined) {
       const myDiff = Math.abs(myVote - res.targetVote);
       const colorClass = myDiff <= 15 ? 'text-emerald-400' : (myDiff > 35 ? 'text-red-500' : 'text-orange-400');
       myStatsHtml = `
         <div class="mt-5 w-full p-5 bg-black/80 border-2 border-white/10 rounded-2xl flex justify-between items-center shadow-inner">
           <div class="flex flex-col text-left">
-            <span class="text-white/50 text-[10px] font-black uppercase tracking-widest mb-1">Tu as voté</span>
+            <span class="text-white/50 text-[10px] font-black uppercase tracking-widest mb-1">Estimation transmise</span>
             <span class="text-white font-display font-black text-3xl">${myVote}%</span>
           </div>
           <div class="flex flex-col text-right">
-            <span class="text-white/50 text-[10px] font-black uppercase tracking-widest mb-1">Ton erreur</span>
+            <span class="text-white/50 text-[10px] font-black uppercase tracking-widest mb-1">Ton Écart</span>
             <span class="${colorClass} font-display font-black text-3xl">${myDiff} pts</span>
           </div>
         </div>
@@ -235,13 +235,13 @@ function renderReveal(r, t) {
   const recapList = sortedPlayers.map(p => {
        const v = (r.votes || {})[p.id];
        const isTarget = p.id === res.targetId;
-       let voteText = v !== undefined ? `${v}%` : "Pas voté";
-       if(isTarget) voteText = `🎯 ${res.targetVote}%`;
+       let voteText = v !== undefined ? `${v}%` : "En attente";
+       if(isTarget) voteText = `${res.targetVote}%`;
        
        return `<div class="flex justify-between items-center p-3 border-b border-white/5 last:border-0 ${isTarget ? 'bg-white/5 rounded-xl border-none mb-2' : ''}">
          <div class="flex items-center gap-3">
            <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-black text-white ring-1 ring-white/30" style="background:${getAvatarGradient(p.name)}">${esc((p.name || "A")[0].toUpperCase())}</div>
-           <span class="text-sm font-bold ${isTarget ? 'text-white' : 'text-white/80'}">${esc(p.name)}</span>
+           <span class="text-sm font-bold ${isTarget ? 'text-white' : 'text-white/80'}">${esc(p.name)} ${isTarget ? '(Cible)' : ''}</span>
          </div>
          <span class="font-black text-lg ${isTarget ? 'text-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.8)]' : 'text-white'}">${voteText}</span>
        </div>`;
@@ -249,31 +249,33 @@ function renderReveal(r, t) {
 
   let sipsSentence = ""; let glowColor = "";
   if (res.isClose) {
-      sipsSentence = `<span class="text-yellow-400 font-black block text-4xl uppercase tracking-tighter mt-1 drop-shadow-[0_0_25px_rgba(250,204,21,1)]">DANS LE MILLE 🎯<br><span class="text-xl text-white mt-2 block drop-shadow-md">La team boit ${res.sips} gorgée${res.sips > 1 ? 's' : ''} 🍻</span></span>`;
+      sipsSentence = `<span class="text-yellow-400 font-black block text-4xl uppercase tracking-tighter mt-1 drop-shadow-[0_0_25px_rgba(250,204,21,1)]">ÉCART MINIME<br><span class="text-xl text-white mt-2 block drop-shadow-md">Groupe pénalisé : ${res.sips} unité${res.sips > 1 ? 's' : ''}</span></span>`;
       glowColor = "border-yellow-400/60 shadow-[0_0_80px_rgba(250,204,21,0.3)] bg-black/80";
   } else {
-      sipsSentence = `<span class="text-red-500 font-black block text-4xl uppercase tracking-tighter mt-1 drop-shadow-[0_0_25px_rgba(239,68,68,1)]">AÏE COUP DUR 📉<br><span class="text-xl text-white mt-2 block drop-shadow-md">${esc(res.drinkerName)} boit ${res.sips} gorgée${res.sips > 1 ? 's' : ''} 🍻</span></span>`;
+      sipsSentence = `<span class="text-red-500 font-black block text-4xl uppercase tracking-tighter mt-1 drop-shadow-[0_0_25px_rgba(239,68,68,1)]">ÉCART MAJEUR<br><span class="text-xl text-white mt-2 block drop-shadow-md">${esc(res.drinkerName)} pénalisé : ${res.sips} unité${res.sips > 1 ? 's' : ''}</span></span>`;
       glowColor = "border-red-500/60 shadow-[0_0_80px_rgba(239,68,68,0.3)] bg-black/80";
   }
 
   const hostControls = isHost ? `
-    <div class="flex gap-3 mt-4 w-full animate-fade">
-      <button id="nextB" class="${btnPrimary} flex-grow">${r.maxRounds > 0 && r.round >= r.maxRounds ? '🏁 Le Classement' : 'Enchaîner ! ➡️'}</button>
-      <button onclick="window.endGame()" class="py-4 px-6 rounded-2xl bg-red-500/20 border-2 border-red-500/50 text-red-200 font-bold active:scale-95 shadow-lg text-2xl" title="Arrêter de jouer">🛑</button>
+    <div class="flex flex-col gap-3 mt-4 w-full animate-fade">
+      <button id="nextB" class="${btnPrimary}">${r.maxRounds > 0 && r.round >= r.maxRounds ? 'Tableau final' : 'Question suivante'}</button>
+      <button onclick="window.endGame();" class="w-full py-4 px-6 rounded-2xl bg-red-600/30 hover:bg-red-600/50 border border-red-500/50 text-red-200 font-black text-xs uppercase tracking-widest transition-all shadow-md" style="touch-action: manipulation;">
+        Mettre fin à la partie
+      </button>
     </div>
   ` : "";
 
   return `<div class="flex-1 flex flex-col gap-6 animate-up pb-8">
-    <div class="text-center pt-2"><p class="text-white/50 text-[10px] font-black uppercase tracking-widest shadow-sm">L'avis du groupe sur</p><h2 class="text-4xl font-black uppercase text-white tracking-tight mt-1 drop-shadow-lg">${esc(res.targetName)}</h2></div>
+    <div class="text-center pt-2"><p class="text-white/50 text-[10px] font-black uppercase tracking-widest shadow-sm">Évaluation du groupe concernant</p><h2 class="text-4xl font-black uppercase text-white tracking-tight mt-1 drop-shadow-lg">${esc(res.targetName)}</h2></div>
     
     <div class="text-center animate-pop my-2 h-24 flex items-center justify-center"><span id="reveal-avg" class="font-display text-white font-black leading-none drop-shadow-[0_15px_40px_rgba(255,255,255,0.8)] blur-xl opacity-0 transition-all duration-[2000ms] text-[28vw]">0%</span></div>
     
     <div id="reveal-details" class="opacity-0 transition-opacity duration-700 flex flex-col gap-6">
       <div class="glass-card border-2 rounded-3xl p-7 flex flex-col items-center text-center gap-5 ${glowColor}">
         <div class="flex w-full justify-around items-center">
-          <div class="flex flex-col"><span class="text-white/50 text-[10px] font-black uppercase tracking-widest mb-1">La réalité</span><span class="text-6xl font-display font-black text-white drop-shadow-xl">${res.targetVote}%</span></div>
+          <div class="flex flex-col"><span class="text-white/50 text-[10px] font-black uppercase tracking-widest mb-1">La Moyenne</span><span class="text-5xl font-display font-black text-white drop-shadow-xl">${res.average}%</span></div>
           <div class="w-px h-16 bg-white/20"></div>
-          <div class="flex flex-col"><span class="text-white/50 text-[10px] font-black uppercase tracking-widest mb-1">Écart global</span><span class="text-6xl font-display font-black text-white drop-shadow-xl">${res.diff}<span class="text-2xl text-white/50 ml-1">pts</span></span></div>
+          <div class="flex flex-col"><span class="text-white/50 text-[10px] font-black uppercase tracking-widest mb-1">Valeur Réelle</span><span class="text-5xl font-display font-black text-white drop-shadow-xl">${res.targetVote}%</span></div>
         </div>
         <div class="w-full h-px bg-white/20"></div>
         <div class="text-center leading-relaxed font-bold text-lg w-full bg-black/50 p-5 rounded-2xl border border-white/10 shadow-inner">${sipsSentence}</div>
@@ -281,14 +283,14 @@ function renderReveal(r, t) {
       </div>
       
       <div class="w-full glass-card bg-black/60 rounded-3xl p-6 border border-white/20 shadow-2xl">
-        <h4 class="text-[10px] text-white/50 font-black uppercase tracking-widest mb-4 text-center">Ce qu'ils ont mis 🧐</h4>
+        <h4 class="text-[10px] text-white/50 font-black uppercase tracking-widest mb-4 text-center">Positionnements enregistrés</h4>
         <div class="max-h-48 overflow-y-auto scroll pr-2">
           ${recapList}
         </div>
       </div>
       
       <div class="w-full glass-card bg-black/50 rounded-3xl p-6 text-center flex flex-col items-center justify-center shadow-2xl border border-white/20 mt-2">
-         <span class="text-white/70 font-bold mb-1">${isHost ? "T'es le boss, lance la suite quand t'es prêt 👇" : "<svg class='w-6 h-6 text-white/50 animate-spin inline-block mb-2' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15'></path></svg><br>On attend le boss pour la suite..."}</span>
+         <span class="text-white/70 font-bold mb-1">${isHost ? "Décision attendue de l'hôte" : "<svg class='w-6 h-6 text-white/50 animate-spin inline-block mb-2' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15'></path></svg><br>En attente de l'action suivante..."}</span>
          ${hostControls}
       </div>
     </div>
@@ -298,24 +300,24 @@ function renderReveal(r, t) {
 function renderStats(r, t) { 
   const rk = r.ranking; const isHost = S.pid === r.hostId;
   return `<div class="flex-1 flex flex-col gap-6 animate-up pb-8">
-    <div class="text-center pt-4"><h2 class="text-5xl font-black mb-2 text-white tracking-tighter drop-shadow-xl">FIN DU GAME 🏁</h2></div>
+    <div class="text-center pt-4"><h2 class="text-5xl font-black mb-2 text-white tracking-tighter drop-shadow-xl">FIN DE LA PARTIE</h2></div>
     
     <div class="bg-black/80 backdrop-blur-xl rounded-[2rem] p-8 text-center shadow-[0_15px_50px_rgba(250,204,21,0.3)] border-2 border-yellow-500/50 relative overflow-hidden mt-4">
-      <div class="absolute -top-10 -right-10 text-9xl opacity-20 blur-sm">👑</div>
-      <span class="text-yellow-400 text-[10px] font-black uppercase tracking-widest block mb-2 relative z-10">Le devin de la soirée</span>
-      <p class="text-5xl font-black text-white relative z-10 drop-shadow-md">👑 ${esc(rk.winner.name)}</p>
-      <p class="text-white/80 text-sm mt-3 font-black uppercase tracking-widest relative z-10 bg-black/60 inline-block px-4 py-2 rounded-full border border-white/10">${rk.winner.score} pts d'erreur au total</p>
+      <div class="absolute -top-10 -right-10 text-9xl opacity-10 blur-sm">👑</div>
+      <span class="text-yellow-400 text-[10px] font-black uppercase tracking-widest block mb-2 relative z-10">Premier classement</span>
+      <p class="text-5xl font-black text-white relative z-10 drop-shadow-md">${esc(rk.winner.name)}</p>
+      <p class="text-white/80 text-sm mt-3 font-black uppercase tracking-widest relative z-10 bg-black/60 inline-block px-4 py-2 rounded-full border border-white/10">${rk.winner.score} pts d'écart cumulés</p>
     </div>
     
     <div class="bg-black/80 backdrop-blur-xl rounded-[2rem] p-8 text-center shadow-[0_15px_50px_rgba(239,68,68,0.3)] border-2 border-red-500/50 relative overflow-hidden mt-4">
-      <div class="absolute -top-10 -left-10 text-9xl opacity-20 blur-sm">🤡</div>
-      <span class="text-red-400 text-[10px] font-black uppercase tracking-widest block mb-2 relative z-10">À l'ouest complet</span>
-      <p class="text-5xl font-black text-white relative z-10 drop-shadow-md">🤡 ${esc(rk.loser.name)}</p>
-      <p class="text-white/80 text-sm mt-3 font-black uppercase tracking-widest relative z-10 bg-black/60 inline-block px-4 py-2 rounded-full border border-white/10">${rk.loser.score} pts dans le vent !</p>
+      <div class="absolute -top-10 -left-10 text-9xl opacity-10 blur-sm">🤡</div>
+      <span class="text-red-400 text-[10px] font-black uppercase tracking-widest block mb-2 relative z-10">Dernier classement</span>
+      <p class="text-5xl font-black text-white relative z-10 drop-shadow-md">${esc(rk.loser.name)}</p>
+      <p class="text-white/80 text-sm mt-3 font-black uppercase tracking-widest relative z-10 bg-black/60 inline-block px-4 py-2 rounded-full border border-white/10">${rk.loser.score} pts d'écart cumulés</p>
     </div>
     
     <div class="mt-6">
-      ${isHost ? `<button id="restartB" class="${btnPrimary} py-5 text-xl">🔄 Rejouer</button>` : `<div class="glass-card bg-black/60 rounded-3xl p-6 text-center text-white/70 font-black uppercase tracking-widest shadow-2xl border border-white/20">Merci d'avoir joué ! Santé 🍻</div>`}
+      ${isHost ? `<button id="restartB" class="${btnPrimary} py-5 text-xl">Nouvelle session</button>` : `<div class="glass-card bg-black/60 rounded-3xl p-6 text-center text-white/70 font-black uppercase tracking-widest shadow-2xl border border-white/20">Session clôturée</div>`}
     </div>
   </div>`; 
 }
