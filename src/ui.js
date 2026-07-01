@@ -86,18 +86,72 @@ function header() {
   </header>`; 
 }
 
-function renderHome(t) { 
-  return `<div class="flex-1 flex flex-col justify-center animate-up pb-8">
-    <div class="glass-card rounded-[2rem] p-7 flex flex-col gap-6 mb-6 shadow-[0_15px_40px_rgba(0,0,0,0.6)] border border-white/20">
-      <div class="flex flex-col gap-2"><label class="text-white/70 font-black text-xs uppercase tracking-widest ml-1">Ton p'tit blaze 👀</label><input id="nameI" maxlength="15" placeholder="Ex: Alex" value="${esc(S.name)}" class="w-full bg-black/60 border-2 border-white/10 rounded-2xl px-5 py-4 text-xl font-bold outline-none focus:border-white/60 transition-colors placeholder:text-white/20 text-white shadow-inner"/></div>
-      <div class="flex flex-col gap-2"><label class="text-white/70 font-black text-xs uppercase tracking-widest ml-1">Choisis la Vibe 🔥</label><div class="grid grid-cols-3 gap-3">${modeBtns(S.pendingMode, "pickMode")}</div></div>
-      <button id="createB" class="${btnPrimary} mt-2" ${S.isLoading ? 'disabled' : ''}>${S.isLoading ? 'Création...' : 'Créer le salon 🚀'}</button>
+function renderLobby(r, t) { 
+  const isHost = S.pid === r.hostId; const ps = playersArr(r); const me = r.players[S.pid]; const myJoker = JOKERS[me.joker]; const others = connectedArr(r).filter(p => p.id !== S.pid);
+  const currentMax = r.maxRounds || 10;
+  
+  let roundsSelectorUi = "";
+  if (isHost) {
+    roundsSelectorUi = `
+      <div class="glass-card rounded-3xl p-5 flex flex-col gap-3 shadow-xl border border-white/10 bg-black/40">
+        <h2 class="text-[10px] font-black uppercase tracking-widest text-white/60 ml-1">Nombre de questions</h2>
+        <div class="grid grid-cols-4 gap-2">
+          ${[5, 10, 15, 0].map(num => `<button onclick="window.changeMaxRounds(${num})" class="py-3 rounded-xl font-black border-2 transition-all ${currentMax === num || (num === 0 && r.maxRounds === 0) ? 'bg-white/30 border-white shadow-[0_0_20px_rgba(255,255,255,0.4)] text-white' : 'bg-black/40 border-white/5 text-white/40 hover:bg-white/10'}">${num === 0 ? '♾️' : num}</button>`).join("")}
+        </div>
+      </div>
+    `;
+  }
+
+  const waitingText = connectedArr(r).length < 2 
+       ? `<span class="text-white/70 font-bold block mb-1"><span class="animate-spin inline-block text-xl">⏳</span> Rameute l'équipe... (1/2 min)</span>`
+       : `<span class="text-emerald-400 font-black block text-lg mb-1 drop-shadow-md">✅ L'équipe est parée !</span>`;
+  const guestWaitingText = !isHost && connectedArr(r).length >= 2 
+       ? `<span class="text-white/50 font-bold text-sm mt-1 animate-pulse block">On attend le lancement du boss...</span>` : "";
+  const hostControls = isHost ? `<button id="startB" class="${btnPrimary} mt-3" ${connectedArr(r).length < 2 ? 'disabled' : ''}>🚀 Let's Go !</button>` : "";
+
+  return `<div class="flex-1 flex flex-col gap-4 animate-up pb-8">
+    
+    <div class="glass-card rounded-3xl p-5 text-center border border-white/20 bg-black/50 shadow-xl flex flex-col items-center justify-center gap-1">
+      <span class="text-[10px] font-black uppercase tracking-widest text-white/40">Code du salon</span>
+      <span class="text-4xl font-display font-black text-emerald-400 tracking-widest my-1 select-all">${S.code}</span>
+      <span class="text-[11px] text-white/40 font-medium bg-white/5 px-3 py-1 rounded-full border border-white/5 break-all">
+        ${window.location.origin}?room=${S.code}
+      </span>
     </div>
-    <div class="glass-card rounded-[2rem] p-3 flex flex-row gap-3 items-center shadow-xl border border-white/10">
-      <input id="joinI" maxlength="4" placeholder="CODE" value="${esc(S.joinCode)}" class="flex-1 min-w-0 bg-transparent border-none px-4 py-2 text-3xl font-display font-black tracking-[0.3em] text-center uppercase outline-none placeholder:text-white/10 placeholder:tracking-normal text-white"/>
-      <button id="joinB" class="shrink-0 py-3 px-8 rounded-xl bg-white/10 border border-white/30 font-black uppercase tracking-wider hover:bg-white/20 active:scale-95 transition-all text-white shadow-lg" ${S.isLoading ? 'disabled' : ''}>Go 🍻</button>
+
+    <div class="glass-card rounded-3xl p-5 flex items-center gap-4 shadow-xl border border-white/10 bg-black/40">
+      <div class="w-14 h-14 shrink-0 rounded-2xl flex items-center justify-center text-3xl shadow-lg" style="background:linear-gradient(135deg,${t.from},${t.to})">${myJoker ? myJoker.icon : '🎴'}</div>
+      <div class="flex flex-col min-w-0">
+        <span class="text-[10px] font-black uppercase tracking-widest text-white/60">Ton pouvoir secret 🃏</span>
+        <span class="text-lg font-black text-white leading-tight">${myJoker ? esc(myJoker.name) : 'Aucun'}</span>
+        <span class="text-xs text-white/60 font-medium leading-snug">${myJoker ? esc(myJoker.desc) : ''}</span>
+      </div>
     </div>
-  </div>`; 
+    
+    ${isHost ? `<div class="glass-card rounded-3xl p-5 flex flex-col gap-3 shadow-xl border border-white/10 bg-black/40"><h2 class="text-[10px] font-black uppercase tracking-widest text-white/60 ml-1">Vibe de la partie</h2><div class="grid grid-cols-3 gap-2">${modeBtns(r.mode, "chooseMode")}</div></div>` : ""}
+    ${roundsSelectorUi}
+    
+    <div class="glass-card rounded-3xl p-5 flex flex-col gap-4 shadow-xl border border-white/10 bg-black/40">
+      <h2 class="text-[10px] font-black uppercase tracking-widest text-white/60 ml-1">L'équipe (${ps.length}) 🍻</h2>
+      <div class="flex flex-col gap-3 max-h-48 overflow-y-auto scroll pr-2">
+        ${ps.map(p => `
+          <div class="flex items-center justify-between p-3 rounded-2xl bg-black/60 border border-white/10 shadow-md">
+            <div class="flex items-center gap-3">
+              <div class="w-12 h-12 rounded-full flex items-center justify-center font-black text-white text-lg ring-2 ring-white/30 ring-offset-2 ring-offset-[#040B16]" style="background:${getAvatarGradient(p.name)}">${esc((p.name || "A")[0].toUpperCase())}</div>
+              <span class="font-bold text-white text-lg">${esc(p.name)} ${p.id === S.pid ? '<span class="text-white/40 text-[10px] uppercase tracking-widest ml-2 bg-white/10 px-2 py-1 rounded-full">C\'est toi</span>' : ''}</span>
+            </div>
+          </div>
+        `).join("")}
+      </div>
+    </div>
+
+    <div class="glass-card rounded-3xl p-6 text-center flex flex-col shadow-2xl border-white/20 bg-black/50">
+       ${waitingText}
+       ${guestWaitingText}
+       ${hostControls}
+    </div>
+
+  </div>`;
 }
 
 function renderLobby(r, t) { 
