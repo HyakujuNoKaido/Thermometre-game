@@ -12,39 +12,54 @@ export function toast(msg, ok=false) {
 // LA FONCTION MANQUANTE QUI CAUSAIT L'ERREUR DE BUILD !
 export function showSmashAlert(action) {
   const container = document.getElementById("smash-alert");
+  if (!container) return;
+  const iconEl = document.getElementById("smash-icon");
   const titleEl = document.getElementById("smash-title");
   const subEl = document.getElementById("smash-subtitle");
 
   let title = "POUVOIR !";
   let sub = `${esc(action.actor)} a engagé un pouvoir !`;
   let color = "rgba(168,85,247,0.9)"; // Violet par défaut
+  let iconSvg = icons.logo("w-20 h-20 sm:w-28 sm:h-28 mx-auto drop-shadow-[0_0_30px_rgba(168,85,247,1)]");
 
   if (action.type === "SHOT") {
-      title = "CUL SEC ! 🥃";
+      title = "CUL SEC !";
       sub = `${esc(action.actor)} a ciblé ${esc(action.target)} !`;
-      color = "rgba(220,38,38,0.9)"; // Rouge
+      color = "rgba(220,38,38,0.9)";
+      iconSvg = icons.alert("w-24 h-24 sm:w-32 sm:h-32 mx-auto drop-shadow-[0_0_30px_rgba(220,38,38,1)] text-white");
   } else if (action.type === "THIEF") {
-      title = "VOL ! 🥷";
+      title = "VOL !";
       sub = `${esc(action.actor)} a dépouillé ${esc(action.target)} !`;
-      color = "rgba(147,51,234,0.9)"; // Violet
+      color = "rgba(147,51,234,0.9)";
+      iconSvg = icons.thief("w-24 h-24 sm:w-32 sm:h-32 mx-auto drop-shadow-[0_0_30px_rgba(147,51,234,1)] text-white");
   } else if (action.type === "SHIELD") {
-      title = "BOUCLIER ! 🛡️";
+      title = "BOUCLIER !";
       sub = `${esc(action.actor)} est intouchable`;
-      color = "rgba(6,182,212,0.9)"; // Cyan
+      color = "rgba(6,182,212,0.9)";
+      iconSvg = icons.shield("w-24 h-24 sm:w-32 sm:h-32 mx-auto drop-shadow-[0_0_30px_rgba(6,182,212,1)] text-white");
   } else if (action.type === "DOUBLE") {
-      title = "X2 ! 🎲";
-      sub = `${esc(action.actor)} prend tous les risques`;
-      color = "rgba(234,179,8,0.9)"; // Jaune
+      title = "RISQUE X2 !";
+      sub = `${esc(action.actor)} double les enjeux`;
+      color = "rgba(234,179,8,0.9)";
+      iconSvg = icons.double("w-24 h-24 sm:w-32 sm:h-32 mx-auto drop-shadow-[0_0_30px_rgba(234,179,8,1)] text-white");
   } else if (action.type === "MIRROR") {
-      title = "MIROIR ! 🪞";
-      sub = `${esc(action.actor)} va renvoyer l'attaque`;
-      color = "rgba(236,72,153,0.9)"; // Rose
+      title = "MIROIR !";
+      sub = `${esc(action.actor)} renvoie l'attaque`;
+      color = "rgba(236,72,153,0.9)";
+      iconSvg = icons.mirror("w-24 h-24 sm:w-32 sm:h-32 mx-auto drop-shadow-[0_0_30px_rgba(236,72,153,1)] text-white");
   }
 
-  titleEl.textContent = title;
-  subEl.textContent = sub;
-  titleEl.style.textShadow = `0 0 30px ${color}, 0 0 70px ${color}`;
-  subEl.style.color = color.replace("0.9", "1"); 
+  // On injecte le bon SVG dans le HTML
+  if(iconEl) iconEl.innerHTML = iconSvg;
+
+  if(titleEl) {
+      titleEl.textContent = title;
+      titleEl.style.textShadow = `0 0 30px ${color}, 0 0 70px ${color}`;
+  }
+  if(subEl) {
+      subEl.textContent = sub;
+      subEl.style.color = color.replace("0.9", "1"); 
+  }
 
   container.classList.remove("hidden", "animate-smash-container");
   void container.offsetWidth; // Force le reflow
