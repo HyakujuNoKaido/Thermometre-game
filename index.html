@@ -13,11 +13,11 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 
-<link rel="icon" href="/icon.svg" type="image/svg+xml" />
-<link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
-<link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png" />
-<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-<link rel="manifest" href="/manifest.json" />
+<link rel="icon" href="./icon.svg" type="image/svg+xml" />
+<link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png" />
+<link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png" />
+<link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png" />
+<link rel="manifest" href="./manifest.json" />
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
@@ -32,7 +32,6 @@
 
 <div id="toasts" class="fixed top-[env(safe-area-inset-top)] left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2 w-[90%] max-w-sm pointer-events-none mt-4"></div>
 
-<!-- L'ALERTE EN PLEIN ÉCRAN (Centrée pour iOS) -->
 <div id="smash-alert" class="fixed top-0 left-0 w-screen h-[100dvh] z-[100] flex flex-col items-center justify-center pointer-events-none hidden">
   <div class="relative z-10 flex flex-col items-center transform -skew-x-12 smash-content w-full px-4">
      <div id="smash-icon" class="mb-4 flex justify-center w-full"></div>
@@ -41,7 +40,6 @@
   </div>
 </div>
 
-<!-- MODALE DE CONTRE (Riposte) -->
 <div id="counterModal" class="fixed inset-0 z-[60] hidden bg-black/80 backdrop-blur-md flex items-center justify-center px-5">
   <div class="glass-card w-full max-w-sm rounded-[2rem] p-8 text-center flex flex-col items-center relative overflow-hidden animate-pop border-red-500/50">
      <div class="absolute inset-0 bg-red-600/20 animate-pulse"></div>
@@ -76,6 +74,6 @@
   </div>
 </div>
 
-<script type="module" src="/src/main.js"></script>
+<script type="module" src="./src/main.js"></script>
 </body>
 </html>
