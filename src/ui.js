@@ -1,5 +1,6 @@
 import { S, THEMES, JOKERS, esc, connectedArr, playersArr } from './store.js';
 import { icons } from './icons/index.js';
+import { activateCounter } from './game.js';
 
 export function toast(msg, ok=false) { 
   const el = document.createElement("div"); 
@@ -9,7 +10,6 @@ export function toast(msg, ok=false) {
   setTimeout(() => el.remove(), 3000); 
 }
 
-// LA FONCTION MANQUANTE QUI CAUSAIT L'ERREUR DE BUILD !
 export function showSmashAlert(action) {
   const container = document.getElementById("smash-alert");
   if (!container) return;
@@ -47,11 +47,14 @@ export function showSmashAlert(action) {
       sub = `${esc(action.actor)} renvoie l'attaque`;
       color = "rgba(236,72,153,0.9)";
       iconSvg = icons.mirror("w-24 h-24 sm:w-32 sm:h-32 mx-auto drop-shadow-[0_0_30px_rgba(236,72,153,1)] text-white");
+  } else if (action.type === "COUNTER") {
+      title = "CONTRE ! 💥";
+      sub = `${esc(action.actor)} a riposté avec son ${action.joker === 'SHIELD' ? 'Bouclier' : 'Miroir'} !`;
+      color = action.joker === 'SHIELD' ? "rgba(6,182,212,0.9)" : "rgba(236,72,153,0.9)";
+      iconSvg = action.joker === 'SHIELD' ? icons.shield("w-24 h-24 sm:w-32 sm:h-32 mx-auto drop-shadow-[0_0_30px_rgba(6,182,212,1)] text-white") : icons.mirror("w-24 h-24 sm:w-32 sm:h-32 mx-auto drop-shadow-[0_0_30px_rgba(236,72,153,1)] text-white");
   }
 
-  // On injecte le bon SVG dans le HTML
   if(iconEl) iconEl.innerHTML = iconSvg;
-
   if(titleEl) {
       titleEl.textContent = title;
       titleEl.style.textShadow = `0 0 30px ${color}, 0 0 70px ${color}`;
@@ -62,11 +65,23 @@ export function showSmashAlert(action) {
   }
 
   container.classList.remove("hidden", "animate-smash-container");
-  void container.offsetWidth; // Force le reflow
+  void container.offsetWidth; 
   container.classList.add("animate-smash-container");
 
   setTimeout(() => { container.classList.add("hidden"); }, 3400);
 }
+
+// FONCTIONS POUR LE CONTRE (Appelées depuis le HTML)
+export function confirmCounter() {
+  document.getElementById("counterModal").classList.add("hidden");
+  activateCounter(); // Appelle Firebase dans game.js
+}
+export function ignoreCounter() {
+  document.getElementById("counterModal").classList.add("hidden");
+}
+
+window.confirmCounter = confirmCounter;
+window.ignoreCounter = ignoreCounter;
 
 export function toggleRules() {
   const modal = document.getElementById('rulesModal');
@@ -93,12 +108,8 @@ function theme() { return THEMES[(S.room && S.room.mode) || S.pendingMode] || TH
 function applyBg() { 
   const t = theme(); if(!t) return;
   const bg = document.getElementById("bg"), b1 = document.getElementById("blob1"), b2 = document.getElementById("blob2"), b3 = document.getElementById("blob3");
-  
-  // Répare l'espace noir iOS en colorant dynamiquement la racine du site !
   document.documentElement.style.setProperty('background-color', t.base, 'important');
   document.body.style.setProperty('background-color', 'transparent', 'important');
-  
-  // Met à jour les couleurs des nuages de fond
   if(bg) bg.style.backgroundColor = t.base; 
   if(b1) b1.style.backgroundColor = t.b1; 
   if(b2) b2.style.backgroundColor = t.b2; 
@@ -356,6 +367,15 @@ function renderReveal(r, t) {
   if (res.usedJokersLog && res.usedJokersLog.length > 0) {
       jokersLogHtml = res.usedJokersLog.map(log => {
           const j = JOKERS[log.joker];
+          if (log.blocked) {
+              return `<div class="w-full bg-cyan-600/30 border border-cyan-500 rounded-2xl p-3 mb-2 text-center text-white font-bold shadow-[0_0_15px_rgba(6,182,212,0.3)] text-sm">
+                <span class="inline-flex items-center gap-1.5">${j.icon("w-5 h-5")} <b>${esc(log.name)}</b> a utilisé son Bouclier contre ${esc(log.blocked)} !</span>
+              </div>`;
+          } else if (log.reflectedTo) {
+              return `<div class="w-full bg-pink-600/30 border border-pink-500 rounded-2xl p-3 mb-2 text-center text-white font-bold shadow-[0_0_15px_rgba(236,72,153,0.3)] text-sm">
+                <span class="inline-flex items-center gap-1.5">${j.icon("w-5 h-5")} <b>${esc(log.name)}</b> a renvoyé l'attaque sur ${esc(log.reflectedTo)} !</span>
+              </div>`;
+          }
           return `<div class="w-full bg-purple-600/30 border border-purple-500 rounded-2xl p-3 mb-2 text-center text-white font-bold shadow-[0_0_15px_rgba(168,85,247,0.3)] text-sm">
             <span class="inline-flex items-center gap-1.5">${j.icon("w-5 h-5")} <b>${esc(log.name)}</b> a engagé son pouvoir !</span>
           </div>`;
@@ -365,8 +385,13 @@ function renderReveal(r, t) {
   let jokerShotVictimsHtml = "";
   if (res.jokerShotVictims && res.jokerShotVictims.length > 0) {
       jokerShotVictimsHtml = res.jokerShotVictims.map(v => {
+          if (v.originalTarget) {
+               return `<div class="w-full bg-gradient-to-r from-pink-600/50 to-purple-600/50 border border-pink-500 rounded-2xl p-4 mb-3 text-center text-white font-black shadow-lg uppercase tracking-wide text-sm animate-pulse flex items-center justify-center gap-2">
+                ${icons.mirror("w-6 h-6 text-white animate-spin-slow")} <span>MIROIR ! ${esc(v.name)} s'est pris son propre CUL SEC en attaquant ${esc(v.originalTarget)} !</span>
+              </div>`;
+          }
           return `<div class="w-full bg-gradient-to-r from-red-600/50 to-orange-600/50 border border-red-500 rounded-2xl p-4 mb-3 text-center text-white font-black shadow-lg uppercase tracking-wide text-sm animate-pulse flex items-center justify-center gap-2">
-            ${icons.alert("w-5 h-5 text-white animate-bounce")} <span>${esc(v.name)} a reçu un CUL SEC, une personne ayant utilisé son pouvoir l'a pris pour cible !</span>
+            ${icons.alert("w-5 h-5 text-white animate-bounce")} <span>${esc(v.name)} a reçu un CUL SEC (Attaque ciblée) !</span>
           </div>`;
       }).join("");
   }
@@ -491,11 +516,35 @@ let afterRenderHook = null;
 export function onAfterRender(fn) { afterRenderHook = fn; }
 
 let lastViewKey = null;
+let lastPromptedActionId = null; // Evite d'ouvrir la modale de riposte en boucle
+
 export function render() {
   applyBg(); const app = document.getElementById("app"); const t = theme(); let body = "";
   
   const viewKey = S.screen === "HOME" ? "HOME" : (S.room ? S.room.phase : "");
   const isNewView = viewKey !== lastViewKey;
+
+  // GESTION DE LA MODALE DE CONTRE-ATTAQUE
+  const r = S.room;
+  if (r && r.lastAction && r.lastAction.type === 'SHOT' && r.lastAction.targetId === S.pid) {
+      const me = r.players[S.pid];
+      if (me && (me.joker === 'SHIELD' || me.joker === 'MIRROR') && !me.jokerConsumed && !me.jokerActive) {
+          if (lastPromptedActionId !== r.lastAction.id) {
+              lastPromptedActionId = r.lastAction.id;
+              const modal = document.getElementById("counterModal");
+              if (modal) {
+                 document.getElementById("counter-desc").innerHTML = `<b>${esc(r.lastAction.actor)}</b> te lance un CUL SEC !`;
+                 const btn = document.getElementById("counter-btn-yes");
+                 if (me.joker === 'SHIELD') {
+                     btn.innerHTML = `${icons.shield("w-5 h-5")} Activer mon Bouclier`;
+                 } else {
+                     btn.innerHTML = `${icons.mirror("w-5 h-5")} Renvoyer le Cul Sec (Miroir)`;
+                 }
+                 modal.classList.remove("hidden");
+              }
+          }
+      }
+  }
 
   if (S.screen === "HOME") body = renderHome(t);
   else if (S.room) {
