@@ -4,7 +4,7 @@ import { render, toast, showSmashAlert } from './ui.js';
 
 let revealing = false;
 let promoting = false;
-let lastActionId = null; // Mémoire pour ne pas rejouer la même alerte
+let lastActionId = null;
 
 export async function tryReconnect() {
   const code = sessionStorage.getItem('thermo_code'); 
@@ -77,10 +77,8 @@ function enterRoom(code, pid) {
     S.room = room; 
     S.screen = "ROOM"; 
 
-    // DETECTER ET JOUER L'ALERTE SMASH BROS
     if (room.lastAction && room.lastAction.id !== lastActionId) {
        lastActionId = room.lastAction.id;
-       // Empêche l'alerte de rejouer si on recharge la page (action de moins de 10s)
        if (Date.now() - room.lastAction.id < 10000) {
            showSmashAlert(room.lastAction);
        }
@@ -90,7 +88,7 @@ function enterRoom(code, pid) {
   });
 }
 
-// 💥 SYSTÈME D'ACTIONS ET POUVOIRS
+// 💥 SYSTÈME DE POUVOIRS ET RIPOSTES
 export async function toggleJoker() {
   const me = S.room.players[S.pid];
   if (!me || me.jokerConsumed || !me.joker) return;
@@ -106,13 +104,23 @@ export async function assignShotTarget(targetId) {
   await S.roomRef.update({
     [`players/${S.pid}/shotTarget`]: targetId,
     [`players/${S.pid}/jokerActive`]: true,
-    lastAction: { id: Date.now(), type: 'SHOT', actor: S.room.players[S.pid].name, target: targetName }
+    lastAction: { id: Date.now(), type: 'SHOT', actor: S.room.players[S.pid].name, target: targetName, targetId: targetId }
   });
 }
 
 export async function cancelShotTarget() {
   vibrate(10);
   await S.roomRef.update({ [`players/${S.pid}/shotTarget`]: null, [`players/${S.pid}/jokerActive`]: false });
+}
+
+// Fonction appelée quand un joueur accepte de contrer (via la modale UI)
+export async function activateCounter() {
+  vibrate([20, 50, 20]);
+  const me = S.room.players[S.pid];
+  await S.roomRef.update({
+    [`players/${S.pid}/jokerActive`]: true,
+    lastAction: { id: Date.now(), type: 'COUNTER', actor: me.name, joker: me.joker }
+  });
 }
 
 export async function stealJoker(targetId) {
@@ -133,7 +141,6 @@ export async function stealJoker(targetId) {
     lastAction: { id: Date.now(), type: 'THIEF', actor: actorName, target: targetP.name }
   });
   
-  // Notification locale unique pour le voleur (il doit savoir ce qu'il a pris)
   setTimeout(() => toast(`Tu as volé le pouvoir : ${JOKERS[stolenJoker].name} ! 🥷`, true), 3500);
 }
 
@@ -227,14 +234,49 @@ export async function hostAutoReveal() {
 
     const usedJokersLog = [];
     const jokerShotVictims = [];
+    
+    // On isole d'abord tous les jokers actifs (sauf Miroir/Bouclier qui seront gérés dans l'attaque)
     Object.keys(r.players).forEach(id => {
        const p = r.players[id];
        if (p.jokerActive && p.joker && !p.jokerConsumed) {
-          usedJokersLog.push({ id, name: p.name, joker: p.joker });
-          if (p.joker === "SHOT" && p.shotTarget) {
-            const victim = r.players[p.shotTarget];
-            if (victim) jokerShotVictims.push({ id: p.shotTarget, name: victim.name });
-          }
+           if (p.joker !== "SHIELD" && p.joker !== "MIRROR") {
+               usedJokersLog.push({ id, name: p.name, joker: p.joker });
+           }
+       }
+    });
+
+    // RESOLUTION DES ATTAQUES CUL SEC (SHOT vs SHIELD/MIRROR)
+    const attackers = Object.keys(r.players).filter(id => r.players[id].jokerActive && r.players[id].joker === "SHOT" && r.players[id].shotTarget);
+    
+    attackers.forEach(atkId => {
+        const p = r.players[atkId];
+        const victimId = p.shotTarget;
+        const victim = r.players[victimId];
+
+        if (victim && victim.jokerActive && !victim.jokerConsumed) {
+            if (victim.joker === "SHIELD") {
+                // Bloqué ! Personne ne boit. On log l'utilisation du bouclier.
+                usedJokersLog.push({ id: victimId, name: victim.name, joker: "SHIELD", blocked: p.name });
+            } else if (victim.joker === "MIRROR") {
+                // Renvoyé ! L'attaquant boit !
+                usedJokersLog.push({ id: victimId, name: victim.name, joker: "MIRROR", reflectedTo: p.name });
+                jokerShotVictims.push({ id: atkId, name: p.name, originalTarget: victim.name });
+            } else {
+                // L'attaque passe (ex: Double)
+                jokerShotVictims.push({ id: victimId, name: victim.name });
+            }
+        } else if (victim) {
+            jokerShotVictims.push({ id: victimId, name: victim.name });
+        }
+    });
+
+    // Ajouter Miroir/Bouclier au log s'ils ont été activés (ex: contre question) sans être ciblés par un SHOT
+    Object.keys(r.players).forEach(id => {
+       const p = r.players[id];
+       if (p.jokerActive && !p.jokerConsumed && (p.joker === "SHIELD" || p.joker === "MIRROR")) {
+           if (!usedJokersLog.find(l => l.id === id)) {
+               usedJokersLog.push({ id, name: p.name, joker: p.joker });
+           }
        }
     });
 
@@ -251,6 +293,7 @@ export async function hostAutoReveal() {
     let targetShot = targetPenalty.shot;
     let targetMsg = "";
 
+    // Application des pouvoirs sur la question classique
     if (hasJoker(tid, "SHIELD") || hasJoker(tid, "MIRROR")) {
         targetSips = 0; targetShot = false; targetMsg = "Intouchable grâce au pouvoir !";
     } else if (hasJoker(tid, "DOUBLE")) {
@@ -308,7 +351,7 @@ export async function endGame() {
   const w = ranked[0]; const l = ranked[ranked.length - 1]; 
   await S.roomRef.update({ phase: "STATS", ranking: { winner: { name: w.name, score: w.score }, loser: { name: l.name, score: l.score }, all: ranked.map(p => ({ id: p.id, name: p.name, score: p.score })) } }); 
 }
- 
+
 export async function restart() { 
   const r = S.room; if (S.pid !== r.hostId) return; 
   const upd = { phase: "LOBBY", round: 0, votes: null, result: null, ranking: null };
