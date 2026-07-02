@@ -6,12 +6,11 @@
 
 html {
   background-color: #040B16 !important;
-  height: -webkit-fill-available;
+  height: 100dvh;
 }
 body {
   background-color: #040B16 !important;
-  min-height: 100vh;
-  min-height: -webkit-fill-available;
+  min-height: 100dvh;
   margin: 0;
   padding: 0;
   overflow: hidden;
@@ -48,7 +47,7 @@ body {
 }
 .animate-smash-container .smash-content {
   animation: smashText 3.5s cubic-bezier(0.1, 2, 0.2, 1) forwards;
-  transform-origin: center center; /* Empêche le décalage sur mobile */
+  transform-origin: center center;
 }
 
 @keyframes smashBg {
