@@ -1,9 +1,10 @@
 import { S, QUESTIONS, JOKERS, rand, genId, genCode, connectedArr, playersArr, vibrate } from './store.js';
 import { db, ServerValue } from './firebase.js';
-import { render, toast } from './ui.js';
+import { render, toast, showSmashAlert } from './ui.js';
 
 let revealing = false;
 let promoting = false;
+let lastActionId = null; // Mémoire pour ne pas rejouer la même alerte
 
 export async function tryReconnect() {
   const code = sessionStorage.getItem('thermo_code'); 
@@ -56,12 +57,10 @@ export async function joinRoom() {
       pid = genId();
       const newPlayer = { name: S.name.trim().slice(0, 20), joker: rand(Object.keys(JOKERS)), score: 0, jokerConsumed: false, jokerActive: false, connected: true };
       const updates = { [`players/${pid}`]: newPlayer };
-      
       if (room.phase === "VOTING" && room.expectedVoters) updates[`expectedVoters/${pid}`] = true;
       await db.ref("rooms/" + code).update(updates);
       toast("Bienvenue dans le salon !", true);
     }
-
     sessionStorage.setItem('thermo_code', code); sessionStorage.setItem('thermo_pid', pid);
     enterRoom(code, pid);
   } catch (e) { toast("Erreur réseau."); } finally { S.isLoading = false; if (!S.room) render(); }
@@ -71,37 +70,49 @@ function enterRoom(code, pid) {
   S.code = code; S.pid = pid; history.replaceState(null, "", "?room=" + code);
   db.ref(`rooms/${code}/players/${pid}`).onDisconnect().update({ connected: false });
   S.roomRef = db.ref("rooms/" + code);
+  
   S.roomRef.on("value", snap => { 
     const room = snap.val();
     if (!room || !room.players || !room.players[S.pid]) { detach(); S.screen = "HOME"; S.room = null; toast("Salon fermé ou déconnexion."); render(); return; }
-    S.room = room; S.screen = "ROOM"; 
+    S.room = room; 
+    S.screen = "ROOM"; 
+
+    // DETECTER ET JOUER L'ALERTE SMASH BROS
+    if (room.lastAction && room.lastAction.id !== lastActionId) {
+       lastActionId = room.lastAction.id;
+       // Empêche l'alerte de rejouer si on recharge la page (action de moins de 10s)
+       if (Date.now() - room.lastAction.id < 10000) {
+           showSmashAlert(room.lastAction);
+       }
+    }
+
     promoteHostIfNeeded(); hostAutoReveal(); render();
   });
 }
 
-// GESTION DES JOKERS ET CIBLAGES
+// 💥 SYSTÈME D'ACTIONS ET POUVOIRS
 export async function toggleJoker() {
   const me = S.room.players[S.pid];
   if (!me || me.jokerConsumed || !me.joker) return;
   vibrate(10);
-  await S.roomRef.update({ [`players/${S.pid}/jokerActive`]: !me.jokerActive });
+  const upd = { [`players/${S.pid}/jokerActive`]: !me.jokerActive };
+  if (!me.jokerActive) upd.lastAction = { id: Date.now(), type: me.joker, actor: me.name };
+  await S.roomRef.update(upd);
 }
 
 export async function assignShotTarget(targetId) {
   vibrate(20);
+  const targetName = S.room.players[targetId].name;
   await S.roomRef.update({
     [`players/${S.pid}/shotTarget`]: targetId,
-    [`players/${S.pid}/jokerActive`]: true
+    [`players/${S.pid}/jokerActive`]: true,
+    lastAction: { id: Date.now(), type: 'SHOT', actor: S.room.players[S.pid].name, target: targetName }
   });
-  toast("Cible du cul sec verrouillée ! 🥃", true);
 }
 
 export async function cancelShotTarget() {
   vibrate(10);
-  await S.roomRef.update({
-    [`players/${S.pid}/shotTarget`]: null,
-    [`players/${S.pid}/jokerActive`]: false
-  });
+  await S.roomRef.update({ [`players/${S.pid}/shotTarget`]: null, [`players/${S.pid}/jokerActive`]: false });
 }
 
 export async function stealJoker(targetId) {
@@ -109,15 +120,21 @@ export async function stealJoker(targetId) {
   const targetP = r.players[targetId];
   if (!targetP || targetP.jokerConsumed || !targetP.joker) return toast("Impossible de voler ce joueur.");
   vibrate(20);
+  const stolenJoker = targetP.joker;
+  const actorName = S.room.players[S.pid].name;
+
   await S.roomRef.update({
-    [`players/${S.pid}/joker`]: targetP.joker,
+    [`players/${S.pid}/joker`]: stolenJoker,
     [`players/${S.pid}/jokerActive`]: false,
     [`players/${S.pid}/jokerConsumed`]: false,
     [`players/${targetId}/joker`]: null,
     [`players/${targetId}/jokerActive`]: false,
-    [`players/${targetId}/jokerConsumed`]: true
+    [`players/${targetId}/jokerConsumed`]: true,
+    lastAction: { id: Date.now(), type: 'THIEF', actor: actorName, target: targetP.name }
   });
-  toast("Pouvoir volé avec succès ! 🥷", true);
+  
+  // Notification locale unique pour le voleur (il doit savoir ce qu'il a pris)
+  setTimeout(() => toast(`Tu as volé le pouvoir : ${JOKERS[stolenJoker].name} ! 🥷`, true), 3500);
 }
 
 export async function randomizeJokers() {
@@ -167,7 +184,7 @@ async function promoteHostIfNeeded() {
     const conn = connectedArr(r).sort((a, b) => a.id < b.id ? -1 : 1); 
     if (conn.length > 0 && conn[0].id === S.pid) { 
       promoting = true;
-      try { await S.roomRef.update({ hostId: S.pid }); toast("Vous êtes le nouvel hôte de la partie", true); } catch(e) {} finally { promoting = false; }
+      try { await S.roomRef.update({ hostId: S.pid }); toast("Vous êtes le nouvel hôte", true); } catch(e) {} finally { promoting = false; }
     } 
   } 
 }
@@ -199,36 +216,32 @@ export async function hostAutoReveal() {
   try {
     const r = S.room; 
     if (!r || r.phase !== "VOTING" || S.pid !== r.hostId || revealing) return;
-    
     const expectedIds = Object.keys(r.expectedVoters || {}); 
     const votes = r.votes || {};
-    
-    // On compte combien de personnes ont réellement voté
     const voters = Object.keys(votes);
-    
-    // Si personne n'a voté, on attend
     if (voters.length === 0) return;
 
-    // SECURITÉ : On déclenche le reveal si au moins 50% des gens ont voté 
-    // OU si tout le monde a voté. Cela évite le plantage si quelqu'un a quitté.
-    const allExpected = expectedIds.length;
-    const progress = voters.length / allExpected;
-
-    // On attend que tout le monde ait voté, mais si un joueur est déconnecté (connected: false), 
-    // on ne l'attend pas.
-    const missing = expectedIds.filter(id => 
-        r.players[id] && 
-        r.players[id].connected !== false && 
-        votes[id] === undefined
-    );
-
+    const missing = expectedIds.filter(id => r.players[id] && r.players[id].connected !== false && votes[id] === undefined);
     if (missing.length > 0) return; 
-    
     revealing = true; 
+
+    const usedJokersLog = [];
+    const jokerShotVictims = [];
+    Object.keys(r.players).forEach(id => {
+       const p = r.players[id];
+       if (p.jokerActive && p.joker && !p.jokerConsumed) {
+          usedJokersLog.push({ id, name: p.name, joker: p.joker });
+          if (p.joker === "SHOT" && p.shotTarget) {
+            const victim = r.players[p.shotTarget];
+            if (victim) jokerShotVictims.push({ id: p.shotTarget, name: victim.name });
+          }
+       }
+    });
+
+    const hasJoker = (id, jName) => { const p = r.players[id]; return p && p.jokerActive && p.joker === jName && !p.jokerConsumed; };
 
     const tid = r.question.targetId; 
     const tv = votes[tid] !== undefined ? votes[tid] : 50; 
-    
     const nonTargetVotes = Object.keys(votes).filter(id => id !== tid).map(id => votes[id]);
     const average = nonTargetVotes.length > 0 ? Math.round(nonTargetVotes.reduce((a, b) => a + b, 0) / nonTargetVotes.length) : 50;
     
@@ -237,12 +250,6 @@ export async function hostAutoReveal() {
     let targetSips = targetPenalty.sips;
     let targetShot = targetPenalty.shot;
     let targetMsg = "";
-
-    // Logique des Jokers
-    const hasJoker = (id, jName) => {
-        const p = r.players[id];
-        return p && p.jokerActive && p.joker === jName && !p.jokerConsumed;
-    };
 
     if (hasJoker(tid, "SHIELD") || hasJoker(tid, "MIRROR")) {
         targetSips = 0; targetShot = false; targetMsg = "Intouchable grâce au pouvoir !";
@@ -274,30 +281,25 @@ export async function hostAutoReveal() {
     const result = { 
       average: average, targetVote: tv, targetName: r.question.targetName || "La cible", 
       targetId: tid, targetDiff: targetDiff, targetSips: targetSips, targetShot: targetShot, targetMsg: targetMsg,
-      groupResults: groupResults
+      groupResults: groupResults, usedJokersLog: usedJokersLog, jokerShotVictims: jokerShotVictims
     };
     
     const updates = { phase: "REVEAL", result: result };
-
     updates[`players/${tid}/score`] = (r.players[tid].score || 0) + targetDiff;
     groupResults.forEach(p => { updates[`players/${p.id}/score`] = (r.players[p.id].score || 0) + p.diff; });
     
-    // Marquer les jokers comme consommés
+    jokerShotVictims.forEach(v => { updates[`players/${v.id}/score`] = (r.players[v.id].score || 0) + 25; });
+
     Object.keys(r.players).forEach(id => {
        if (r.players[id].jokerActive && !r.players[id].jokerConsumed) {
           updates[`players/${id}/jokerConsumed`] = true;
           updates[`players/${id}/jokerActive`] = false;
+          updates[`players/${id}/shotTarget`] = null;
        }
     });
 
     await S.roomRef.update(updates);
-
-  } catch (err) { 
-    console.error("Erreur mécanique :", err); 
-    revealing = false; // Important pour débloquer en cas d'erreur
-  } finally { 
-    revealing = false; 
-  }
+  } catch (err) { console.error(err); revealing = false; } finally { revealing = false; }
 }
 
 export async function endGame() { 
