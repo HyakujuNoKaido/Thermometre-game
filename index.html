@@ -31,9 +31,9 @@
   <div id="blob3" class="absolute top-[35%] left-[10%] w-80 h-80 rounded-full opacity-30 animate-blob mix-blend-screen" style="animation-delay: 2s; filter:blur(100px); background:#9D00FF;"></div>
 </div>
 
-<div id="toasts" class="fixed top-safe left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2 w-[90%] max-w-sm pointer-events-none mt-4"></div>
+<div id="toasts" class="fixed top-[env(safe-area-inset-top)] left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2 w-[90%] max-w-sm pointer-events-none mt-4"></div>
 
-<div class="w-full max-w-md mx-auto min-h-screen-ios px-5 pt-[calc(env(safe-area-inset-top)+1.5rem)] safe-padding-bottom flex flex-col relative z-10" id="app"></div>
+<div id="app" class="w-full max-w-md mx-auto h-full overflow-y-auto px-5 pt-[calc(env(safe-area-inset-top)+1.5rem)] pb-[calc(env(safe-area-inset-bottom)+2rem)] flex flex-col relative z-10" style="-webkit-overflow-scrolling: touch;"></div>
 
 <div id="rulesModal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center">
   <div class="sheet glass-card w-full max-w-md sm:max-w-sm rounded-t-[2rem] sm:rounded-3xl p-6 pb-[calc(env(safe-area-inset-bottom,16px)+1.5rem)] sm:pb-6 relative">
