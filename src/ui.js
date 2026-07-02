@@ -93,6 +93,12 @@ function theme() { return THEMES[(S.room && S.room.mode) || S.pendingMode] || TH
 function applyBg() { 
   const t = theme(); if(!t) return;
   const bg = document.getElementById("bg"), b1 = document.getElementById("blob1"), b2 = document.getElementById("blob2"), b3 = document.getElementById("blob3");
+  
+  // Répare l'espace noir iOS en colorant dynamiquement la racine du site !
+  document.documentElement.style.setProperty('background-color', t.base, 'important');
+  document.body.style.setProperty('background-color', 'transparent', 'important');
+  
+  // Met à jour les couleurs des nuages de fond
   if(bg) bg.style.backgroundColor = t.base; 
   if(b1) b1.style.backgroundColor = t.b1; 
   if(b2) b2.style.backgroundColor = t.b2; 
