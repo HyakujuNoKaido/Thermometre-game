@@ -308,7 +308,7 @@ export async function endGame() {
   const w = ranked[0]; const l = ranked[ranked.length - 1]; 
   await S.roomRef.update({ phase: "STATS", ranking: { winner: { name: w.name, score: w.score }, loser: { name: l.name, score: l.score }, all: ranked.map(p => ({ id: p.id, name: p.name, score: p.score })) } }); 
 }
-
+ 
 export async function restart() { 
   const r = S.room; if (S.pid !== r.hostId) return; 
   const upd = { phase: "LOBBY", round: 0, votes: null, result: null, ranking: null };
