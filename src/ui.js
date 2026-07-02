@@ -34,10 +34,11 @@ function theme() { return THEMES[(S.room && S.room.mode) || S.pendingMode] || TH
 function applyBg() { 
   const t = theme(); if(!t) return;
   const bg = document.getElementById("bg"), b1 = document.getElementById("blob1"), b2 = document.getElementById("blob2"), b3 = document.getElementById("blob3");
-  if(bg) bg.style.background = t.base; 
-  if(b1) b1.style.background = t.b1; 
-  if(b2) b2.style.background = t.b2; 
-  if(b3) b3.style.background = t.from;
+  // L'utilisation de backgroundColor garantit la fluidité CSS
+  if(bg) bg.style.backgroundColor = t.base; 
+  if(b1) b1.style.backgroundColor = t.b1; 
+  if(b2) b2.style.backgroundColor = t.b2; 
+  if(b3) b3.style.backgroundColor = t.from;
 }
 
 export function updateThermometerColor(val) {
@@ -99,7 +100,7 @@ function header() {
 }
 
 function renderHome(t) { 
-  return `<div class="flex-1 flex flex-col justify-center animate-up pb-8">
+  return `<div class="view-content flex-1 flex flex-col justify-center pb-8">
     <div class="glass-card rounded-[2rem] p-7 flex flex-col gap-6 mb-6 shadow-[0_15px_40px_rgba(0,0,0,0.6)] border border-white/20">
       <div class="flex flex-col gap-2"><label class="text-white/70 font-black text-xs uppercase tracking-widest ml-1">Pseudonyme</label><input id="nameI" maxlength="15" placeholder="Ex: Alex" value="${esc(S.name)}" class="w-full bg-black/60 border-2 border-white/10 rounded-2xl px-5 py-4 text-xl font-bold outline-none focus:border-white/60 transition-colors placeholder:text-white/20 text-white shadow-inner"/></div>
       <div class="flex flex-col gap-2"><label class="text-white/70 font-black text-xs uppercase tracking-widest ml-1">Configuration de l'ambiance</label><div class="grid grid-cols-3 gap-3">${modeBtns(S.pendingMode, "pickMode")}</div></div>
@@ -155,7 +156,7 @@ function renderLobby(r, t) {
        ? `<span class="text-white/50 font-bold text-sm mt-1 animate-pulse block">L'hôte configure le lancement...</span>` : "";
   const hostControls = isHost ? `<button id="startB" class="${btnPrimary} mt-3" ${connectedArr(r).length < 2 ? 'disabled' : ''}>Lancer la partie</button>` : "";
 
-  return `<div class="flex-1 flex flex-col gap-4 animate-up pb-8">
+  return `<div class="view-content flex-1 flex flex-col gap-4 pb-8">
     <div class="glass-card rounded-3xl p-5 text-center border border-white/20 bg-black/50 shadow-xl flex flex-col items-center justify-center gap-1">
       <span class="text-[10px] font-black uppercase tracking-widest text-white/40">Code du salon</span>
       <span class="text-4xl font-display font-black text-emerald-400 tracking-widest my-1 select-all">${S.code}</span>
@@ -218,7 +219,6 @@ function renderVoting(r, t) {
               jokerActionHtml = `<div class="w-full bg-black/40 border border-white/10 rounded-2xl p-3 mb-4 text-center text-white/40 text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-2">${myJoker.icon("w-4 h-4")} Aucun pouvoir dérobable</div>`;
           }
       } else if (myJokerStr === "SHOT") {
-          // CORRECTIF : Permet de cibler n'importe quel joueur pour lui infliger un cul sec
           if (!me.jokerActive) {
               const attackablePlayers = connectedArr(r).filter(p => p.id !== S.pid);
               jokerActionHtml = `<div class="w-full bg-black/60 border border-purple-500/50 rounded-2xl p-4 mb-4 shadow-[0_0_20px_rgba(168,85,247,0.2)]">
@@ -247,7 +247,7 @@ function renderVoting(r, t) {
       return `<div class="flex items-center justify-between p-3 rounded-2xl border-2 transition-all ${hasVoted ? 'bg-white/10 border-white/20 shadow-lg scale-[1.02]' : 'bg-black/40 border-transparent opacity-60'}"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full flex items-center justify-center font-black text-white ring-2 ring-white/20" style="background:${getAvatarGradient(p.name)}">${esc((p.name || "A")[0].toUpperCase())}</div><span class="font-bold text-white text-lg">${esc(p.name)}</span></div><div>${hasVoted ? `${icons.check("w-6 h-6 text-emerald-400 drop-shadow-md")}` : `${icons.refresh("w-6 h-6 text-white/50 animate-spin")}`}</div></div>`;
   }).join("");
   
-  return `<div class="flex-1 flex flex-col justify-center gap-6 animate-up pb-8">
+  return `<div class="view-content flex-1 flex flex-col justify-center gap-6 pb-8">
     <div class="glass-card rounded-3xl p-8 text-center flex flex-col gap-4 relative overflow-hidden min-h-[200px] justify-center shadow-2xl bg-black/60 ${amTarget ? 'border-2 border-yellow-400/80 shadow-[0_0_50px_rgba(250,204,21,0.3)]' : 'border border-white/20'}">
       <div class="absolute top-4 left-0 right-0 flex justify-center">
          <span class="px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-white/10 border border-white/20 text-white shadow-inner">${roundCounter}</span>
@@ -300,7 +300,6 @@ function renderReveal(r, t) {
       }).join("");
   }
 
-  // CORRECTIF : Message d'animation de ciblage de Cul Sec par Pouvoir
   let jokerShotVictimsHtml = "";
   if (res.jokerShotVictims && res.jokerShotVictims.length > 0) {
       jokerShotVictimsHtml = res.jokerShotVictims.map(v => {
@@ -357,7 +356,7 @@ function renderReveal(r, t) {
   const blurCls = S.animDone ? "" : "blur-xl opacity-0 transition-all duration-[2000ms]";
   const avgVal = S.animDone ? `${res.average}%` : "0%";
 
-  return `<div class="flex-1 flex flex-col gap-5 animate-up pb-8">
+  return `<div class="view-content flex-1 flex flex-col gap-5 pb-8">
     <div class="text-center pt-2"><p class="text-white/40 text-[10px] font-black uppercase tracking-widest">Le verdict social</p><h2 class="text-3xl font-black text-white tracking-tight mt-0.5">${esc(res.targetName)} face au groupe</h2></div>
     
     <div class="text-center animate-pop my-1 h-20 flex items-center justify-center"><span id="reveal-avg" class="font-display text-cyan-400 font-black leading-none drop-shadow-[0_15px_40px_rgba(34,211,238,0.8)] ${blurCls} text-[24vw]">${avgVal}</span></div>
@@ -402,7 +401,7 @@ function renderReveal(r, t) {
 
 function renderStats(r, t) { 
   const rk = r.ranking; const isHost = S.pid === r.hostId;
-  return `<div class="flex-1 flex flex-col gap-6 animate-up pb-8">
+  return `<div class="view-content flex-1 flex flex-col gap-6 pb-8">
     <div class="text-center pt-4"><h2 class="text-5xl font-black mb-2 text-white tracking-tighter drop-shadow-xl">FIN DE SESSION</h2></div>
     
     <div class="bg-black/80 backdrop-blur-xl rounded-[2rem] p-8 text-center shadow-[0_15px_50px_rgba(250,204,21,0.3)] border-2 border-yellow-500/50 relative overflow-hidden mt-4">
@@ -436,6 +435,10 @@ export function onAfterRender(fn) { afterRenderHook = fn; }
 let lastViewKey = null;
 export function render() {
   applyBg(); const app = document.getElementById("app"); const t = theme(); let body = "";
+  
+  const viewKey = S.screen === "HOME" ? "HOME" : (S.room ? S.room.phase : "");
+  const isNewView = viewKey !== lastViewKey;
+
   if (S.screen === "HOME") body = renderHome(t);
   else if (S.room) {
     if (S.room.phase === "LOBBY") body = renderLobby(S.room, t);
@@ -443,14 +446,14 @@ export function render() {
     else if (S.room.phase === "REVEAL") body = renderReveal(S.room, t);
     else if (S.room.phase === "STATS") body = renderStats(S.room, t);
   }
+  
   const html = header() + body;
   if (app.__html === html) return;
 
   const active = document.activeElement;
   const activeId = active && active.id ? active.id : null;
   
-  const viewKey = S.screen === "HOME" ? "HOME" : (S.room ? S.room.phase : "");
-  if (activeId === "slider" && viewKey === lastViewKey) return; 
+  if (activeId === "slider" && !isNewView) return; 
 
   const selStart = active && 'selectionStart' in active ? active.selectionStart : null;
   const selEnd = active && 'selectionEnd' in active ? active.selectionEnd : null;
@@ -458,10 +461,16 @@ export function render() {
   app.innerHTML = html;
   app.__html = html;
 
-  if (viewKey !== lastViewKey) {
+  // C'est ICI qu'on déclenche l'animation de transition de page, 
+  // seulement si on change VRAIMENT d'écran (pas en cliquant sur un simple bouton)
+  if (isNewView) {
     lastViewKey = viewKey;
-    const root = app.lastElementChild;
-    if (root) root.classList.add("view-enter");
+    const content = app.querySelector('.view-content');
+    if (content) {
+      // Force le navigateur à rafraîchir pour que l'animation se lance proprement
+      void content.offsetWidth;
+      content.classList.add('animate-view');
+    }
   }
 
   if (activeId) {
