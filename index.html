@@ -23,17 +23,24 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 </head>
 
-<body class="selection:bg-white/30 fixed inset-0 w-full h-full overflow-hidden">
+<body>
 
 <div id="bg" class="fixed inset-0 w-full h-full -z-10 overflow-hidden transition-colors duration-1000 ease-out" style="background-color:#040B16">
-  <div id="blob1" class="absolute top-[-10%] left-[-15%] w-96 h-96 rounded-full opacity-50 animate-blob mix-blend-screen transition-colors duration-1000 ease-out" style="filter:blur(100px); background-color:#00F0FF;"></div>
-  <div id="blob2" class="absolute bottom-[-10%] right-[-15%] w-[30rem] h-[30rem] rounded-full opacity-40 animate-blob blob-delay mix-blend-screen transition-colors duration-1000 ease-out" style="filter:blur(120px); background-color:#0038FF;"></div>
-  <div id="blob3" class="absolute top-[35%] left-[10%] w-80 h-80 rounded-full opacity-30 animate-blob mix-blend-screen transition-colors duration-1000 ease-out" style="animation-delay: 2s; filter:blur(100px); background-color:#9D00FF;"></div>
+  <div id="blob1" class="absolute top-[-10%] left-[-15%] w-96 h-96 rounded-full opacity-50 mix-blend-screen transition-colors duration-1000 ease-out" style="filter:blur(100px); background-color:#00F0FF;"></div>
+  <div id="blob2" class="absolute bottom-[-10%] right-[-15%] w-[30rem] h-[30rem] rounded-full opacity-40 mix-blend-screen transition-colors duration-1000 ease-out" style="filter:blur(120px); background-color:#0038FF;"></div>
 </div>
 
 <div id="toasts" class="fixed top-[env(safe-area-inset-top)] left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2 w-[90%] max-w-sm pointer-events-none mt-4"></div>
 
-<div id="app" class="w-full max-w-md mx-auto h-full overflow-y-auto px-5 pt-[calc(env(safe-area-inset-top)+1.5rem)] pb-[calc(env(safe-area-inset-bottom)+2rem)] flex flex-col relative z-10" style="-webkit-overflow-scrolling: touch;"></div>
+<!-- L'ALERTE EN PLEIN ÉCRAN TYPE SMASH BROS -->
+<div id="smash-alert" class="fixed inset-0 z-[100] flex items-center justify-center pointer-events-none hidden">
+  <div class="relative z-10 flex flex-col items-center transform -skew-x-12 smash-content">
+     <div class="text-7xl sm:text-8xl font-black italic text-white uppercase tracking-tighter" id="smash-title">BAM !</div>
+     <div class="bg-white text-black px-6 py-2 mt-2 text-xl sm:text-2xl font-bold uppercase tracking-widest shadow-2xl" id="smash-subtitle">Alerte</div>
+  </div>
+</div>
+
+<div id="app" class="w-full max-w-md mx-auto h-[100vh] h-[-webkit-fill-available] overflow-y-auto px-5 pt-[calc(env(safe-area-inset-top)+1.5rem)] pb-[calc(env(safe-area-inset-bottom)+2rem)] flex flex-col relative z-10" style="-webkit-overflow-scrolling: touch;"></div>
 
 <div id="rulesModal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center">
   <div class="sheet glass-card w-full max-w-md sm:max-w-sm rounded-t-[2rem] sm:rounded-3xl p-6 pb-[calc(env(safe-area-inset-bottom,16px)+1.5rem)] sm:pb-6 relative">
@@ -45,8 +52,8 @@
       <p><b>2.</b> La cible s'évalue elle-même sur le curseur secrètement.</p>
       <p><b>3.</b> Le groupe vote pour estimer le score de la cible.</p>
       <p><b>4.</b> <b>La Vérité :</b> La moyenne des votes du groupe est la référence.</p>
-      <p><b>5.</b> <b>Double Peine :</b> Plus vous êtes loin de cette moyenne (par tranches de 10%), plus vous buvez. La cible, ET les joueurs les plus éloignés trinquent !</p>
-      <p><b>🃏 Les Pouvoirs :</b> Chaque joueur a un Joker unique à usage unique. Utilisez-le au bon moment pour piquer un pouvoir ou éviter une sanction.</p>
+      <p><b>5.</b> <b>Double Peine :</b> Plus vous êtes loin de cette moyenne, plus vous buvez. La cible ET les joueurs les plus éloignés trinquent !</p>
+      <p><b>🃏 Les Pouvoirs :</b> Chaque joueur a un Joker unique. Utilisez-le pour retourner la partie.</p>
     </div>
     <button onclick="toggleRules()" class="w-full mt-6 py-3.5 rounded-xl bg-white/10 border border-white/20 font-bold active:scale-95 transition-transform text-white">J'ai compris !</button>
   </div>
