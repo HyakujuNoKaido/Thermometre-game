@@ -9,6 +9,49 @@ export function toast(msg, ok=false) {
   setTimeout(() => el.remove(), 3000); 
 }
 
+export function showSmashAlert(action) {
+  const container = document.getElementById("smash-alert");
+  const titleEl = document.getElementById("smash-title");
+  const subEl = document.getElementById("smash-subtitle");
+
+  let title = "POUVOIR !";
+  let sub = `${esc(action.actor)} a engagé un pouvoir !`;
+  let color = "rgba(168,85,247,0.9)"; // Violet par défaut
+
+  if (action.type === "SHOT") {
+      title = "CUL SEC ! 🥃";
+      sub = `${esc(action.actor)} a ciblé ${esc(action.target)} !`;
+      color = "rgba(220,38,38,0.9)"; // Rouge
+  } else if (action.type === "THIEF") {
+      title = "VOL ! 🥷";
+      sub = `${esc(action.actor)} a dépouillé ${esc(action.target)} !`;
+      color = "rgba(147,51,234,0.9)"; // Violet
+  } else if (action.type === "SHIELD") {
+      title = "BOUCLIER ! 🛡️";
+      sub = `${esc(action.actor)} est intouchable`;
+      color = "rgba(6,182,212,0.9)"; // Cyan
+  } else if (action.type === "DOUBLE") {
+      title = "X2 ! 🎲";
+      sub = `${esc(action.actor)} prend tous les risques`;
+      color = "rgba(234,179,8,0.9)"; // Jaune
+  } else if (action.type === "MIRROR") {
+      title = "MIROIR ! 🪞";
+      sub = `${esc(action.actor)} va renvoyer l'attaque`;
+      color = "rgba(236,72,153,0.9)"; // Rose
+  }
+
+  titleEl.textContent = title;
+  subEl.textContent = sub;
+  titleEl.style.textShadow = `0 0 30px ${color}, 0 0 70px ${color}`;
+  subEl.style.color = color.replace("0.9", "1"); 
+
+  container.classList.remove("hidden", "animate-smash-container");
+  void container.offsetWidth; // Force le reflow
+  container.classList.add("animate-smash-container");
+
+  setTimeout(() => { container.classList.add("hidden"); }, 3400);
+}
+
 export function toggleRules() {
   const modal = document.getElementById('rulesModal');
   if (!modal) return;
@@ -34,7 +77,6 @@ function theme() { return THEMES[(S.room && S.room.mode) || S.pendingMode] || TH
 function applyBg() { 
   const t = theme(); if(!t) return;
   const bg = document.getElementById("bg"), b1 = document.getElementById("blob1"), b2 = document.getElementById("blob2"), b3 = document.getElementById("blob3");
-  // L'utilisation de backgroundColor garantit la fluidité CSS
   if(bg) bg.style.backgroundColor = t.base; 
   if(b1) b1.style.backgroundColor = t.b1; 
   if(b2) b2.style.backgroundColor = t.b2; 
@@ -261,13 +303,11 @@ function renderVoting(r, t) {
       ${jokerActionHtml}
       <div class="glass-card rounded-3xl p-6 flex flex-col gap-6 shadow-2xl border border-white/20 bg-black/60">
         <div class="flex justify-between items-end"><span class="font-black text-white/50 text-[10px] uppercase tracking-widest">${amTarget ? 'Sois honnête' : 'Tu penses à combien ?'}</span><span id="sv" class="text-7xl font-display font-black text-white drop-shadow-xl">${S.voteValue}%</span></div>
-        
         <div class="relative h-20 rounded-full bg-black/80 shadow-[inset_0_5px_15px_rgba(0,0,0,0.5)] border-2 border-white/10 flex items-center px-2">
           <div id="fill" class="absolute left-2 h-16 rounded-full pointer-events-none" style="width: calc(${S.voteValue}% - 16px); background: ${t.b1}; transition: none !important;"></div>
           <input type="range" id="slider" min="0" max="100" value="${S.voteValue}" class="thermo-slider absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" style="touch-action: pan-x;" onpointerup="this.blur()" ontouchend="this.blur()" onmouseup="this.blur()" />
           <div id="thumb-bubble" class="thumb-bubble font-display pointer-events-none z-20" style="left:${S.voteValue}%;background:${t.b1};border-top-color:${t.b1}; transition: none !important;">${S.voteValue}%</div>
         </div>
-
       </div>
       <button id="voteB" class="${btnPrimary}">Valider la position <svg class="w-5 h-5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg></button>
     ` : `<div class="glass-card rounded-3xl p-6 flex flex-col gap-4 shadow-2xl border border-white/10 bg-black/40"><div class="flex flex-col gap-3 max-h-[50vh] overflow-y-auto scroll pr-2">${waitingList}</div></div>`}
@@ -288,25 +328,6 @@ function renderReveal(r, t) {
           <span class="text-cyan-400 text-xs font-bold uppercase tracking-wider">Ton Écart : <b class="text-white text-sm">${myDiff} pts</b></span>
         </div>
       `;
-  }
-
-  let jokersLogHtml = "";
-  if (res.usedJokersLog && res.usedJokersLog.length > 0) {
-      jokersLogHtml = res.usedJokersLog.map(log => {
-          const j = JOKERS[log.joker];
-          return `<div class="w-full bg-purple-600/30 border border-purple-500 rounded-2xl p-3 mb-2 text-center text-white font-bold shadow-[0_0_15px_rgba(168,85,247,0.3)] text-sm">
-            <span class="inline-flex items-center gap-1.5">${j.icon("w-5 h-5")} <b>${esc(log.name)}</b> a engagé son pouvoir !</span>
-          </div>`;
-      }).join("");
-  }
-
-  let jokerShotVictimsHtml = "";
-  if (res.jokerShotVictims && res.jokerShotVictims.length > 0) {
-      jokerShotVictimsHtml = res.jokerShotVictims.map(v => {
-          return `<div class="w-full bg-gradient-to-r from-red-600/50 to-orange-600/50 border border-red-500 rounded-2xl p-4 mb-3 text-center text-white font-black shadow-lg uppercase tracking-wide text-sm animate-pulse flex items-center justify-center gap-2">
-            ${icons.alert("w-5 h-5 text-white animate-bounce")} <span>${esc(v.name)} a reçu un CUL SEC, une personne ayant utilisé son pouvoir l'a pris pour cible !</span>
-          </div>`;
-      }).join("");
   }
 
   let targetVerdictHtml = "";
@@ -362,10 +383,7 @@ function renderReveal(r, t) {
     <div class="text-center animate-pop my-1 h-20 flex items-center justify-center"><span id="reveal-avg" class="font-display text-cyan-400 font-black leading-none drop-shadow-[0_15px_40px_rgba(34,211,238,0.8)] ${blurCls} text-[24vw]">${avgVal}</span></div>
     
     <div id="reveal-details" class="${detCls}">
-      ${jokersLogHtml}
-      ${jokerShotVictimsHtml}
       <div class="glass-card border rounded-3xl p-6 flex flex-col items-center shadow-2xl bg-black/70 border-white/10">
-        
         <div class="flex w-full justify-around items-center">
           <div class="flex flex-col text-center">
             <span class="text-white/40 text-[10px] font-black uppercase tracking-widest mb-0.5">La Moyenne</span>
@@ -377,7 +395,6 @@ function renderReveal(r, t) {
             <span class="text-4xl font-display font-black text-yellow-400 drop-shadow-md">${res.targetVote}%</span>
           </div>
         </div>
-        
         <div class="w-full h-px bg-white/10 my-4"></div>
         ${targetVerdictHtml}
         ${groupVerdictHtml}
@@ -461,13 +478,11 @@ export function render() {
   app.innerHTML = html;
   app.__html = html;
 
-  // C'est ICI qu'on déclenche l'animation de transition de page, 
-  // seulement si on change VRAIMENT d'écran (pas en cliquant sur un simple bouton)
+  // L'animation ne se déclenche que si on change de page
   if (isNewView) {
     lastViewKey = viewKey;
     const content = app.querySelector('.view-content');
     if (content) {
-      // Force le navigateur à rafraîchir pour que l'animation se lance proprement
       void content.offsetWidth;
       content.classList.add('animate-view');
     }
