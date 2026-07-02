@@ -9,6 +9,7 @@ export function toast(msg, ok=false) {
   setTimeout(() => el.remove(), 3000); 
 }
 
+// LA FONCTION MANQUANTE QUI CAUSAIT L'ERREUR DE BUILD !
 export function showSmashAlert(action) {
   const container = document.getElementById("smash-alert");
   const titleEl = document.getElementById("smash-title");
@@ -330,6 +331,25 @@ function renderReveal(r, t) {
       `;
   }
 
+  let jokersLogHtml = "";
+  if (res.usedJokersLog && res.usedJokersLog.length > 0) {
+      jokersLogHtml = res.usedJokersLog.map(log => {
+          const j = JOKERS[log.joker];
+          return `<div class="w-full bg-purple-600/30 border border-purple-500 rounded-2xl p-3 mb-2 text-center text-white font-bold shadow-[0_0_15px_rgba(168,85,247,0.3)] text-sm">
+            <span class="inline-flex items-center gap-1.5">${j.icon("w-5 h-5")} <b>${esc(log.name)}</b> a engagé son pouvoir !</span>
+          </div>`;
+      }).join("");
+  }
+
+  let jokerShotVictimsHtml = "";
+  if (res.jokerShotVictims && res.jokerShotVictims.length > 0) {
+      jokerShotVictimsHtml = res.jokerShotVictims.map(v => {
+          return `<div class="w-full bg-gradient-to-r from-red-600/50 to-orange-600/50 border border-red-500 rounded-2xl p-4 mb-3 text-center text-white font-black shadow-lg uppercase tracking-wide text-sm animate-pulse flex items-center justify-center gap-2">
+            ${icons.alert("w-5 h-5 text-white animate-bounce")} <span>${esc(v.name)} a reçu un CUL SEC, une personne ayant utilisé son pouvoir l'a pris pour cible !</span>
+          </div>`;
+      }).join("");
+  }
+
   let targetVerdictHtml = "";
   if (res.targetShot) {
     targetVerdictHtml = `<div class="w-full bg-red-600/40 border border-red-500 rounded-2xl p-4 text-center text-white font-bold shadow-lg flex flex-col items-center justify-center gap-1">${icons.alert("w-8 h-8 text-white animate-bounce")} <span>CUL SEC POUR ${esc(res.targetName).toUpperCase()} !</span> <span class="text-xs text-white/80 font-medium normal-case">Déni total (${res.targetDiff} pts d'écart).</span></div>`;
@@ -373,17 +393,16 @@ function renderReveal(r, t) {
     </div>
   ` : "";
 
-  const detCls = S.animDone ? "flex flex-col gap-4" : "opacity-0 transition-opacity duration-700 flex flex-col gap-4";
-  const blurCls = S.animDone ? "" : "blur-xl opacity-0 transition-all duration-[2000ms]";
-  const avgVal = S.animDone ? `${res.average}%` : "0%";
-
   return `<div class="view-content flex-1 flex flex-col gap-5 pb-8">
     <div class="text-center pt-2"><p class="text-white/40 text-[10px] font-black uppercase tracking-widest">Le verdict social</p><h2 class="text-3xl font-black text-white tracking-tight mt-0.5">${esc(res.targetName)} face au groupe</h2></div>
     
-    <div class="text-center animate-pop my-1 h-20 flex items-center justify-center"><span id="reveal-avg" class="font-display text-cyan-400 font-black leading-none drop-shadow-[0_15px_40px_rgba(34,211,238,0.8)] ${blurCls} text-[24vw]">${avgVal}</span></div>
+    <div class="text-center animate-pop my-1 h-20 flex items-center justify-center"><span id="reveal-avg" class="font-display text-cyan-400 font-black leading-none drop-shadow-[0_15px_40px_rgba(34,211,238,0.8)] text-[24vw]">${res.average}%</span></div>
     
-    <div id="reveal-details" class="${detCls}">
+    <div id="reveal-details" class="flex flex-col gap-4">
+      ${jokersLogHtml}
+      ${jokerShotVictimsHtml}
       <div class="glass-card border rounded-3xl p-6 flex flex-col items-center shadow-2xl bg-black/70 border-white/10">
+        
         <div class="flex w-full justify-around items-center">
           <div class="flex flex-col text-center">
             <span class="text-white/40 text-[10px] font-black uppercase tracking-widest mb-0.5">La Moyenne</span>
@@ -395,6 +414,7 @@ function renderReveal(r, t) {
             <span class="text-4xl font-display font-black text-yellow-400 drop-shadow-md">${res.targetVote}%</span>
           </div>
         </div>
+        
         <div class="w-full h-px bg-white/10 my-4"></div>
         ${targetVerdictHtml}
         ${groupVerdictHtml}
@@ -478,7 +498,6 @@ export function render() {
   app.innerHTML = html;
   app.__html = html;
 
-  // L'animation ne se déclenche que si on change de page
   if (isNewView) {
     lastViewKey = viewKey;
     const content = app.querySelector('.view-content');
