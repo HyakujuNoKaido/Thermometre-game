@@ -4,7 +4,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* FIX DÉFINITIF POUR L'ESPACE NOIR IOS PWA */
 html {
   background-color: #040B16 !important;
   height: -webkit-fill-available;
@@ -26,11 +25,9 @@ body {
 .font-roast { font-family: 'Nunito', sans-serif; }
 .font-display { font-family: 'Outfit', sans-serif; }
 
-/* Safe areas (notch) */
 .safe-padding-bottom { padding-bottom: calc(env(safe-area-inset-bottom, 20px) + 1.5rem); }
 .top-safe { top: env(safe-area-inset-top, 0px); }
 
-/* Slider */
 .thermo-slider { -webkit-appearance: none; appearance: none; width: 100%; height: 64px; background: transparent; cursor: pointer; outline: none; touch-action: pan-y; }
 .thermo-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 50px; height: 50px; border-radius: 9999px; background: #fff; border: 4px solid rgba(255,255,255,.8); box-shadow: 0 4px 12px rgba(0,0,0,0.3), 0 0 20px rgba(255,255,255,.5); transition: transform 0.1s; }
 .thermo-slider::-webkit-slider-thumb:active { transform: scale(1.1); }
@@ -39,19 +36,19 @@ body {
 .thumb-bubble { position: absolute; bottom: calc(100% + 10px); transform: translateX(-50%); padding: 6px 14px; border-radius: 9999px; font-family: 'Outfit', sans-serif; font-weight: 900; font-size: 1rem; color: #fff; box-shadow: 0 6px 20px rgba(0,0,0,.5); pointer-events: none; transition: left .08s ease-out, background .08s ease-out; white-space: nowrap; z-index: 20; }
 .thumb-bubble::after { content: ""; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); border: 6px solid transparent; border-top-color: inherit; }
 
-/* Transitions fluides de base */
 @keyframes smoothSlideUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
 .animate-view { animation: smoothSlideUp 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; will-change: transform, opacity; }
 @keyframes pop { 0% { opacity: 0; transform: scale(.7); } 60% { transform: scale(1.08); } 100% { opacity: 1; transform: scale(1); } }
 .animate-pop { animation: pop .5s cubic-bezier(0.16, 1, 0.3, 1) both; will-change: transform, opacity; }
 
-/* ANIMATION ALERTE SMASH BROS 💥 */
+/* FIX DU CENTRAGE SMASH BROS */
 .animate-smash-container {
   animation: smashBg 3.5s forwards;
-  pointer-events: auto !important; /* Empêche de cliquer derrière */
+  pointer-events: auto !important;
 }
 .animate-smash-container .smash-content {
   animation: smashText 3.5s cubic-bezier(0.1, 2, 0.2, 1) forwards;
+  transform-origin: center center; /* Empêche le décalage sur mobile */
 }
 
 @keyframes smashBg {
@@ -62,14 +59,13 @@ body {
 }
 
 @keyframes smashText {
-  0% { opacity: 0; transform: scale(4) skewX(-15deg); }
-  8% { opacity: 1; transform: scale(0.9) skewX(-15deg); }
-  14% { transform: scale(1) skewX(-15deg); }
-  85% { transform: scale(1.05) skewX(-15deg); opacity: 1; }
-  100% { transform: scale(0.5) skewX(-15deg); opacity: 0; }
+  0% { opacity: 0; transform: scale(2.5) skewX(-12deg); }
+  8% { opacity: 1; transform: scale(0.9) skewX(-12deg); }
+  14% { transform: scale(1) skewX(-12deg); }
+  85% { transform: scale(1.05) skewX(-12deg); opacity: 1; }
+  100% { transform: scale(0.5) skewX(-12deg); opacity: 0; }
 }
 
-/* UI Components */
 .glass-card { background-color: rgba(20, 20, 30, 0.2); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.15); border-top: 1px solid rgba(255, 255, 255, 0.3); box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.4); }
 .btn-gold { background: linear-gradient(135deg, #fbbf24, #d97706); box-shadow: 0 0 20px rgba(251, 191, 36, 0.3); transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s; color: #000; }
 .btn-gold:active { transform: scale(0.95); }
