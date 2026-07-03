@@ -4,32 +4,43 @@
 @tailwind components;
 @tailwind utilities;
 
-/* CORRECTION DU FOND NOIR POUR LE THERMOMETRE */
+/* VERROUILLAGE NATIF ABSOLU (Anti-zoom, anti-saut, anti-sélection) */
 html, body {
-  background-color: #040B16 !important;
-  margin: 0;
-  padding: 0;
+  overscroll-behavior: none;
+  overflow: hidden;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0; /* Ancrage parfait sur tous les écrans */
   width: 100%;
   height: 100%;
-  min-height: 100dvh;
-}
-
-body {
-  overflow: hidden;
-  overscroll-behavior: none;
+  margin: 0;
+  padding: 0;
+  background-color: #040B16 !important;
   font-family: 'Nunito', sans-serif;
   color: #fff;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%; /* Empêche le changement de taille de police auto */
+  touch-action: manipulation; /* BLOQUE LE ZOOM AU DOUBLE-TAP */
+  -webkit-user-select: none; /* Désactive la sélection de texte */
+  user-select: none;
+}
+
+/* On réautorise les interactions uniquement sur les boutons et champs de texte */
+input, button, .thermo-slider {
+  -webkit-user-select: auto;
+  user-select: auto;
 }
 
 * { -webkit-tap-highlight-color: transparent; }
 .font-roast { font-family: 'Nunito', sans-serif; }
 .font-display { font-family: 'Outfit', sans-serif; }
 
+/* Safe areas (notch de l'iPhone et bordures d'Android) */
 .safe-padding-bottom { padding-bottom: calc(env(safe-area-inset-bottom, 20px) + 1.5rem); }
 .top-safe { top: env(safe-area-inset-top, 0px); }
 
-.thermo-slider { -webkit-appearance: none; appearance: none; width: 100%; height: 64px; background: transparent; cursor: pointer; outline: none; touch-action: pan-y; }
+/* Slider (La barre de vote) */
+.thermo-slider { -webkit-appearance: none; appearance: none; width: 100%; height: 64px; background: transparent; cursor: pointer; outline: none; }
 .thermo-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 50px; height: 50px; border-radius: 9999px; background: #fff; border: 4px solid rgba(255,255,255,.8); box-shadow: 0 4px 12px rgba(0,0,0,0.3), 0 0 20px rgba(255,255,255,.5); transition: transform 0.1s; }
 .thermo-slider::-webkit-slider-thumb:active { transform: scale(1.1); }
 .thermo-slider::-moz-range-thumb { width: 50px; height: 50px; border-radius: 9999px; background: #fff; border: 4px solid rgba(255,255,255,.8); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
@@ -37,20 +48,15 @@ body {
 .thumb-bubble { position: absolute; bottom: calc(100% + 10px); transform: translateX(-50%); padding: 6px 14px; border-radius: 9999px; font-family: 'Outfit', sans-serif; font-weight: 900; font-size: 1rem; color: #fff; box-shadow: 0 6px 20px rgba(0,0,0,.5); pointer-events: none; transition: left .08s ease-out, background .08s ease-out; white-space: nowrap; z-index: 20; }
 .thumb-bubble::after { content: ""; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); border: 6px solid transparent; border-top-color: inherit; }
 
+/* Animations fluides */
 @keyframes smoothSlideUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
 .animate-view { animation: smoothSlideUp 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; will-change: transform, opacity; }
 @keyframes pop { 0% { opacity: 0; transform: scale(.7); } 60% { transform: scale(1.08); } 100% { opacity: 1; transform: scale(1); } }
 .animate-pop { animation: pop .5s cubic-bezier(0.16, 1, 0.3, 1) both; will-change: transform, opacity; }
 
-/* FIX DU CENTRAGE SMASH BROS */
-.animate-smash-container {
-  animation: smashBg 3.5s forwards;
-  pointer-events: auto !important;
-}
-.animate-smash-container .smash-content {
-  animation: smashText 3.5s cubic-bezier(0.1, 2, 0.2, 1) forwards;
-  transform-origin: center center;
-}
+/* Alerte Smash Bros */
+.animate-smash-container { animation: smashBg 3.5s forwards; pointer-events: auto !important; }
+.animate-smash-container .smash-content { animation: smashText 3.5s cubic-bezier(0.1, 2, 0.2, 1) forwards; transform-origin: center center; }
 
 @keyframes smashBg {
   0% { opacity: 0; background-color: rgba(0,0,0,0); }
@@ -58,7 +64,6 @@ body {
   85% { opacity: 1; background-color: rgba(0,0,0,0.85); backdrop-filter: blur(10px); }
   100% { opacity: 0; background-color: rgba(0,0,0,0); backdrop-filter: blur(0px); }
 }
-
 @keyframes smashText {
   0% { opacity: 0; transform: scale(2.5) skewX(-12deg); }
   8% { opacity: 1; transform: scale(0.9) skewX(-12deg); }
@@ -67,7 +72,15 @@ body {
   100% { transform: scale(0.5) skewX(-12deg); opacity: 0; }
 }
 
-.glass-card { background-color: rgba(20, 20, 30, 0.2); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.15); border-top: 1px solid rgba(255, 255, 255, 0.3); box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.4); isolation: isolate; -webkit-mask-image: -webkit-radial-gradient(white, black); }
+@keyframes blob { 0% { transform: translate(0,0) scale(1); } 33% { transform: translate(30px,-50px) scale(1.1); } 66% { transform: translate(-20px,20px) scale(.9); } 100% { transform: translate(0,0) scale(1); } }
+.animate-blob { animation: blob 15s infinite alternate ease-in-out; will-change: transform; transform: translateZ(0); backface-visibility: hidden; }
+.blob-delay { animation-delay: 5s; }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+.spinner { display: inline-block; width: 1.1em; height: 1.1em; border: 2.5px solid rgba(0,0,0,.25); border-top-color: #000; border-radius: 9999px; animation: spin .7s linear infinite; vertical-align: -2px; }
+
+/* UI Components */
+.glass-card { background-color: rgba(20, 20, 30, 0.2); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.15); border-top: 1px solid rgba(255, 255, 255, 0.3); box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.4); }
 .btn-gold { background: linear-gradient(135deg, #fbbf24, #d97706); box-shadow: 0 0 20px rgba(251, 191, 36, 0.3); transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s; color: #000; }
 .btn-gold:active { transform: scale(0.95); }
 
