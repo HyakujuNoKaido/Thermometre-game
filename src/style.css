@@ -6,23 +6,23 @@
 
 /* VERROUILLAGE NATIF ABSOLU (Anti-zoom, anti-saut, anti-sélection) */
 html, body {
-  overscroll-behavior: none;
-  overflow: hidden;
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0; /* Ancrage parfait sur tous les écrans */
-  width: 100%;
-  height: 100%;
+  background-color: #040B16 !important;
   margin: 0;
   padding: 0;
-  background-color: #040B16 !important;
+  width: 100%;
+  max-width: 100vw;
+  height: 100%;
+  min-height: 100dvh;
+  overflow-x: hidden; /* LA LIGNE MAGIQUE : Coupe tout ce qui dépasse à l'horizontale */
+}
+
+body {
+  /* On garde le défilement vertical si le thermomètre en a besoin, 
+     mais on bloque le rebond élastique natif des téléphones */
+  overscroll-behavior-y: none;
   font-family: 'Nunito', sans-serif;
   color: #fff;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  -webkit-text-size-adjust: 100%; /* Empêche le changement de taille de police auto */
-  touch-action: manipulation; /* BLOQUE LE ZOOM AU DOUBLE-TAP */
-  -webkit-user-select: none; /* Désactive la sélection de texte */
-  user-select: none;
 }
 
 /* On réautorise les interactions uniquement sur les boutons et champs de texte */
