@@ -36,46 +36,58 @@ input, select, textarea, button { font-size: 16px !important; outline: none; }
 .animate-pop { animation: pop .5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 @keyframes pop { 0% { opacity: 0; transform: scale(.95); } 100% { opacity: 1; transform: scale(1); } }
 
-/* === LE THERMOMÈTRE EN VERRE (CSS 3D) === */
+.animate-flash { animation: flashBang 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+@keyframes flashBang { 0% { opacity: 1; } 10% { opacity: 0.8; } 100% { opacity: 0; } }
+
+/* === CARTE D'ALERTE (SMASH) VOLANTE === */
+.card-alert-container { perspective: 1200px; }
+.card-alert {
+  width: 160px; height: 240px; margin: 0 auto;
+  transform-style: preserve-3d; position: relative;
+  animation: flyInCard 1.8s cubic-bezier(0.2, 0.9, 0.3, 1.1) forwards;
+}
+@keyframes flyInCard {
+  0% { transform: translateY(80vh) scale(0.2) rotateY(-90deg) rotateZ(30deg); opacity: 0; }
+  35% { transform: translateY(-5vh) scale(1.1) rotateY(180deg) rotateZ(-5deg); opacity: 1; }
+  60%, 100% { transform: translateY(0) scale(1) rotateY(360deg) rotateZ(0deg); opacity: 1; }
+}
+.card-alert-face {
+  position: absolute; inset: 0; backface-visibility: hidden;
+  border-radius: 8px; border: 1px solid rgba(255,255,255,0.3);
+  background: linear-gradient(135deg, #151515, #000);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+}
+.card-alert-back { transform: rotateY(180deg); }
+
+/* === CARTE TAROT INTERACTIVE (VOTE) === */
+.tarot-scene-interactive { perspective: 1000px; width: 100%; height: 180px; z-index: 50; }
+.tarot-card-interactive {
+  width: 130px; height: 180px; margin: 0 auto; position: relative;
+  transform-style: preserve-3d; transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.tarot-card-interactive.flipped { transform: rotateY(180deg) scale(1.1); z-index: 60; }
+.tarot-card-interactive.consumed {
+  opacity: 0; transform: rotateY(180deg) scale(1.2) translateY(-40px);
+  transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1); pointer-events: none;
+}
+.tarot-face {
+  position: absolute; inset: 0; backface-visibility: hidden; border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.15); background: linear-gradient(135deg, #111, #000);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; p-4;
+}
+.tarot-back { transform: rotateY(180deg); background: rgba(5,5,5,0.9); }
+
+/* === THERMOMÈTRE EN VERRE === */
 .glass-tube {
   background: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.02) 100%);
-  box-shadow: inset 0 2px 10px rgba(255,255,255,0.3), inset 0 -2px 10px rgba(0,0,0,0.8), 0 10px 30px rgba(0,0,0,0.5);
-  border: 1px solid rgba(255,255,255,0.2);
-  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  box-shadow: inset 0 2px 10px rgba(255,255,255,0.2), inset 0 -2px 10px rgba(0,0,0,0.8), 0 10px 30px rgba(0,0,0,0.5);
+  border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(5px);
 }
 .mercury-fluid {
   box-shadow: inset 0 2px 5px rgba(255,255,255,0.5), inset 0 -2px 5px rgba(0,0,0,0.5);
   transition: width 0.1s ease-out, background-color 0.3s ease, box-shadow 0.3s ease;
-}
-
-/* === LES CARTES DE TAROT (CSS 3D FLIP) === */
-.tarot-scene {
-  perspective: 1000px;
-  width: 100%; height: 160px;
-}
-.tarot-card {
-  width: 120px; height: 160px; margin: 0 auto;
-  position: relative;
-  transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.5s;
-  transform-style: preserve-3d;
-  cursor: pointer;
-}
-.tarot-card.flipped { transform: rotateY(180deg) scale(1.1); }
-.tarot-card.consumed { opacity: 0; transform: rotateY(180deg) scale(0.8) translateY(-20px); pointer-events: none; }
-
-.tarot-face {
-  position: absolute; width: 100%; height: 100%;
-  backface-visibility: hidden; -webkit-backface-visibility: hidden;
-  border-radius: 8px; border: 1px solid rgba(255,255,255,0.2);
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-}
-.tarot-front {
-  background: linear-gradient(135deg, #111, #000);
-  box-shadow: inset 0 0 20px rgba(0,0,0,0.8), 0 10px 20px rgba(0,0,0,0.5);
-}
-.tarot-back {
-  background: var(--accent); transform: rotateY(180deg);
-  box-shadow: 0 0 40px var(--accent);
 }
 
 /* === LUXE UI === */
@@ -86,11 +98,8 @@ input, select, textarea, button { font-size: 16px !important; outline: none; }
 }
 
 .luxury-card {
-  background-color: rgba(10, 10, 10, 0.6);
-  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
-  border-radius: 4px;
+  background-color: rgba(10, 10, 10, 0.6); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5); border-radius: 4px;
 }
 
 .glow-active { box-shadow: 0 0 35px var(--accent); border-color: var(--accent); }
@@ -107,4 +116,4 @@ input, select, textarea, button { font-size: 16px !important; outline: none; }
 .luxury-btn:disabled { opacity: 0.3 !important; cursor: not-allowed; }
 
 .scroll::-webkit-scrollbar { width: 2px; }
-.scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); }
+.scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); }
