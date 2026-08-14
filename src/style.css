@@ -33,23 +33,52 @@ input, select, textarea, button { font-size: 16px !important; outline: none; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes fadeOut { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-10px); } }
 
-.animate-view { animation: smoothSlideUp 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; will-change: transform, opacity; }
-@keyframes smoothSlideUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
 .animate-pop { animation: pop .5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 @keyframes pop { 0% { opacity: 0; transform: scale(.95); } 100% { opacity: 1; transform: scale(1); } }
 
-/* Flash effect "Slot Machine" */
-.animate-flash { animation: flashBang 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-@keyframes flashBang { 0% { opacity: 1; } 10% { opacity: 0.8; } 100% { opacity: 0; } }
-
-/* Alerte Pouvoir (Glow intense) */
-.animate-alert-glow { animation: alertGlow 1.5s infinite; }
-@keyframes alertGlow {
-  0%, 100% { box-shadow: inset 0 0 50px rgba(0,0,0,0.9); }
-  50% { box-shadow: inset 0 0 150px var(--accent); }
+/* === LE THERMOMÈTRE EN VERRE (CSS 3D) === */
+.glass-tube {
+  background: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.02) 100%);
+  box-shadow: inset 0 2px 10px rgba(255,255,255,0.3), inset 0 -2px 10px rgba(0,0,0,0.8), 0 10px 30px rgba(0,0,0,0.5);
+  border: 1px solid rgba(255,255,255,0.2);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+}
+.mercury-fluid {
+  box-shadow: inset 0 2px 5px rgba(255,255,255,0.5), inset 0 -2px 5px rgba(0,0,0,0.5);
+  transition: width 0.1s ease-out, background-color 0.3s ease, box-shadow 0.3s ease;
 }
 
-/* Le bouton "Vivant" */
+/* === LES CARTES DE TAROT (CSS 3D FLIP) === */
+.tarot-scene {
+  perspective: 1000px;
+  width: 100%; height: 160px;
+}
+.tarot-card {
+  width: 120px; height: 160px; margin: 0 auto;
+  position: relative;
+  transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.5s;
+  transform-style: preserve-3d;
+  cursor: pointer;
+}
+.tarot-card.flipped { transform: rotateY(180deg) scale(1.1); }
+.tarot-card.consumed { opacity: 0; transform: rotateY(180deg) scale(0.8) translateY(-20px); pointer-events: none; }
+
+.tarot-face {
+  position: absolute; width: 100%; height: 100%;
+  backface-visibility: hidden; -webkit-backface-visibility: hidden;
+  border-radius: 8px; border: 1px solid rgba(255,255,255,0.2);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+.tarot-front {
+  background: linear-gradient(135deg, #111, #000);
+  box-shadow: inset 0 0 20px rgba(0,0,0,0.8), 0 10px 20px rgba(0,0,0,0.5);
+}
+.tarot-back {
+  background: var(--accent); transform: rotateY(180deg);
+  box-shadow: 0 0 40px var(--accent);
+}
+
+/* === LUXE UI === */
 .breathing { animation: breath 2.5s ease-in-out infinite; }
 @keyframes breath {
   0%, 100% { box-shadow: 0 0 10px var(--accent); }
@@ -64,31 +93,18 @@ input, select, textarea, button { font-size: 16px !important; outline: none; }
   border-radius: 4px;
 }
 
-.glow-active {
-  box-shadow: 0 0 35px var(--accent);
-  border-color: var(--accent);
-}
+.glow-active { box-shadow: 0 0 35px var(--accent); border-color: var(--accent); }
 
 .luxury-btn {
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: transparent; border: 1px solid rgba(255, 255, 255, 0.2);
   color: #fff; text-transform: uppercase; letter-spacing: 0.15em;
   font-family: 'Outfit', sans-serif; font-size: 0.75rem; font-weight: 600;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  border-radius: 2px;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); border-radius: 2px;
 }
 .luxury-btn:hover:not(:disabled), .luxury-btn:active:not(:disabled) {
   background: rgba(255, 255, 255, 0.05); transform: scale(0.98);
 }
 .luxury-btn:disabled { opacity: 0.3 !important; cursor: not-allowed; }
-
-.thermo-slider { 
-  -webkit-appearance: none; appearance: none; width: 100%; height: 2px; 
-  background: transparent; outline: none; cursor: pointer; touch-action: pan-y; 
-}
-.thermo-slider::-webkit-slider-thumb { 
-  -webkit-appearance: none; width: 30px; height: 40px; background: transparent; 
-}
 
 .scroll::-webkit-scrollbar { width: 2px; }
 .scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); }
