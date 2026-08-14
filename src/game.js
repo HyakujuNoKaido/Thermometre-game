@@ -16,6 +16,25 @@ async function cleanRoomIfEmpty(code) {
   } catch(e) {}
 }
 
+export async function tryReconnect() {
+  const code = sessionStorage.getItem('thermo_code'); 
+  const pid = sessionStorage.getItem('thermo_pid');
+  if (code && pid) {
+    try {
+      const snap = await db.ref("rooms/" + code).get();
+      if (snap.exists() && snap.val().players && snap.val().players[pid]) {
+        S.name = snap.val().players[pid].name;
+        await db.ref(`rooms/${code}/players/${pid}`).update({ connected: true });
+        enterRoom(code, pid); 
+        return true;
+      }
+    } catch(e) {
+        console.error("Firebase Error:", e);
+    }
+  }
+  return false;
+}
+
 export async function createRoom() {
   if (!S.name.trim()) return toast("Veuillez décliner votre identité."); 
   if (S.isLoading) return; haptic('medium'); S.isLoading = true; render(); 
@@ -82,7 +101,6 @@ function enterRoom(code, pid) {
   });
 }
 
-// Reste de tes fonctions Jokers (identiques)
 export async function toggleJoker() {
   const me = S.room.players[S.pid]; if (!me || me.jokerConsumed || !me.joker) return;
   haptic('light');
@@ -102,10 +120,13 @@ export async function stealJoker(targetId) {
   const r = S.room; const targetP = r.players[targetId];
   if (!targetP || targetP.jokerConsumed || !targetP.joker) return toast("Cible protégée.");
   haptic('medium');
+  const stolenJoker = targetP.joker;
+  const actorName = S.room.players[S.pid].name;
+
   await S.roomRef.update({
-    [`players/${S.pid}/joker`]: targetP.joker, [`players/${S.pid}/jokerActive`]: false, [`players/${S.pid}/jokerConsumed`]: false,
+    [`players/${S.pid}/joker`]: stolenJoker, [`players/${S.pid}/jokerActive`]: false, [`players/${S.pid}/jokerConsumed`]: false,
     [`players/${targetId}/joker`]: null, [`players/${targetId}/jokerActive`]: false, [`players/${targetId}/jokerConsumed`]: true,
-    lastAction: { id: Date.now(), type: 'THIEF', actor: S.room.players[S.pid].name, target: targetP.name }
+    lastAction: { id: Date.now(), type: 'THIEF', actor: actorName, target: targetP.name }
   });
 }
 
@@ -155,7 +176,6 @@ async function promoteHostIfNeeded() {
   } 
 }
 
-// LANCEMENT DU ROUND (Questions Aléatoires, Pacte de Sang, Part des Anges)
 export async function startRound() {
   const r = S.room; if (S.pid !== r.hostId) return;
   const conn = connectedArr(r);
@@ -179,13 +199,11 @@ export async function startRound() {
       startedAt: ServerValue.TIMESTAMP 
   };
 
-  // Le Pacte de Sang (Défini au 1er round)
   if (conn.length >= 3 && (!r.bloodPact || r.round === 0)) {
       const shuffled = [...conn].sort(() => 0.5 - Math.random());
       upd.bloodPact = { p1: shuffled[0].id, p2: shuffled[1].id };
   }
 
-  // La Part des Anges (15% de chance)
   upd.angelRound = Math.random() < 0.15;
 
   Object.keys(r.players).forEach(id => { upd[`players/${id}/jokerActive`] = false; });
@@ -211,7 +229,6 @@ export async function hostAutoReveal() {
     const usedJokersLog = [];
     const jokerShotVictims = [];
     
-    // GESTION DES POUVOIRS...
     Object.keys(r.players).forEach(id => {
        const p = r.players[id];
        if (p.jokerActive && p.joker && !p.jokerConsumed && p.joker !== "SHIELD" && p.joker !== "MIRROR") {
@@ -240,7 +257,6 @@ export async function hostAutoReveal() {
 
     const hasJoker = (id, jName) => { const p = r.players[id]; return p && p.jokerActive && p.joker === jName && !p.jokerConsumed; };
 
-    // CALCULS DES SANCTIONS
     const tid = r.question.targetId; 
     const tv = votes[tid] !== undefined ? votes[tid] : 50; 
     const allVotes = Object.values(votes);
@@ -281,7 +297,7 @@ export async function hostAutoReveal() {
       let sips = 0;
       
       if (!r.angelRound && targetSips > 0 && playerDiff > targetDiff + 5) {
-          sips = 1; // Balle perdue
+          sips = 1; 
       }
       
       if (hasJoker(id, "SHIELD") || hasJoker(id, "MIRROR")) sips = 0;
@@ -290,7 +306,6 @@ export async function hostAutoReveal() {
       groupResults.push({ id, name: r.players[id].name, diff: playerDiff, sips, shot: false, collateral: 0 });
     });
 
-    // PACTE DE SANG : Dommages Collatéraux
     if (r.bloodPact && !r.angelRound) {
         const applyCollateral = (partnerId, penaltySips, penaltyShot) => {
             if (penaltyShot || penaltySips >= 3) {
@@ -301,10 +316,8 @@ export async function hostAutoReveal() {
                 }
             }
         };
-        // Si la cible principale a pris cher
         if (tid === r.bloodPact.p1) applyCollateral(r.bloodPact.p2, targetSips, targetShot);
         if (tid === r.bloodPact.p2) applyCollateral(r.bloodPact.p1, targetSips, targetShot);
-        // Si un membre du groupe a pris cher (ex: shot via pouvoir)
         jokerShotVictims.forEach(v => {
             if (v.id === r.bloodPact.p1) applyCollateral(r.bloodPact.p2, 0, true);
             if (v.id === r.bloodPact.p2) applyCollateral(r.bloodPact.p1, 0, true);
