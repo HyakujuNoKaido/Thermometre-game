@@ -26,7 +26,7 @@ export function showSmashAlert(action) {
   else if (action.type === "COUNTER") { title = "Riposte"; sub = `${esc(action.actor)} contre-attaque !`; iconSvg = action.joker === 'SHIELD' ? icons.shield("w-12 h-12") : icons.mirror("w-12 h-12"); color = "#06b6d4"; }
 
   container.innerHTML = `
-    <div class="card-alert-container flex flex-col items-center justify-center w-full h-full relative z-10">
+    <div class="card-alert-container flex flex-col items-center justify-center w-full h-full relative z-10 pointer-events-none">
        <div class="card-alert" style="box-shadow: 0 0 50px ${color}60">
           <div class="card-alert-face"></div>
           <div class="card-alert-face card-alert-back" style="border-color:${color}">
@@ -100,15 +100,37 @@ export function updateThermometerColor(val) {
   }
 }
 
-window.triggerTarotCard = function() {
+// GESTION DU TOUCHER SUR LA CARTE INTERACTIVE
+window.flipTarotCard = function(e) {
+  if (e) { e.stopPropagation(); e.preventDefault(); }
   const card = document.getElementById('tarot-card-interactive');
-  if (!card) return;
-  card.classList.add('flipped');
+  if (card && !card.classList.contains('flipped')) {
+      card.classList.add('flipped');
+      if (window.haptic) window.haptic('light');
+  }
+};
+
+window.unflipTarotCard = function(e) {
+  if (e) { e.stopPropagation(); e.preventDefault(); }
+  const card = document.getElementById('tarot-card-interactive');
+  if (card) {
+      card.classList.remove('flipped');
+      if (window.haptic) window.haptic('light');
+  }
+};
+
+window.confirmTarotAction = function(actionType, targetId, e) {
+  if (e) { e.stopPropagation(); e.preventDefault(); }
+  const card = document.getElementById('tarot-card-interactive');
+  if(card) card.classList.add('consumed');
+  if (window.haptic) window.haptic('medium');
+  
   setTimeout(() => {
-     card.classList.add('consumed');
-     if (window.toggleJoker) window.toggleJoker();
-  }, 800);
-}
+      if(actionType === 'toggle' && window.toggleJoker) window.toggleJoker();
+      else if (actionType === 'shot' && window.assignShotTarget) window.assignShotTarget(targetId);
+      else if (actionType === 'steal' && window.stealJoker) window.stealJoker(targetId);
+  }, 600);
+};
 
 window.updateName = function(val) {
   S.name = val;
@@ -196,13 +218,11 @@ function renderHome(t) {
           }).join("")}
         </div>
       </div>
-      <!-- ATTRIBUT ONCLICK RESTAURÉ ICI -->
       <button id="createB" onclick="window.createRoom()" class="w-full py-4 mt-4 luxury-btn transition-colors duration-500" style="border-color:var(--accent); color:var(--accent); font-weight:700;" ${S.isLoading || !S.name.trim() ? 'disabled' : ''}>Créer le salon</button>
     </div>
 
     <div class="luxury-card p-4 flex flex-row gap-4 items-center">
       <input id="joinI" oninput="window.updateJoinCode(this.value)" maxlength="4" placeholder="ROOM" value="${esc(S.joinCode)}" class="flex-1 min-w-0 bg-transparent border-none px-2 py-2 text-xl font-display tracking-[0.2em] text-center uppercase outline-none text-white placeholder:text-white/10"/>
-      <!-- ATTRIBUT ONCLICK RESTAURÉ ICI -->
       <button id="joinB" onclick="window.joinRoom()" class="py-3 px-6 border border-white/20 text-xs font-display uppercase tracking-widest hover:bg-white/10 transition-all text-white rounded-sm">Rejoindre</button>
     </div>
   </div>`; 
@@ -318,11 +338,11 @@ function renderVoting(r, t) {
 
       jokerActionHtml = `
       <div class="tarot-scene-interactive mb-4">
-        <div id="tarot-card-interactive" class="tarot-card-interactive" onclick="window.flipTarotCard(event)">
+        <div id="tarot-card-interactive" class="tarot-card-interactive" ontouchstart="window.flipTarotCard(event)" onclick="window.flipTarotCard(event)">
            <div class="tarot-face tarot-front">
               <span style="color:${t.accent}" class="mb-2 drop-shadow-md">${myJoker.icon("w-10 h-10")}</span>
               <span class="font-serif italic text-white text-lg tracking-wide text-center leading-none">${esc(myJoker.name)}</span>
-              <span class="font-display text-[8px] text-white/40 uppercase tracking-widest mt-2 border border-white/10 px-2 py-1 rounded-sm bg-black/40">Appuyer</span>
+              <span class="font-display text-[8px] text-white/40 uppercase tracking-widest mt-2 border border-white/10 px-2 py-1 rounded-sm bg-black/40">Abattre la carte</span>
            </div>
            <div class="tarot-face tarot-back" style="border-color:${t.accent}">
               ${backContent}
