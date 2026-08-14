@@ -95,52 +95,36 @@ export function updateThermometerColor(val) {
   }
 }
 
-// GESTION DU POP-UP DE LA CARTE DE TAROT (TACTILE & FIABLE)
-window.openTarotModal = function(jokerType) {
-  const modal = document.getElementById('tarotActionModal');
-  const content = document.getElementById('tarot-modal-content');
-  if (!modal || !content) return;
-  
-  window.haptic('light');
-  const t = THEMES[S.room.mode] || THEMES.Chill;
-
-  if (jokerType === 'THIEF' || jokerType === 'SHOT') {
-      const targets = connectedArr(S.room).filter(p => p.id !== S.pid);
-      const actionName = jokerType === 'THIEF' ? 'Dérober le privilège de' : 'Condamner (Cul Sec)';
-      const fnName = jokerType === 'THIEF' ? 'steal' : 'shot';
-
-      content.innerHTML = `
-        <h3 class="text-xl font-serif italic text-white mb-2">${jokerType === 'THIEF' ? 'Voleur' : 'Cul Sec'}</h3>
-        <p class="font-display text-[10px] uppercase tracking-widest text-white/50 mb-4">${actionName}</p>
-        <div class="flex flex-col gap-2 w-full max-h-40 overflow-y-auto scroll">
-          ${targets.map(p => `<button onclick="window.confirmTarotAction('${fnName}', '${p.id}', event)" class="w-full py-3 border border-white/20 text-white font-display text-xs uppercase tracking-widest hover:bg-white/10 transition-colors rounded-sm">${esc(p.name)}</button>`).join('')}
-        </div>
-      `;
-  } else {
-      content.innerHTML = `
-        <h3 class="text-xl font-serif italic text-white mb-2">Activer le privilège</h3>
-        <p class="font-display text-[10px] uppercase tracking-widest text-white/50 mb-6">Êtes-vous sûr de vouloir abattre votre carte ?</p>
-        <button onclick="window.confirmTarotAction('toggle', null, event)" class="w-full py-4 luxury-btn mb-3" style="border-color:${t.accent}; color:${t.accent}">Confirmer l'utilisation</button>
-      `;
+// GESTION DU FLIP DE LA CARTE 3D ET DE SON VERSO TACTILE
+window.flipTarotCard = function(e) {
+  if (e) { e.stopPropagation(); e.preventDefault(); }
+  const card = document.getElementById('tarot-card-interactive');
+  if (card && !card.classList.contains('flipped')) {
+      card.classList.add('flipped');
+      if (window.haptic) window.haptic('light');
   }
-  modal.classList.remove('hidden');
 };
 
-window.closeTarotModal = function() {
-  const modal = document.getElementById('tarotActionModal');
-  if (modal) modal.classList.add('hidden');
+window.unflipTarotCard = function(e) {
+  if (e) { e.stopPropagation(); e.preventDefault(); }
+  const card = document.getElementById('tarot-card-interactive');
+  if (card) {
+      card.classList.remove('flipped');
+      if (window.haptic) window.haptic('light');
+  }
 };
 
 window.confirmTarotAction = function(actionType, targetId, e) {
   if (e) { e.stopPropagation(); e.preventDefault(); }
-  window.closeTarotModal();
+  const card = document.getElementById('tarot-card-interactive');
+  if(card) card.classList.add('consumed');
   if (window.haptic) window.haptic('medium');
   
   setTimeout(() => {
       if(actionType === 'toggle' && window.toggleJoker) window.toggleJoker();
       else if (actionType === 'shot' && window.assignShotTarget) window.assignShotTarget(targetId);
       else if (actionType === 'steal' && window.stealJoker) window.stealJoker(targetId);
-  }, 300);
+  }, 400);
 };
 
 window.updateName = function(val) {
@@ -333,7 +317,7 @@ function renderLobby(r, t) {
        ${connectedArr(r).length < 2 ? `<p class="font-display text-xs text-center uppercase tracking-widest text-white/40 mb-4">En attente des invités...</p>` : ''}
        ${isHost ? `<button onclick="window.startRound()" class="w-full py-4 luxury-btn" style="border-color:${t.accent}; color:${t.accent}" ${connectedArr(r).length < 2 ? 'disabled' : ''}>Ouvrir les débats</button>` : (!isHost && connectedArr(r).length >= 2 ? `<p class="font-display text-xs text-center uppercase tracking-widest text-white/40 animate-pulse">Le maître de cérémonie prépare la table...</p>` : "")}
     </div>
-  </div>`;
+  `;
 }
 
 function renderVoting(r, t) { 
@@ -347,16 +331,43 @@ function renderVoting(r, t) {
   let jokerActionHtml = "";
 
   if (myJoker && !me.jokerConsumed) {
-      const tarotType = (myJokerStr === 'THIEF' || myJokerStr === 'SHOT') ? myJokerStr : 'TOGGLE';
+      let backContent = "";
+      if (myJokerStr === "THIEF") {
+          const stealablePlayers = connectedArr(r).filter(p => p.id !== S.pid && p.joker && !p.jokerConsumed);
+          if (stealablePlayers.length > 0) {
+              backContent = `<span class="text-white/50 font-display uppercase tracking-widest text-[8px] block mb-1">Dérober :</span>
+              <div class="flex flex-col gap-1 w-full px-1 max-h-24 overflow-y-auto scroll">
+                  ${stealablePlayers.map(p => `<button onclick="window.confirmTarotAction('steal', '${p.id}', event)" class="w-full py-1.5 border border-white/20 text-white font-display text-[9px] uppercase tracking-widest hover:bg-white/10 transition-colors rounded-sm">${esc(p.name)}</button>`).join("")}
+              </div>`;
+          } else {
+              backContent = `<span class="text-white/30 text-[9px] font-display uppercase tracking-widest text-center px-1">Aucune cible</span>`;
+          }
+      } else if (myJokerStr === "SHOT") {
+          const attackablePlayers = connectedArr(r).filter(p => p.id !== S.pid);
+          backContent = `<span class="text-white/50 font-display uppercase tracking-widest text-[8px] block mb-1">Condamner :</span>
+          <div class="flex flex-col gap-1 w-full px-1 max-h-24 overflow-y-auto scroll">
+              ${attackablePlayers.map(p => `<button onclick="window.confirmTarotAction('shot', '${p.id}', event)" class="w-full py-1.5 border border-white/20 text-white font-display text-[9px] uppercase tracking-widest hover:bg-white/10 transition-colors rounded-sm">${esc(p.name)}</button>`).join("")}
+          </div>`;
+      } else {
+          backContent = `
+            <span class="text-white font-serif italic text-xs mb-2">Confirmer ?</span>
+            <button onclick="window.confirmTarotAction('toggle', null, event)" class="w-[85%] py-2 border text-white font-display text-[9px] uppercase tracking-widest hover:bg-white/10 transition-colors rounded-sm" style="border-color:${t.accent}">Oui</button>
+            <button onclick="window.unflipTarotCard(event)" class="w-[85%] mt-1 py-1.5 border border-white/10 text-white/40 font-display text-[8px] uppercase tracking-widest hover:text-white transition-colors rounded-sm">Retour</button>
+          `;
+      }
+
       jokerActionHtml = `
-      <div class="flex justify-center mb-4">
-        <button onclick="window.openTarotModal('${tarotType}')" class="luxury-card px-6 py-3 border border-white/30 flex items-center gap-3 active:scale-95 transition-transform" style="border-color:${t.accent}; box-shadow: 0 0 20px ${t.accent}30;">
-           <span style="color:${t.accent}">${myJoker.icon("w-6 h-6")}</span>
-           <div class="flex flex-col text-left">
-              <span class="font-serif italic text-white text-sm leading-tight">${esc(myJoker.name)}</span>
-              <span class="font-display text-[8px] uppercase tracking-widest text-white/60">Appuyer pour abattre</span>
+      <div class="tarot-scene-interactive mb-4">
+        <div id="tarot-card-interactive" class="tarot-card-interactive" ontouchstart="window.flipTarotCard(event)" onclick="window.flipTarotCard(event)">
+           <div class="tarot-face tarot-front">
+              <span style="color:${t.accent}" class="mb-2 drop-shadow-md">${myJoker.icon("w-10 h-10")}</span>
+              <span class="font-serif italic text-white text-lg tracking-wide text-center leading-none">${esc(myJoker.name)}</span>
+              <span class="font-display text-[8px] text-white/40 uppercase tracking-widest mt-2 border border-white/10 px-2 py-1 rounded-sm bg-black/40">Abattre la carte</span>
            </div>
-        </button>
+           <div class="tarot-face tarot-back" style="border-color:${t.accent}">
+              ${backContent}
+           </div>
+        </div>
       </div>`;
   }
 
@@ -565,7 +576,7 @@ function renderReveal(r, t) {
       </div>
       
       <div class="w-full luxury-card p-5 mt-4">
-        <h4 class="text-[9px] font-display uppercase tracking-widest mb-4 text-center">Les Évaluations</h4>
+        <h4 class="text-[9px] text-white/40 font-display uppercase tracking-widest mb-4 text-center">Les Évaluations</h4>
         <div class="max-h-44 overflow-y-auto scroll pr-2">
           ${recapList}
         </div>
