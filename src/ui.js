@@ -1,55 +1,59 @@
 import { S, THEMES, JOKERS, esc, connectedArr, playersArr, haptic } from './store.js';
 import { icons } from './icons/index.js';
-import { activateCounter } from './game.js';
 
 export function toast(msg, ok=false) { 
   const el = document.createElement("div"); 
   el.className = `fixed top-[6rem] left-1/2 -translate-x-1/2 px-6 py-3 luxury-card border border-${ok ? 'white/40' : 'red-500/40'} text-center shadow-2xl z-50 fade-in pointer-events-none`; 
-  el.innerHTML = `<span class="font-display text-xs uppercase tracking-widest text-white">${msg}</span>`;
+  el.innerHTML = `<span class="font-display text-[10px] uppercase tracking-widest text-white">${msg}</span>`;
   document.getElementById("toasts").appendChild(el); 
   setTimeout(() => { el.classList.remove('fade-in'); el.classList.add('fade-out'); setTimeout(() => el.remove(), 600); }, 2500); 
 }
 
+// ALERTE VOLANTE (CARTE 3D)
 export function showSmashAlert(action) {
-  const alertBox = document.getElementById("top-alert");
-  if (!alertBox) return;
+  const container = document.getElementById("smash-alert");
+  if (!container) return;
 
-  const iconEl = document.getElementById("top-alert-icon");
-  const titleEl = document.getElementById("top-alert-title");
-  const subEl = document.getElementById("top-alert-subtitle");
-  const borderEl = document.getElementById("top-alert-border");
-
-  let title = "Privilège engagé";
-  let sub = `${esc(action.actor)} abat ses cartes`;
+  let title = "Privilège";
+  let sub = `${esc(action.actor)} abat sa carte`;
   let color = "var(--accent)"; 
-  let iconSvg = icons.logo("w-8 h-8");
+  let iconSvg = icons.logo("w-12 h-12");
 
-  if (action.type === "SHOT") { title = "Ciblage"; sub = `${esc(action.actor)} condamne ${esc(action.target)}`; iconSvg = icons.shot("w-8 h-8"); color = "#ef4444"; } 
-  else if (action.type === "THIEF") { title = "Vol Subtil"; sub = `${esc(action.actor)} dépouille ${esc(action.target)}`; iconSvg = icons.thief("w-8 h-8"); } 
-  else if (action.type === "SHIELD") { title = "Immunité"; sub = `${esc(action.actor)} se protège`; iconSvg = icons.shield("w-8 h-8"); } 
-  else if (action.type === "DOUBLE") { title = "Risque Maximal"; sub = `${esc(action.actor)} double les enjeux`; iconSvg = icons.double("w-8 h-8"); } 
-  else if (action.type === "MIRROR") { title = "Réflection"; sub = `${esc(action.actor)} prépare sa défense`; iconSvg = icons.mirror("w-8 h-8"); color = "#ec4899"; } 
-  else if (action.type === "COUNTER") { title = "Contre-Offensive"; sub = `${esc(action.actor)} riposte vigoureusement`; iconSvg = action.joker === 'SHIELD' ? icons.shield("w-8 h-8") : icons.mirror("w-8 h-8"); color = "#06b6d4"; }
+  if (action.type === "SHOT") { title = "Ciblage"; sub = `${esc(action.actor)} condamne ${esc(action.target)}`; iconSvg = icons.shot("w-12 h-12"); color = "#ef4444"; } 
+  else if (action.type === "THIEF") { title = "Vol"; sub = `${esc(action.actor)} dépouille ${esc(action.target)}`; iconSvg = icons.thief("w-12 h-12"); } 
+  else if (action.type === "SHIELD") { title = "Immunité"; sub = `${esc(action.actor)} se protège`; iconSvg = icons.shield("w-12 h-12"); } 
+  else if (action.type === "DOUBLE") { title = "Risque"; sub = `${esc(action.actor)} double la mise`; iconSvg = icons.double("w-12 h-12"); } 
+  else if (action.type === "MIRROR") { title = "Réflection"; sub = `${esc(action.actor)} se prépare`; iconSvg = icons.mirror("w-12 h-12"); color = "#ec4899"; } 
+  else if (action.type === "COUNTER") { title = "Riposte"; sub = `${esc(action.actor)} contre-attaque !`; iconSvg = action.joker === 'SHIELD' ? icons.shield("w-12 h-12") : icons.mirror("w-12 h-12"); color = "#06b6d4"; }
 
-  if(iconEl) iconEl.innerHTML = iconSvg;
-  if(titleEl) { titleEl.textContent = title; titleEl.style.color = color; }
-  if(subEl) subEl.textContent = sub;
-  if(borderEl) { borderEl.style.borderColor = color; borderEl.style.boxShadow = `0 10px 30px ${color}40`; }
+  container.innerHTML = `
+    <div class="card-alert-container flex flex-col items-center justify-center w-full h-full relative z-10">
+       <div class="card-alert" style="box-shadow: 0 0 50px ${color}60">
+          <div class="card-alert-face"></div>
+          <div class="card-alert-face card-alert-back" style="border-color:${color}">
+             <span style="color:${color}" class="mb-4 drop-shadow-md">${iconSvg}</span>
+             <span class="font-serif italic text-white text-2xl tracking-wide px-2 text-center leading-none">${title}</span>
+          </div>
+       </div>
+       <div class="mt-8 text-center animate-pop" style="animation-delay: 1.5s; opacity: 0; animation-fill-mode: forwards;">
+          <span class="font-display text-[10px] uppercase tracking-widest text-white/80 border border-white/20 px-4 py-2 bg-black/50">${sub}</span>
+       </div>
+    </div>
+  `;
 
-  alertBox.classList.remove("-translate-y-full");
-  setTimeout(() => { alertBox.classList.add("-translate-y-full"); }, 2000); 
+  container.classList.remove("hidden");
+  container.classList.add("fade-in");
+
+  setTimeout(() => { 
+    container.classList.remove("fade-in");
+    container.classList.add("fade-out");
+    setTimeout(() => {
+        container.classList.add("hidden");
+        container.classList.remove("fade-out");
+        container.innerHTML = '';
+    }, 600);
+  }, 4500); 
 }
-
-export function confirmCounter() {
-  document.getElementById("counterModal").classList.add("hidden");
-  if (window.activateCounter) window.activateCounter();
-}
-export function ignoreCounter() {
-  document.getElementById("counterModal").classList.add("hidden");
-}
-
-window.confirmCounter = confirmCounter;
-window.ignoreCounter = ignoreCounter;
 
 export function toggleRules() {
   const modal = document.getElementById('rulesModal');
@@ -97,72 +101,41 @@ export function updateThermometerColor(val) {
   }
 }
 
-window.triggerTarotCard = function() {
-  const card = document.getElementById('tarot-card');
-  if (!card) return;
-  card.classList.add('flipped');
-  setTimeout(() => {
-     card.classList.add('consumed');
-     if (window.toggleJoker) window.toggleJoker();
-  }, 800);
-}
-
-// ----------------------------------------------------
-// NOUVEAUTÉ : Mise à jour en temps réel des inputs
-// ----------------------------------------------------
-window.updateName = function(val) {
-  S.name = val;
-  sessionStorage.setItem('thermo_name', val);
-  const ni = document.getElementById('nameI');
-  if (ni && ni.value !== val) ni.value = val;
-  const createB = document.getElementById('createB');
-  if (createB) createB.disabled = S.isLoading || !val.trim();
-}
-
-window.updateJoinCode = function(val) {
-  S.joinCode = val.toUpperCase();
-  const ji = document.getElementById('joinI');
-  if (ji && ji.value !== S.joinCode) ji.value = S.joinCode;
-}
-
-// ----------------------------------------------------
-// NOUVEAUTÉ : Transition douce inter-modes (Zéro Refresh)
-// ----------------------------------------------------
-window.pickMode = function(m) {
-  if (S.pendingMode === m) return;
-  S.pendingMode = m;
-  if (window.haptic) window.haptic('light');
-  
-  const t = THEMES[m];
-  document.documentElement.style.setProperty('--accent', t.accent);
-
-  Object.keys(THEMES).forEach(mode => {
-      const btn = document.getElementById(`btn-mode-${mode}`);
-      if (!btn) return;
-      const tm = THEMES[mode];
-      const act = (m === mode);
-      
-      const spanIcon = btn.querySelector('.mode-icon');
-      
-      if (act) {
-          btn.className = "py-4 border transition-all duration-500 glow-active text-white bg-white/5 flex flex-col items-center gap-2 rounded-sm";
-          btn.style.borderColor = tm.accent;
-          btn.style.boxShadow = `0 0 20px ${tm.accent}40`;
-          if(spanIcon) spanIcon.style.color = tm.accent;
-      } else {
-          btn.className = "py-4 border transition-all duration-500 border-white/10 text-white/30 flex flex-col items-center gap-2 rounded-sm";
-          btn.style.borderColor = "rgba(255,255,255,0.1)";
-          btn.style.boxShadow = "none";
-          if(spanIcon) spanIcon.style.color = "currentColor";
-      }
-  });
-
-  const createB = document.getElementById("createB");
-  if (createB) {
-      createB.style.borderColor = t.accent;
-      createB.style.color = t.accent;
+// ------------------------------------------------------------------
+// LOGIQUE DE LA CARTE DE TAROT INTERACTIVE
+// ------------------------------------------------------------------
+window.flipTarotCard = function(e) {
+  if (e) e.stopPropagation();
+  const card = document.getElementById('tarot-card-interactive');
+  if (card && !card.classList.contains('flipped')) {
+      card.classList.add('flipped');
+      window.haptic('light');
   }
-}
+};
+
+window.unflipTarotCard = function(e) {
+  if (e) e.stopPropagation();
+  const card = document.getElementById('tarot-card-interactive');
+  if (card) {
+      card.classList.remove('flipped');
+      window.haptic('light');
+  }
+};
+
+window.confirmTarotAction = function(actionType, targetId, e) {
+  if (e) e.stopPropagation();
+  const card = document.getElementById('tarot-card-interactive');
+  if(card) card.classList.add('consumed');
+  window.haptic('medium');
+  
+  setTimeout(() => {
+      if(actionType === 'toggle' && window.toggleJoker) window.toggleJoker();
+      else if (actionType === 'shot' && window.assignShotTarget) window.assignShotTarget(targetId);
+      else if (actionType === 'steal' && window.stealJoker) window.stealJoker(targetId);
+  }, 600);
+};
+
+// ------------------------------------------------------------------
 
 function renderHome(t) { 
   let tableOptions = "";
@@ -170,21 +143,21 @@ function renderHome(t) {
     const tablePlayers = JSON.parse(localStorage.getItem('ja_players')) || [];
     if (tablePlayers.length > 0) {
       tableOptions = `<div class="flex gap-2 overflow-x-auto scroll pb-2 mt-2">` + 
-        tablePlayers.map(p => `<button onclick="window.updateName('${esc(p.name)}')" class="px-3 py-1.5 text-xs font-display border border-white/10 hover:border-white/40 text-white/60 transition-colors uppercase whitespace-nowrap">${esc(p.name)}</button>`).join('')
+        tablePlayers.map(p => `<button onclick="document.getElementById('nameI').value='${esc(p.name)}'; document.getElementById('nameI').dispatchEvent(new Event('input'))" class="px-3 py-1.5 text-xs font-display border border-white/10 hover:border-white/40 text-white/60 transition-colors uppercase whitespace-nowrap">${esc(p.name)}</button>`).join('')
       + `</div>`;
     }
   } catch(e) {}
 
   return `<div class="flex-1 flex flex-col justify-center pb-8 mt-12 animate-pop relative z-10">
     <div class="text-center mb-10">
-      <h1 class="text-4xl font-serif italic tracking-wide text-white mb-2">Le <span style="color:var(--accent); transition: color 0.5s ease;">Thermo</span>mètre</h1>
+      <h1 class="text-4xl font-serif italic tracking-wide text-white mb-2">Le <span style="color:${t.accent}">Thermo</span>mètre</h1>
       <p class="font-display text-[10px] text-white/40 uppercase tracking-widest">Évaluer. Sanctionner. Répéter.</p>
     </div>
 
     <div class="luxury-card p-6 flex flex-col gap-6 mb-6">
       <div class="flex flex-col gap-2">
         <label class="text-white/50 font-display text-[10px] uppercase tracking-widest">Identité à la table</label>
-        <input id="nameI" oninput="window.updateName(this.value)" maxlength="15" placeholder="Votre nom" value="${esc(S.name)}" class="w-full bg-transparent border-b border-white/20 px-2 py-3 text-xl font-display outline-none focus:border-white transition-colors text-white uppercase placeholder:text-white/20 placeholder:capitalize"/>
+        <input id="nameI" maxlength="15" placeholder="Votre nom" value="${esc(S.name)}" class="w-full bg-transparent border-b border-white/20 px-2 py-3 text-xl font-display outline-none focus:border-white transition-colors text-white uppercase placeholder:text-white/20 placeholder:capitalize"/>
         ${tableOptions}
       </div>
       
@@ -193,19 +166,19 @@ function renderHome(t) {
         <div class="grid grid-cols-3 gap-3">
           ${Object.keys(THEMES).map(m => {
             const act = S.pendingMode === m; const tm = THEMES[m];
-            return `<button id="btn-mode-${m}" onclick="window.pickMode('${m}')" class="py-4 border transition-all duration-500 ${act ? `glow-active text-white bg-white/5` : 'border-white/10 text-white/30'} flex flex-col items-center gap-2 rounded-sm" ${act ? `style="border-color:${tm.accent}; box-shadow: 0 0 20px ${tm.accent}40;"` : 'style="border-color:rgba(255,255,255,0.1);"'}>
-              <span class="mode-icon transition-colors duration-500" style="color:${act ? tm.accent : 'currentColor'}">${tm.icon("w-5 h-5")}</span>
+            return `<button onclick="window.pickMode('${m}'); window.haptic('light');" class="h-[88px] box-border border transition-all ${act ? `glow-active text-white bg-white/5` : 'border-white/10 text-white/30'} flex flex-col items-center justify-center gap-2 rounded-sm" ${act ? `style="border-color:${tm.accent}; box-shadow: 0 0 20px ${tm.accent}40;"` : ''}>
+              <span style="color:${act ? tm.accent : 'currentColor'}">${tm.icon("w-5 h-5")}</span>
               <span class="font-display text-xs tracking-widest uppercase">${tm.label}</span>
             </button>`;
           }).join("")}
         </div>
       </div>
-      <button id="createB" onclick="window.createRoom()" class="w-full py-4 mt-4 luxury-btn transition-colors duration-500" style="border-color:var(--accent); color:var(--accent); font-weight:700;" ${S.isLoading || !S.name.trim() ? 'disabled' : ''}>Créer le salon</button>
+      <button id="createB" class="w-full py-4 mt-4 luxury-btn" style="border-color:${t.accent}; color:${t.accent}; font-weight:700;" ${S.isLoading || !S.name ? 'disabled' : ''}>Créer le salon</button>
     </div>
 
     <div class="luxury-card p-4 flex flex-row gap-4 items-center">
-      <input id="joinI" oninput="window.updateJoinCode(this.value)" maxlength="4" placeholder="ROOM" value="${esc(S.joinCode)}" class="flex-1 min-w-0 bg-transparent border-none px-2 py-2 text-xl font-display tracking-[0.2em] text-center uppercase outline-none text-white placeholder:text-white/10"/>
-      <button id="joinB" onclick="window.joinRoom()" class="py-3 px-6 border border-white/20 text-xs font-display uppercase tracking-widest hover:bg-white/10 transition-all text-white rounded-sm">Rejoindre</button>
+      <input id="joinI" maxlength="4" placeholder="ROOM" value="${esc(S.joinCode)}" class="flex-1 min-w-0 bg-transparent border-none px-2 py-2 text-xl font-display tracking-[0.2em] text-center uppercase outline-none text-white placeholder:text-white/10"/>
+      <button id="joinB" class="py-3 px-6 border border-white/20 text-xs font-display uppercase tracking-widest hover:bg-white/10 transition-all text-white rounded-sm" ${S.isLoading ? 'disabled' : ''}>Rejoindre</button>
     </div>
   </div>`; 
 }
@@ -220,7 +193,7 @@ function renderLobby(r, t) {
       <div class="luxury-card p-5 flex flex-col gap-4 mt-4">
         <h2 class="text-xs font-display uppercase tracking-widest text-white/50">Questions</h2>
         <div class="grid grid-cols-4 gap-2">
-          ${[5, 10, 15, 0].map(num => `<button onclick="window.changeMaxRounds(${num})" class="py-3 font-display text-xs border transition-all rounded-sm ${currentMax === num || (num === 0 && r.maxRounds === 0) ? `glow-active text-white bg-white/5` : 'border-white/10 text-white/40'}" ${(currentMax === num || (num === 0 && r.maxRounds === 0)) ? `style="border-color:${t.accent}; box-shadow: 0 0 15px ${t.accent}40"` : ''}>${num === 0 ? 'Infini' : num}</button>`).join("")}
+          ${[5, 10, 15, 0].map(num => `<button onclick="window.changeMaxRounds(${num})" class="h-[48px] box-border font-display text-xs border transition-all rounded-sm ${currentMax === num || (num === 0 && r.maxRounds === 0) ? `glow-active text-white bg-white/5` : 'border-white/10 text-white/40'}" ${(currentMax === num || (num === 0 && r.maxRounds === 0)) ? `style="border-color:${t.accent}; box-shadow: 0 0 15px ${t.accent}40"` : ''}>${num === 0 ? 'Infini' : num}</button>`).join("")}
         </div>
       </div>
     `;
@@ -230,17 +203,17 @@ function renderLobby(r, t) {
     <div class="luxury-card p-5 flex flex-col gap-3 mt-4">
       <div class="flex justify-between items-center">
          <h2 class="text-xs font-display uppercase tracking-widest text-white/50">Privilèges</h2>
-         <button onclick="window.randomizeJokers()" class="text-[10px] font-display uppercase tracking-widest text-white/60 hover:text-white border border-white/20 px-3 py-1.5 rounded-sm transition-colors">Mélanger</button>
+         <button onclick="window.randomizeJokers()" class="text-[10px] font-display uppercase tracking-widest text-white/60 hover:text-white border border-white/20 px-3 py-1.5 rounded-sm transition-colors">Battre les cartes</button>
       </div>
-      <p class="text-xs text-white/40 font-display mt-2 leading-relaxed">En tant qu'hôte, vous pouvez redistribuer les privilèges de chacun.</p>
+      <p class="text-xs text-white/40 font-display mt-2 leading-relaxed">Les privilèges sont distribués aléatoirement. L'hôte peut rectifier un tirage ci-dessous.</p>
     </div>
   ` : `
     <div class="luxury-card p-5 flex items-center gap-5 mt-4">
       <div class="w-12 h-12 shrink-0 border border-white/20 flex items-center justify-center text-white" style="color:${t.accent}">${myJoker ? myJoker.icon("w-6 h-6") : ''}</div>
       <div class="flex flex-col min-w-0 gap-1">
-        <span class="text-[10px] font-display uppercase tracking-widest text-white/50">Votre privilège</span>
+        <span class="text-[10px] font-display uppercase tracking-widest text-white/50">Votre Carte</span>
         <span class="text-sm font-serif italic text-white tracking-wide capitalize">${myJoker ? esc(myJoker.name) : 'Aucun'}</span>
-        <span class="text-[11px] text-white/40 font-display leading-snug">La carte flottera à l'écran durant la partie.</span>
+        <span class="text-[11px] text-white/40 font-display leading-snug">${myJoker ? esc(myJoker.desc) : ''}</span>
       </div>
     </div>
   `;
@@ -269,7 +242,7 @@ function renderLobby(r, t) {
               ${p.id === S.pid ? `<span class="text-[9px] font-display uppercase tracking-widest border border-white/20 text-white/60 px-2 py-0.5">Vous</span>` : ''}
               ${p.connected === false ? `<span class="text-[9px] font-display uppercase tracking-widest text-red-500/80">Absent</span>` : ''}
             </div>
-            ${isHost ? `<button onclick="window.cycleJoker('${p.id}')" class="text-white/40 hover:text-white transition-colors" title="Modifier le pouvoir">${JOKERS[p.joker]?.icon("w-5 h-5")}</button>` : `<div class="text-white/20">${JOKERS[p.joker]?.icon("w-5 h-5")}</div>`}
+            ${isHost ? `<button onclick="window.cycleJoker('${p.id}')" class="text-white/40 hover:text-white transition-colors" title="Modifier la carte">${JOKERS[p.joker]?.icon("w-5 h-5")}</button>` : `<div class="text-white/20">${JOKERS[p.joker]?.icon("w-5 h-5")}</div>`}
           </div>
         `).join("")}
       </div>
@@ -277,7 +250,7 @@ function renderLobby(r, t) {
 
     <div class="mt-6">
        ${connectedArr(r).length < 2 ? `<p class="font-display text-xs text-center uppercase tracking-widest text-white/40 mb-4">En attente des invités...</p>` : ''}
-       ${isHost ? `<button onclick="window.startRound()" class="w-full py-4 luxury-btn" style="border-color:${t.accent}; color:${t.accent}" ${connectedArr(r).length < 2 ? 'disabled' : ''}>Ouvrir les débats</button>` : (!isHost && connectedArr(r).length >= 2 ? `<p class="font-display text-xs text-center uppercase tracking-widest text-white/40 animate-pulse">Le maître de cérémonie prépare la table...</p>` : "")}
+       ${isHost ? `<button id="startB" class="w-full py-4 luxury-btn" style="border-color:${t.accent}; color:${t.accent}" ${connectedArr(r).length < 2 ? 'disabled' : ''}>Ouvrir les débats</button>` : (!isHost && connectedArr(r).length >= 2 ? `<p class="font-display text-xs text-center uppercase tracking-widest text-white/40 animate-pulse">Le maître de cérémonie prépare la table...</p>` : "")}
     </div>
   </div>`;
 }
@@ -293,69 +266,74 @@ function renderVoting(r, t) {
   let jokerActionHtml = "";
 
   if (myJoker && !me.jokerConsumed) {
+      let backContent = "";
       if (myJokerStr === "THIEF") {
           const stealablePlayers = connectedArr(r).filter(p => p.id !== S.pid && p.joker && !p.jokerConsumed);
           if (stealablePlayers.length > 0) {
-              jokerActionHtml = `<div class="w-full luxury-card p-4 mb-4">
-                  <span class="text-white/50 font-display uppercase tracking-widest text-[10px] block mb-3">Subtiliser un privilège à :</span>
-                  <div class="flex gap-2 overflow-x-auto scroll pb-2">
-                      ${stealablePlayers.map(p => `<button onclick="window.stealJoker('${p.id}')" class="shrink-0 px-4 py-2 border border-white/20 text-white font-display text-xs uppercase tracking-widest hover:bg-white/10 transition-colors rounded-sm">${esc(p.name)}</button>`).join("")}
-                  </div>
+              backContent = `<span class="text-white/50 font-display uppercase tracking-widest text-[8px] block mb-2">Dérober la carte de :</span>
+              <div class="flex flex-col gap-1 w-full px-2 max-h-24 overflow-y-auto scroll">
+                  ${stealablePlayers.map(p => `<button onclick="window.confirmTarotAction('steal', '${p.id}', event)" class="w-full py-1.5 border border-white/20 text-white font-display text-[9px] uppercase tracking-widest hover:bg-white/10 transition-colors rounded-sm">${esc(p.name)}</button>`).join("")}
               </div>`;
           } else {
-              jokerActionHtml = `<div class="w-full border border-white/10 p-3 mb-4 text-center text-white/30 text-xs font-display uppercase tracking-widest">Aucun privilège dérobable</div>`;
+              backContent = `<span class="text-white/30 text-[9px] font-display uppercase tracking-widest text-center px-2">Aucune cible valide</span>`;
           }
       } else if (myJokerStr === "SHOT") {
-          if (!me.jokerActive) {
-              const attackablePlayers = connectedArr(r).filter(p => p.id !== S.pid);
-              jokerActionHtml = `<div class="w-full luxury-card p-4 mb-4">
-                  <span class="text-white/50 font-display uppercase tracking-widest text-[10px] block mb-3">Assigner un CUL SEC absolu à :</span>
-                  <div class="flex gap-2 overflow-x-auto scroll pb-2">
-                      ${attackablePlayers.map(p => `<button onclick="window.assignShotTarget('${p.id}')" class="shrink-0 px-4 py-2 border border-white/20 text-white font-display text-xs uppercase tracking-widest hover:bg-white/10 transition-colors rounded-sm">${esc(p.name)}</button>`).join("")}
-                  </div>
-              </div>`;
-          } else {
-              const targetName = r.players[me.shotTarget]?.name || "Inconnu";
-              jokerActionHtml = `<button onclick="window.cancelShotTarget()" class="w-full py-4 luxury-card !bg-white/5 border border-white/10 text-white/50 font-display text-xs uppercase tracking-widest mb-4 hover:text-white transition-colors">Sentence programmée pour ${esc(targetName)} (Annuler)</button>`;
-          }
+          const attackablePlayers = connectedArr(r).filter(p => p.id !== S.pid);
+          backContent = `<span class="text-white/50 font-display uppercase tracking-widest text-[8px] block mb-2">Condamner :</span>
+          <div class="flex flex-col gap-1 w-full px-2 max-h-24 overflow-y-auto scroll">
+              ${attackablePlayers.map(p => `<button onclick="window.confirmTarotAction('shot', '${p.id}', event)" class="w-full py-1.5 border border-white/20 text-white font-display text-[9px] uppercase tracking-widest hover:bg-white/10 transition-colors rounded-sm">${esc(p.name)}</button>`).join("")}
+          </div>`;
       } else {
-          if (!me.jokerActive) {
-              jokerActionHtml = `
-              <div class="tarot-scene mb-6" onclick="window.triggerTarotCard()">
-                <div id="tarot-card" class="tarot-card">
-                   <div class="tarot-face tarot-front">
-                      <span style="color:${t.accent}" class="mb-2">${myJoker.icon("w-10 h-10")}</span>
-                      <span class="font-serif italic text-white text-lg tracking-wide">${esc(myJoker.name)}</span>
-                      <span class="font-display text-[8px] text-white/40 uppercase tracking-widest mt-1">Appuyer pour abattre</span>
-                   </div>
-                   <div class="tarot-face tarot-back flex items-center justify-center">
-                      <span class="font-display text-white text-xs uppercase tracking-widest">Actif</span>
-                   </div>
-                </div>
-              </div>`;
-          }
+          backContent = `
+            <span class="text-white font-serif italic text-sm mb-3 text-center">Confirmer ?</span>
+            <button onclick="window.confirmTarotAction('toggle', null, event)" class="w-[80%] py-2 border text-white font-display text-[10px] uppercase tracking-widest hover:bg-white/10 transition-colors rounded-sm" style="border-color:${t.accent}">Oui</button>
+            <button onclick="window.unflipTarotCard(event)" class="w-[80%] mt-2 py-1.5 border border-white/10 text-white/40 font-display text-[9px] uppercase tracking-widest hover:text-white transition-colors rounded-sm">Retour</button>
+          `;
       }
+
+      jokerActionHtml = `
+      <div class="tarot-scene-interactive mb-4">
+        <div id="tarot-card-interactive" class="tarot-card-interactive" onclick="window.flipTarotCard(event)">
+           <div class="tarot-face tarot-front">
+              <span style="color:${t.accent}" class="mb-2 drop-shadow-md">${myJoker.icon("w-10 h-10")}</span>
+              <span class="font-serif italic text-white text-lg tracking-wide text-center leading-none">${esc(myJoker.name)}</span>
+              <span class="font-display text-[8px] text-white/40 uppercase tracking-widest mt-2 border border-white/10 px-2 py-1 rounded-sm bg-black/40">Appuyer</span>
+           </div>
+           <div class="tarot-face tarot-back" style="border-color:${t.accent}">
+              ${backContent}
+           </div>
+        </div>
+      </div>`;
   }
 
   let pactHtml = "";
   if (r.bloodPact && (r.bloodPact.p1 === S.pid || r.bloodPact.p2 === S.pid)) {
       const partnerId = r.bloodPact.p1 === S.pid ? r.bloodPact.p2 : r.bloodPact.p1;
       const partnerName = r.players[partnerId]?.name || "Inconnu";
-      pactHtml = `<div class="w-full bg-red-600/20 border-b border-red-500/50 py-2 text-center fixed top-0 left-0 z-50 text-red-200 font-display text-[9px] uppercase tracking-widest">
-        🩸 PACTE DE SANG : Vos destinées sont liées à ${esc(partnerName)}.
+      pactHtml = `<div class="w-full bg-red-600/10 border-b border-red-500/30 py-2 text-center fixed top-0 left-0 z-50 text-red-400 font-display text-[9px] uppercase tracking-widest flex items-center justify-center gap-2">
+        ${icons.bloodPact("w-4 h-4")} Pacte de Sang : Lié à ${esc(partnerName)}
       </div>`;
   }
   
-  return `${pactHtml}<div class="flex-1 flex flex-col justify-center gap-8 pb-8 mt-4 animate-pop relative z-10">
+  let angelHtml = "";
+  if (r.angelRound) {
+      angelHtml = `<div class="w-full border border-[#FFD700]/30 bg-[#FFD700]/5 p-3 text-center text-[#FFD700] font-serif italic text-sm tracking-wide mt-4">
+        ${icons.angel("w-5 h-5 mx-auto mb-1")} La Part des Anges : Ce tour, la table ne boit pas. La pire estimation subira le gage de l'Hôte.
+      </div>`;
+  }
+
+  return `${pactHtml}<div class="flex-1 flex flex-col justify-center gap-6 pb-8 mt-4 animate-pop relative z-10">
     <div class="text-center pt-8 relative">
       <span class="absolute top-0 left-1/2 -translate-x-1/2 font-display text-[10px] uppercase tracking-widest text-white/30 border border-white/10 px-3 py-1">${r.angelRound ? 'LA PART DES ANGES' : roundCounter}</span>
       <h2 class="text-3xl font-serif italic leading-snug mt-6 px-4" style="${r.angelRound ? 'color:#FFD700' : ''}">"${esc(q.text)}"</h2>
       ${amTarget ? `<span class="mt-4 inline-block text-xs font-display uppercase tracking-widest border border-white/20 px-4 py-2 glow-active bg-white/5 text-white" style="border-color:${t.accent}; box-shadow:0 0 15px ${t.accent}40">Cible : Vous-même</span>` : ''}
     </div>
+    
+    ${angelHtml}
 
     ${!voted ? `
       ${jokerActionHtml}
-      <div class="mt-4 flex flex-col items-center gap-6 px-4">
+      <div class="mt-2 flex flex-col items-center gap-6 px-4">
         
         <div class="relative w-full h-10 glass-tube rounded-full overflow-hidden flex items-center p-1">
            <div id="slider-fill" class="h-full rounded-full mercury-fluid pointer-events-none" style="width: ${S.voteValue}%; background: ${t.accent};"></div>
@@ -476,6 +454,13 @@ function renderReveal(r, t) {
     </div>`;
   }
 
+  let pactHtml = "";
+  if (r.bloodPact && (r.bloodPact.p1 === S.pid || r.bloodPact.p2 === S.pid)) {
+      pactHtml = `<div class="w-full bg-red-600/10 border-b border-red-500/30 py-2 text-center fixed top-0 left-0 z-50 text-red-400 font-display text-[9px] uppercase tracking-widest flex items-center justify-center gap-2">
+        ${icons.bloodPact("w-4 h-4")} Pacte de Sang Actif
+      </div>`;
+  }
+
   const recapList = playersArr(r).map(p => {
        const v = (r.votes || {})[p.id];
        const isTarget = p.id === res.targetId;
@@ -488,12 +473,12 @@ function renderReveal(r, t) {
 
   const hostControls = isHost ? `
     <div class="flex flex-col gap-4 mt-6 w-full">
-      <button onclick="window.nextRound()" class="w-full py-4 luxury-btn bg-black/50" style="border-color:${t.accent}; color:${t.accent}">${r.maxRounds > 0 && r.round >= r.maxRounds ? 'Bilan Final' : 'Question Suivante'}</button>
+      <button id="nextB" class="w-full py-4 luxury-btn bg-black/50" style="border-color:${t.accent}; color:${t.accent}">${r.maxRounds > 0 && r.round >= r.maxRounds ? 'Bilan Final' : 'Question Suivante'}</button>
       <button onclick="window.endGame()" class="w-full py-4 luxury-btn !border-red-500/30 !text-red-500/80 hover:!bg-red-500/10 transition-colors bg-black/50">Clôturer la session</button>
     </div>
   ` : `<p class="font-display text-[10px] text-center uppercase tracking-widest text-white/40 mt-8">En attente de l'hôte...</p>`;
 
-  return `<div class="flex-1 flex flex-col gap-5 pb-8 mt-6 relative z-10">
+  return `${pactHtml}<div class="flex-1 flex flex-col gap-5 pb-8 mt-6 relative z-10">
     <div class="text-center">
       <p class="text-white/40 text-[9px] font-display uppercase tracking-widest">Le Verdict Social</p>
       <h2 class="text-2xl font-serif italic text-white tracking-wide mt-2 capitalize">${esc(res.targetName)} VS Moyenne</h2>
@@ -589,7 +574,7 @@ export function render() {
              document.getElementById("counter-desc").innerHTML = `${esc(r.lastAction.actor)} vous assigne un CUL SEC`;
              const btnYes = document.getElementById("counter-btn-yes");
              if(btnYes) {
-                 if (me.joker === 'SHIELD') btnYes.innerHTML = "Activer Bouclier";
+                 if (me.joker === 'SHIELD') btnYes.innerHTML = "Activer Immunité";
                  else btnYes.innerHTML = "Renvoyer (Miroir)";
              }
              modal.classList.remove("hidden");
