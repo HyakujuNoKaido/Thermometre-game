@@ -11,8 +11,8 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<!-- Import des typographies de luxe -->
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700;900&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<!-- Typographies de luxe, douces mais affirmées -->
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Playfair+Display:ital,wght@0,600;1,600&display=swap" rel="stylesheet">
 
 <link rel="icon" href="./icon.svg" type="image/svg+xml" />
 <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png" />
@@ -25,51 +25,54 @@
 
 <body>
 
+<!-- Calque pour le flash du Reveal -->
+<div id="flash-overlay" class="fixed inset-0 bg-white opacity-0 pointer-events-none z-[200]"></div>
+
 <div class="fixed inset-0 w-full h-full overflow-hidden z-0">
   <!-- Bruit de fond premium -->
   <div class="noise-overlay"></div>
 
   <!-- Bouton de retour Hub -->
-  <button id="hubReturnBtn" class="fixed top-[env(safe-area-inset-top,10px)] left-4 mt-4 z-50 flex items-center gap-2 text-white/50 hover:text-white transition-colors font-mono text-[10px] uppercase tracking-widest outline-none">
+  <button id="hubReturnBtn" class="fixed top-[env(safe-area-inset-top,10px)] left-4 mt-4 z-50 flex items-center gap-2 text-white/50 hover:text-white transition-colors font-display text-xs uppercase tracking-widest outline-none">
     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
     La Carte
   </button>
 
   <div id="toasts" class="fixed top-[calc(env(safe-area-inset-top,10px)+4rem)] left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2 w-[90%] max-w-sm pointer-events-none mt-4"></div>
 
-  <!-- Overlay Alerte Pouvoir (Chic & Minimaliste) -->
-  <div id="smash-alert" class="fixed inset-0 z-[100] bg-black/90 backdrop-blur-md flex flex-col items-center justify-center pointer-events-none hidden transition-opacity duration-300">
+  <!-- Overlay Alerte Pouvoir (Ambiance Speakeasy) -->
+  <div id="smash-alert" class="fixed inset-0 z-[100] bg-black/95 backdrop-blur-lg flex flex-col items-center justify-center pointer-events-none hidden transition-opacity duration-300">
     <div class="relative z-10 flex flex-col items-center w-full px-6 text-center">
        <div id="smash-icon" class="mb-6 flex justify-center w-full"></div>
-       <div class="text-4xl font-display font-light text-white uppercase tracking-[0.2em] mb-4" id="smash-title">ACTION</div>
-       <div class="font-mono text-xs uppercase tracking-[0.2em] text-white/70" id="smash-subtitle">Détail de l'action</div>
+       <div class="text-4xl font-serif text-white italic tracking-wide mb-4" id="smash-title">Privilège</div>
+       <div class="font-display text-sm text-white/70 tracking-widest uppercase" id="smash-subtitle">Détail</div>
     </div>
   </div>
 
-  <!-- Modale Riposte (Contre-attaque) -->
-  <div id="counterModal" class="fixed inset-0 z-[60] hidden bg-black/95 backdrop-blur-xl flex items-center justify-center px-5">
+  <!-- Modale Riposte -->
+  <div id="counterModal" class="fixed inset-0 z-[60] hidden bg-black/90 backdrop-blur-lg flex items-center justify-center px-5">
     <div class="luxury-card w-full max-w-sm p-8 text-center flex flex-col items-center relative overflow-hidden animate-pop">
        <div class="relative z-10 w-full flex flex-col items-center">
-          <h2 class="text-xl font-display font-light mb-2 text-white uppercase tracking-[0.2em]" id="counter-title">Ciblage Détecté</h2>
-          <p class="font-mono text-white/60 mb-8 text-[10px] uppercase tracking-widest" id="counter-desc">Un joueur vous cible</p>
+          <h2 class="text-2xl font-serif italic mb-2 text-white tracking-wide" id="counter-title">Offensive ciblée</h2>
+          <p class="font-display text-white/60 mb-8 text-xs uppercase tracking-widest" id="counter-desc">Quelqu'un s'en prend à vous</p>
           <div class="flex flex-col gap-4 w-full">
             <button onclick="window.confirmCounter()" class="w-full py-4 luxury-btn !border-white !bg-white/10 !text-white flex items-center justify-center gap-3" id="counter-btn-yes">Riposter</button>
-            <button onclick="window.ignoreCounter()" class="w-full py-4 luxury-btn !border-white/10 !text-white/40">Ignorer la menace</button>
+            <button onclick="window.ignoreCounter()" class="w-full py-4 text-xs font-display uppercase tracking-widest text-white/40 hover:text-white transition-colors">Subir en silence</button>
           </div>
        </div>
     </div>
   </div>
 
-  <div id="rulesModal" class="fixed inset-0 z-[60] hidden bg-black/90 backdrop-blur-xl flex items-center justify-center px-5">
+  <div id="rulesModal" class="fixed inset-0 z-[60] hidden bg-black/90 backdrop-blur-lg flex items-center justify-center px-5">
     <div class="luxury-card w-full max-w-sm p-8 flex flex-col relative animate-pop">
-      <button onclick="toggleRules()" class="absolute top-4 right-4 text-white/40 hover:text-white font-mono text-xs uppercase tracking-widest outline-none">Fermer</button>
-      <h2 class="text-xl font-display font-light mb-6 text-white uppercase tracking-[0.2em]">Règlement</h2>
-      <div class="text-white/60 space-y-4 font-mono text-[10px] uppercase tracking-wider leading-relaxed max-h-[60vh] overflow-y-auto scroll pr-2">
-        <p><span class="text-white">I.</span> L'hôte définit l'ambiance.</p>
-        <p><span class="text-white">II.</span> La cible s'évalue secrètement.</p>
-        <p><span class="text-white">III.</span> Le groupe vote à l'aveugle.</p>
-        <p><span class="text-white">IV.</span> L'écart entre la cible et la moyenne du groupe dicte la sentence.</p>
-        <p><span class="text-white">V.</span> Chaque joueur possède un privilège secret à usage unique.</p>
+      <button onclick="toggleRules()" class="absolute top-4 right-4 text-white/40 hover:text-white font-display text-xs uppercase tracking-widest outline-none">Fermer</button>
+      <h2 class="text-3xl font-serif italic mb-6 text-white tracking-wide">L'Étiquette</h2>
+      <div class="text-white/60 space-y-4 font-display text-xs uppercase tracking-widest leading-relaxed max-h-[60vh] overflow-y-auto scroll pr-2">
+        <p><span class="text-white">I.</span> L'hôte impose le ton de la table.</p>
+        <p><span class="text-white">II.</span> La cible jauge sa propre valeur secrètement.</p>
+        <p><span class="text-white">III.</span> Le groupe juge à l'aveugle.</p>
+        <p><span class="text-white">IV.</span> La vérité appartient au groupe. L'écart dicte la sentence.</p>
+        <p><span class="text-white">V.</span> Chacun possède un privilège occulte. Soyez stratège.</p>
       </div>
     </div>
   </div>
