@@ -26,7 +26,7 @@
 
 <div id="gold-overlay" class="fixed inset-0 bg-[#FFD700] mix-blend-overlay opacity-0 pointer-events-none z-[150] transition-opacity duration-1000"></div>
 
-<div class="fixed inset-0 w-full h-full overflow-hidden z-10">
+<div class="fixed inset-0 w-full h-full overflow-hidden z-10 bg-[#050505]">
   <div class="noise-overlay"></div>
 
   <button id="hubReturnBtn" class="fixed top-[env(safe-area-inset-top,10px)] left-4 mt-4 z-[200] flex items-center gap-2 text-white/50 hover:text-white transition-colors font-display text-xs uppercase tracking-widest outline-none cursor-pointer pointer-events-auto">
@@ -36,16 +36,8 @@
 
   <div id="toasts" class="fixed top-[calc(env(safe-area-inset-top,10px)+4rem)] left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2 w-[90%] max-w-sm pointer-events-none mt-4"></div>
 
-  <!-- NOUVELLE ALERTE : Rapide, élégante, en haut de l'écran -->
-  <div id="top-alert" class="fixed top-0 left-0 right-0 z-[300] transform -translate-y-full transition-transform duration-300 ease-out p-4 pointer-events-none">
-    <div class="luxury-card mx-auto max-w-sm flex items-center gap-4 p-4 border-l-4" id="top-alert-border">
-       <div id="top-alert-icon" class="text-white"></div>
-       <div class="flex flex-col">
-          <span class="font-serif italic text-white text-lg leading-none mb-1" id="top-alert-title">Privilège</span>
-          <span class="font-display text-[9px] uppercase tracking-widest text-white/60" id="top-alert-subtitle">Détail</span>
-       </div>
-    </div>
-  </div>
+  <!-- ALERTE CARTE VOLANTE (GLOBALE) -->
+  <div id="smash-alert" class="fixed inset-0 z-[300] flex flex-col items-center justify-center pointer-events-none hidden bg-black/80 backdrop-blur-sm"></div>
 
   <div id="counterModal" class="fixed inset-0 z-[60] hidden bg-black/90 backdrop-blur-lg flex items-center justify-center px-5 pointer-events-auto">
     <div class="luxury-card w-full max-w-sm p-8 text-center flex flex-col items-center relative overflow-hidden animate-pop">
