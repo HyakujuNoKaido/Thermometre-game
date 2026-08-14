@@ -356,7 +356,7 @@ export async function hostAutoReveal() {
     
     const updates = { phase: "REVEAL", result: result };
     
-    // MAJ DES SCORES ET DES STATISTIQUES POUR LES TITRES
+    // ENREGISTREMENT DES STATISTIQUES POUR LES TITRES DE NOBLESSE
     Object.keys(r.players).forEach(id => {
        const p = r.players[id];
        const currentStats = p.stats || { sipsGiven: 0, sipsTaken: 0, exact: 0 };
@@ -398,7 +398,7 @@ export async function endGame() {
   const ranked = playersArr(r).sort((a, b) => a.score - b.score);
   const w = ranked[0]; const l = ranked[ranked.length - 1]; 
 
-  // ATTRIBUTION DES TITRES DE NOBLESSE
+  // CALCUL DES TITRES DE NOBLESSE
   let oracle = null; let maxExact = 0;
   let bourreau = null; let maxGiven = 0;
   let victime = null; let maxTaken = 0;
