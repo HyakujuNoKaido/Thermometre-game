@@ -35,22 +35,25 @@ input, select, textarea, button { font-size: 16px !important; outline: none; }
 
 .animate-view { animation: smoothSlideUp 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; will-change: transform, opacity; }
 @keyframes smoothSlideUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
-
 .animate-pop { animation: pop .5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 @keyframes pop { 0% { opacity: 0; transform: scale(.95); } 100% { opacity: 1; transform: scale(1); } }
 
-/* Flash effect pour le Reveal */
+/* Flash effect "Slot Machine" */
 .animate-flash { animation: flashBang 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 @keyframes flashBang { 0% { opacity: 1; } 10% { opacity: 0.8; } 100% { opacity: 0; } }
 
-/* Heartbeat Tension */
-.shake-light { animation: shake 0.4s infinite cubic-bezier(.36,.07,.19,.97); }
-.shake-heavy { animation: shake 0.15s infinite cubic-bezier(.36,.07,.19,.97); }
-@keyframes shake {
-  10%, 90% { transform: translate3d(-1px, 0, 0); }
-  20%, 80% { transform: translate3d(1px, 0, 0); }
-  30%, 50%, 70% { transform: translate3d(-2px, 0, 0); }
-  40%, 60% { transform: translate3d(2px, 0, 0); }
+/* Alerte Pouvoir (Glow intense) */
+.animate-alert-glow { animation: alertGlow 1.5s infinite; }
+@keyframes alertGlow {
+  0%, 100% { box-shadow: inset 0 0 50px rgba(0,0,0,0.9); }
+  50% { box-shadow: inset 0 0 150px var(--accent); }
+}
+
+/* Le bouton "Vivant" */
+.breathing { animation: breath 2.5s ease-in-out infinite; }
+@keyframes breath {
+  0%, 100% { box-shadow: 0 0 10px var(--accent); }
+  50% { box-shadow: 0 0 35px var(--accent); }
 }
 
 .luxury-card {
@@ -78,6 +81,14 @@ input, select, textarea, button { font-size: 16px !important; outline: none; }
   background: rgba(255, 255, 255, 0.05); transform: scale(0.98);
 }
 .luxury-btn:disabled { opacity: 0.3 !important; cursor: not-allowed; }
+
+.thermo-slider { 
+  -webkit-appearance: none; appearance: none; width: 100%; height: 2px; 
+  background: transparent; outline: none; cursor: pointer; touch-action: pan-y; 
+}
+.thermo-slider::-webkit-slider-thumb { 
+  -webkit-appearance: none; width: 30px; height: 40px; background: transparent; 
+}
 
 .scroll::-webkit-scrollbar { width: 2px; }
 .scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); }
