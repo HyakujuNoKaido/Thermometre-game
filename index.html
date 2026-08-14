@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" class="bg-[#050505] h-full overflow-hidden">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no, viewport-fit=cover" />
@@ -21,15 +21,14 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 </head>
 
-<body>
+<body class="bg-[#050505] text-white h-full overflow-hidden m-0 p-0 selection:bg-transparent">
 
 <div id="gold-overlay" class="fixed inset-0 bg-[#FFD700] mix-blend-overlay opacity-0 pointer-events-none z-[150] transition-opacity duration-1000"></div>
 
-<!-- CONTENEUR PLEIN ÉCRAN FORCÉ POUR IPHONE BORDERLESS -->
-<div class="fixed inset-0 w-full h-full overflow-hidden z-10 bg-[#050505]" style="width: 100vw; height: 100vh; height: -webkit-fill-available;">
+<!-- CONTENEUR PLEIN ÉCRAN ABSOLU (Couvre l'écran de haut en bas sans bande noire) -->
+<div class="fixed inset-0 w-screen h-screen overflow-hidden z-10 bg-[#050505]" style="width: 100vw; height: 100vh; height: 100dvh;">
   <div class="noise-overlay"></div>
 
-  <!-- Bouton ajusté avec l'encoche de l'iPhone -->
   <button id="hubReturnBtn" class="fixed top-0 left-4 z-[200] flex items-center gap-2 text-white/50 hover:text-white transition-colors font-display text-xs uppercase tracking-widest outline-none cursor-pointer pointer-events-auto" style="padding-top: max(env(safe-area-inset-top), 16px);">
     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
     La Carte
@@ -71,8 +70,8 @@
     </div>
   </div>
 
-  <!-- APPLICATION GLOBALE PLEIN ÉCRAN -->
-  <div id="app" class="w-full max-w-md mx-auto h-full overflow-x-hidden overflow-y-auto px-5 flex flex-col relative z-20 fade-in" style="padding-top: max(env(safe-area-inset-top), 40px); padding-bottom: max(env(safe-area-inset-bottom), 20px); -webkit-overflow-scrolling: touch;">
+  <!-- ZONE DE L'APPLICATION AVEC GESTION COMPLÈTE DES ENCOCHES BORDERLESS -->
+  <div id="app" class="w-full max-w-md mx-auto h-full overflow-x-hidden overflow-y-auto px-5 flex flex-col relative z-20 fade-in" style="padding-top: max(env(safe-area-inset-top), 40px); padding-bottom: max(env(safe-area-inset-bottom), 30px); -webkit-overflow-scrolling: touch;">
     <!-- Injecté par ui.js -->
   </div>
 </div>
