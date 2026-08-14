@@ -1,8 +1,6 @@
 import BANK from './data/questions.json';
 import { icons } from './icons/index.js';
 
-export const GEMINI_API_KEY = "AQ.Ab8RN6IB_6U4QMMkAf7W_tFyngxZv3X12jImgPfSGYpmMFp-cQ";
-
 export const haptic = (intensity = 'light') => {
   if (!navigator.vibrate) return;
   try {
@@ -26,18 +24,13 @@ export const JOKERS = {
   THIEF: { name: "Voleur", icon: icons.thief, desc: "Dérobez furtivement un privilège." }
 };
 
-export let QUESTIONS = {
-  Chill: [...BANK.Chill],
-  Spicy: [...BANK.Spicy],
-  Hardcore: [...BANK.Hardcore]
-};
+export const QUESTIONS = { Chill: [...BANK.Chill], Spicy: [...BANK.Spicy], Hardcore: [...BANK.Hardcore] };
 
 export const S = { 
   screen: "HOME", code: null, pid: null, room: null, 
   name: sessionStorage.getItem('thermo_name') || "", 
   joinCode: "", pendingMode: "Chill", voteValue: 50, 
-  roomRef: null, pickingShot: false, timerLeft: null, 
-  timerInt: null, isLoading: false, animDone: false
+  roomRef: null, isLoading: false, animDone: false
 };
 
 export const rand = a => a[Math.floor(Math.random() * a.length)];
@@ -45,4 +38,15 @@ export const genId = () => Math.random().toString(36).slice(2, 10);
 export const genCode = () => Array.from({length: 4}, () => rand([..."ABCDEFGHJKLMNPQRSTUVWXYZ23456789"])).join("");
 export const esc = s => (s || "").toString().replace(/[&<>"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
 export const playersArr = (room) => Object.entries(room.players || {}).map(([id, p]) => ({id, ...p})); 
-export const connectedArr = (room) => playersArr(room).filter(p => p.connected !== false);
+export const connectedArr = (room) => playersArr(room).filter(p => p.connected !== false); 
+
+// Pioche aléatoire sans répétition
+export const getQuestion = (mode, usedQuestions, name1, name2) => {
+    let pool = QUESTIONS[mode].filter(q => !usedQuestions.includes(q));
+    if (pool.length === 0) pool = QUESTIONS[mode]; // Reset si tout est joué
+    const q = rand(pool);
+    return { 
+        text: q.replace(/{name}/g, name1).replace(/{name2}/g, name2), 
+        raw: q 
+    };
+};
