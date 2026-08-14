@@ -10,6 +10,7 @@ export function toast(msg, ok=false) {
   setTimeout(() => { el.classList.remove('fade-in'); el.classList.add('fade-out'); setTimeout(() => el.remove(), 600); }, 2500); 
 }
 
+// FLASH VISCÉRAL AU DÉCLENCHEMENT D'UN POUVOIR
 export function showSmashAlert(action) {
   const container = document.getElementById("smash-alert");
   if (!container) return;
@@ -26,7 +27,9 @@ export function showSmashAlert(action) {
   else if (action.type === "MIRROR") { title = "Miroir"; sub = `${esc(action.actor)} renvoie l'attaque`; iconSvg = icons.mirror("w-10 h-10"); color = "#ec4899"; } 
   else if (action.type === "COUNTER") { title = "Riposte"; sub = `${esc(action.actor)} contre-attaque !`; iconSvg = action.joker === 'SHIELD' ? icons.shield("w-10 h-10") : icons.mirror("w-10 h-10"); color = "#06b6d4"; }
 
+  // Injecte un flash qui remplit l'écran avec la couleur de l'action
   container.innerHTML = `
+    <div class="absolute inset-0 z-0 mix-blend-screen animate-flash-fast pointer-events-none" style="background-color:${color};"></div>
     <div class="flex flex-col items-center justify-center w-full h-full relative z-50 pointer-events-none px-4">
        <div class="flying-tarot-alert" style="box-shadow: 0 0 60px ${color}80; border: 1px solid ${color};">
           <span style="color:${color}" class="mb-3 drop-shadow-[0_0_15px_${color}]">${iconSvg}</span>
@@ -65,8 +68,10 @@ export function toggleRules() {
 }
 window.toggleRules = toggleRules;
 
+// PARTICULES D'AMBIANCE DYNAMIQUES SELON LE THÈME
 function applyBg() { 
-  let t = THEMES[(S.room && S.room.mode) || S.pendingMode] || THEMES.Chill;
+  let m = (S.room && S.room.mode) || S.pendingMode || 'Chill';
+  let t = THEMES[m] || THEMES.Chill;
   const goldOverlay = document.getElementById("gold-overlay");
   
   if (S.room && S.room.angelRound) {
@@ -76,6 +81,31 @@ function applyBg() {
       if (goldOverlay) { goldOverlay.classList.add("opacity-0"); goldOverlay.classList.remove("opacity-30"); }
   }
   document.documentElement.style.setProperty('--accent', t.accent);
+
+  const pc = document.getElementById("particles-container");
+  if (pc && pc.dataset.mode !== m) {
+      pc.dataset.mode = m;
+      let html = '';
+      if (m === 'Chill') {
+          for(let i=0; i<15; i++) {
+              const left = Math.random()*100;
+              const dur = 4 + Math.random()*6;
+              const delay = Math.random()*5;
+              const size = 2 + Math.random()*4;
+              html += `<div class="particle bubble" style="left:${left}%; width:${size}px; height:${size}px; --dur:${dur}s; animation-delay:-${delay}s;"></div>`;
+          }
+      } else {
+          for(let i=0; i<20; i++) {
+              const left = Math.random()*100;
+              const dur = 3 + Math.random()*5;
+              const delay = Math.random()*5;
+              const size = 1 + Math.random()*3;
+              const drift = (Math.random() > 0.5 ? 1 : -1) * (20 + Math.random()*50) + 'px';
+              html += `<div class="particle ember" style="left:${left}%; width:${size}px; height:${size}px; --dur:${dur}s; --drift:${drift}; animation-delay:-${delay}s; ${m==='Hardcore' ? 'background:#ff0000; box-shadow:0 0 10px #ff0000;' : ''}"></div>`;
+          }
+      }
+      pc.innerHTML = html;
+  }
 }
 
 function hexToRgb(hex) {
@@ -105,7 +135,6 @@ export function updateThermometerColor(val) {
   }
 }
 
-// GESTION DU FLIP 3D DES CARTES AVEC INTERACTIONS TACTILES SÉCURISÉES
 window.flipTarotCard = function(e) {
   if (e) { e.stopPropagation(); e.preventDefault(); }
   const card = document.getElementById('tarot-card-interactive');
@@ -327,7 +356,7 @@ function renderLobby(r, t) {
        ${connectedArr(r).length < 2 ? `<p class="font-display text-xs text-center uppercase tracking-widest text-white/40 mb-4">En attente des invités...</p>` : ''}
        ${isHost ? `<button onclick="window.startRound()" class="w-full py-4 luxury-btn" style="border-color:${t.accent}; color:${t.accent}" ${connectedArr(r).length < 2 ? 'disabled' : ''}>Ouvrir les débats</button>` : (!isHost && connectedArr(r).length >= 2 ? `<p class="font-display text-xs text-center uppercase tracking-widest text-white/40 animate-pulse">Le maître de cérémonie prépare la table...</p>` : "")}
     </div>
-  `;
+  </div>`;
 }
 
 function renderVoting(r, t) { 
@@ -425,7 +454,8 @@ function renderVoting(r, t) {
         <div class="w-full luxury-card p-5 flex flex-col gap-2">
           ${connectedArr(r).map(p => {
             const hasV = (r.votes || {})[p.id] !== undefined;
-            return `<div class="flex justify-between items-center py-3 border-b border-white/5 last:border-0"><span class="font-display font-light text-lg capitalize tracking-wide ${hasV ? 'text-white' : 'text-white/30'}">${esc(p.name)}</span> ${hasV ? `<span class="font-display text-[10px] uppercase tracking-widest" style="color:${t.accent}">Validé</span>` : `<span class="font-display text-[10px] uppercase tracking-widest text-white/30">Décision...</span>`}</div>`;
+            // INDICATEUR DE PRESSION "NAME & SHAME"
+            return `<div class="flex justify-between items-center py-3 border-b border-white/5 last:border-0"><span class="font-display font-light text-lg capitalize tracking-wide ${hasV ? 'text-white' : 'text-red-500/80 animate-pulse'}">${esc(p.name)}</span> ${hasV ? `<span class="font-display text-[10px] uppercase tracking-widest" style="color:${t.accent}">Validé</span>` : `<span class="font-display text-[10px] uppercase tracking-widest text-red-500/80 animate-pulse font-bold">En attente...</span>`}</div>`;
           }).join('')}
         </div>
       </div>
@@ -594,39 +624,53 @@ function renderReveal(r, t) {
       
       ${hostControls}
     </div>
-  `; 
+  </div>`; 
 }
 
+// AFFICHAGE DES TITRES DE NOBLESSE EN FIN DE PARTIE
 function renderStats(r, t) { 
   const rk = r.ranking; const isHost = S.pid === r.hostId;
-  return `<div class="flex-1 flex flex-col gap-6 pb-8 mt-10 relative z-10">
-    <div class="text-center mb-4">
-      <h2 class="text-3xl font-serif italic tracking-wide text-white">Fin de Session</h2>
+  
+  let titlesHtml = "";
+  if (rk.titles && Object.keys(rk.titles).length > 0) {
+      titlesHtml = `<div class="w-full flex flex-col gap-2 mt-4">
+          <span class="text-[9px] font-display uppercase tracking-widest text-white/50 block text-center mb-1">Mentions Honorifiques</span>
+          ${rk.titles.oracle ? `<div class="flex justify-between items-center p-3 border border-[#06b6d4]/30 bg-[#06b6d4]/5 rounded-sm"><span class="font-serif italic text-[#06b6d4]">L'Oracle</span><div class="text-right"><span class="block text-white text-xs">${esc(rk.titles.oracle.name)}</span><span class="block text-[8px] text-white/50 uppercase tracking-widest">${rk.titles.oracle.val}</span></div></div>` : ''}
+          ${rk.titles.bourreau ? `<div class="flex justify-between items-center p-3 border border-red-500/30 bg-red-500/5 rounded-sm"><span class="font-serif italic text-red-400">Le Bourreau</span><div class="text-right"><span class="block text-white text-xs">${esc(rk.titles.bourreau.name)}</span><span class="block text-[8px] text-white/50 uppercase tracking-widest">${rk.titles.bourreau.val}</span></div></div>` : ''}
+          ${rk.titles.victime ? `<div class="flex justify-between items-center p-3 border border-white/20 bg-white/5 rounded-sm"><span class="font-serif italic text-white/80">La Victime</span><div class="text-right"><span class="block text-white text-xs">${esc(rk.titles.victime.name)}</span><span class="block text-[8px] text-white/50 uppercase tracking-widest">${rk.titles.victime.val}</span></div></div>` : ''}
+      </div>`;
+  }
+
+  return `<div class="flex-1 flex flex-col gap-4 pb-8 mt-6 relative z-10">
+    <div class="text-center mb-2">
+      <h2 class="text-3xl font-serif italic tracking-wide text-white">Bilan de la Nuit</h2>
     </div>
     
-    <div class="luxury-card p-8 text-center flex flex-col items-center justify-center border border-white/20 glow-active" style="border-color:${t.accent}60">
-      <span class="text-[9px] font-display uppercase tracking-widest text-white/50 mb-4">La plus grande lucidité</span>
-      <p class="text-4xl font-display font-light text-white capitalize tracking-wide mb-4" style="color:${t.accent}">${esc(rk.winner.name)}</p>
+    <div class="luxury-card p-6 text-center flex flex-col items-center justify-center border border-white/20 glow-active" style="border-color:${t.accent}60">
+      <span class="text-[9px] font-display uppercase tracking-widest text-white/50 mb-3">La plus grande lucidité</span>
+      <p class="text-4xl font-display font-light text-white capitalize tracking-wide mb-3" style="color:${t.accent}">${esc(rk.winner.name)}</p>
       <span class="font-display text-[10px] text-white/60 border border-white/10 px-4 py-2 uppercase tracking-widest">${rk.winner.score} pts d'erreur cumulés</span>
     </div>
     
-    <div class="luxury-card p-8 text-center flex flex-col items-center justify-center mt-2 border border-white/5 opacity-80">
-      <span class="text-[9px] font-display uppercase tracking-widest text-white/40 mb-4">Déni absolu (Dernière place)</span>
-      <p class="text-3xl font-display font-light text-white/80 capitalize tracking-wide mb-4">${esc(rk.loser.name)}</p>
+    <div class="luxury-card p-6 text-center flex flex-col items-center justify-center mt-1 border border-white/5 opacity-80">
+      <span class="text-[9px] font-display uppercase tracking-widest text-white/40 mb-3">Déni absolu (Dernière place)</span>
+      <p class="text-3xl font-display font-light text-white/80 capitalize tracking-wide mb-3">${esc(rk.loser.name)}</p>
       <span class="font-display text-[10px] text-white/40 border border-white/10 px-4 py-2 uppercase tracking-widest">${rk.loser.score} pts d'erreur cumulés</span>
     </div>
+    
+    ${titlesHtml}
 
-    <div class="mt-8 border border-white/20 p-6 text-center bg-white/5">
+    <div class="mt-4 border border-white/20 p-5 text-center bg-white/5">
       <span class="text-[9px] font-display uppercase tracking-widest text-white/50 block mb-3">La Sentence Légitime</span>
       <p class="text-xs font-display text-white leading-relaxed uppercase tracking-widest">
         <span style="color:${t.accent}">${esc(rk.winner.name)}</span> détient l'autorité absolue pour imposer une ultime sanction à <span>${esc(rk.loser.name)}</span>.
       </p>
     </div>
     
-    <div class="mt-8">
+    <div class="mt-6">
       ${isHost ? `<button onclick="window.restart()" class="w-full py-4 luxury-btn bg-black/50" style="border-color:${t.accent}; color:${t.accent}">Nouvelle Session</button>` : `<p class="font-display text-[10px] text-center uppercase tracking-widest text-white/40">Session clôturée</p>`}
     </div>
-  `; 
+  </div>`; 
 }
 
 let afterRenderHook = null;
