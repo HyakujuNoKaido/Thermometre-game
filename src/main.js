@@ -7,7 +7,6 @@ Object.assign(window, Game);
 window.toggleRules = UI.toggleRules;
 window.haptic = haptic;
 
-// --- INTEGRATION "LA TABLE" (Le Hub) ---
 function syncLaTablePlayers() {
   try {
     const tablePlayers = JSON.parse(localStorage.getItem('ja_players')) || [];
@@ -24,7 +23,7 @@ function handleHubReturn() {
   app.classList.remove('fade-in');
   app.classList.add('fade-out');
   setTimeout(() => {
-    window.location.href = '/la-carte'; // À adapter si le path de ton hub est différent
+    window.location.href = '/la-carte'; 
   }, 600);
 }
 
@@ -41,50 +40,76 @@ function bindInputs() {
   if (g("restartB")) g("restartB").onclick = Game.restart;
 
   const sl = g("slider");
+  const sliderContainer = document.getElementById("slider-container");
   if (sl) {
     sl.value = S.voteValue; 
     UI.updateThermometerColor(S.voteValue);
-    let lastStep = Math.round(S.voteValue / 10);
+    let lastStep = Math.round(S.voteValue / 5); // Déclencheur tous les 5%
+    
     sl.oninput = e => {
-      S.voteValue = e.target.value;
-      UI.updateThermometerColor(e.target.value);
-      const step = Math.round(e.target.value / 10);
-      if (step !== lastStep) { lastStep = step; haptic('light'); }
+      const val = parseInt(e.target.value);
+      S.voteValue = val;
+      UI.updateThermometerColor(val);
+      
+      const step = Math.round(val / 5);
+      if (step !== lastStep) { 
+        lastStep = step; 
+        if (val > 80) haptic('heavy');
+        else if (val > 50) haptic('medium');
+        else haptic('light');
+      }
+
+      // Effet visuel "danger"
+      if (sliderContainer) {
+         if (val > 85) sliderContainer.className = "relative w-full h-12 flex items-center shake-heavy";
+         else if (val > 65) sliderContainer.className = "relative w-full h-12 flex items-center shake-light";
+         else sliderContainer.className = "relative w-full h-12 flex items-center";
+      }
     };
   }
 }
 
 UI.onAfterRender(function() {
   bindInputs();
+  
+  // Slot Machine / Tension Reveal Effect
   if (S.room && S.room.phase === "REVEAL" && !S.animDone) {
     S.animDone = true;
     const avgEl = document.getElementById("reveal-avg");
     const detailsEl = document.getElementById("reveal-details");
+    const flashEl = document.getElementById("flash-overlay");
     
     if (avgEl && detailsEl) {
-      let current = 0; 
       const target = Number(S.room.result?.average) || 0;
+      let rolls = 0;
+      const maxRolls = 40; // 40 rolls * 40ms = ~1.6 sec de suspense
       
-      if (target === 0) {
-          avgEl.textContent = "00";
-          avgEl.classList.remove("opacity-0");
+      avgEl.classList.remove("opacity-0");
+      avgEl.classList.add("blur-[2px]"); // Effet de flou de mouvement
+      
+      const interval = setInterval(() => {
+        rolls++;
+        // Aléatoire frénétique
+        avgEl.textContent = Math.floor(Math.random() * 101).toString().padStart(2, '0');
+        haptic('light');
+        
+        if (rolls >= maxRolls) {
+          clearInterval(interval);
+          avgEl.classList.remove("blur-[2px]");
+          avgEl.textContent = target.toString().padStart(2, '0');
+          
+          if(flashEl) flashEl.classList.add("animate-flash");
+          haptic('heavy');
+          
           detailsEl.classList.remove("opacity-0");
-      } else {
-          const interval = setInterval(() => {
-            current += Math.max(1, target / 30);
-            if (current >= target) {
-              current = target;
-              clearInterval(interval);
-              detailsEl.classList.remove("opacity-0");
-              haptic('heavy');
-            }
-            avgEl.textContent = Math.round(current).toString().padStart(2, '0');
-            avgEl.classList.remove("opacity-0");
-          }, 30);
-      }
+          detailsEl.classList.add("fade-in");
+        }
+      }, 40);
     }
   } else if (S.room && S.room.phase !== "REVEAL") {
     S.animDone = false;
+    const flashEl = document.getElementById("flash-overlay");
+    if (flashEl) flashEl.classList.remove("animate-flash");
   }
 });
 
