@@ -32,6 +32,15 @@ window.toggleBloodPact = toggleBloodPact;
 window.toggleRules = UI.toggleRules;
 window.haptic = haptic;
 
+// CORRECTION MOBILE : Force la hauteur réelle du viewport de l'appareil (iOS / Android)
+function setAppHeight() {
+  const doc = document.documentElement;
+  doc.style.setProperty('--app-height', `${window.innerHeight}px`);
+}
+window.addEventListener('resize', setAppHeight);
+window.addEventListener('orientationchange', () => setTimeout(setAppHeight, 200));
+setAppHeight();
+
 function syncLaTablePlayers() {
   try {
     const tablePlayers = JSON.parse(localStorage.getItem('ja_players')) || [];
