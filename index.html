@@ -39,7 +39,8 @@
   <!-- ALERTE CARTE VOLANTE (GLOBALE) -->
   <div id="smash-alert" class="fixed inset-0 z-[300] flex flex-col items-center justify-center pointer-events-none hidden bg-black/80 backdrop-blur-sm"></div>
 
-  <div id="counterModal" class="fixed inset-0 z-[60] hidden bg-black/90 backdrop-blur-lg flex items-center justify-center px-5 pointer-events-auto">
+  <!-- MODALE RIPOSTE (MIROIR / BOUCLIER) -->
+  <div id="counterModal" class="fixed inset-0 z-[280] hidden bg-black/90 backdrop-blur-lg flex items-center justify-center px-5 pointer-events-auto">
     <div class="luxury-card w-full max-w-sm p-8 text-center flex flex-col items-center relative overflow-hidden animate-pop">
        <div class="relative z-10 w-full flex flex-col items-center">
           <h2 class="text-2xl font-serif italic mb-2 text-white tracking-wide" id="counter-title">Offensive ciblée</h2>
@@ -52,13 +53,23 @@
     </div>
   </div>
 
-  <!-- MODALE RÈGLES & POUVOIRS (Accessible en tout temps) -->
+  <!-- MODALE ACTION TAROT / PRIVILÈGE (Mobile-Friendly) -->
+  <div id="tarotActionModal" class="fixed inset-0 z-[260] hidden bg-black/90 backdrop-blur-lg flex items-center justify-center px-5 pointer-events-auto">
+    <div class="luxury-card w-full max-w-sm p-6 text-center flex flex-col items-center relative overflow-hidden animate-pop">
+       <button onclick="window.closeTarotModal()" class="absolute top-4 right-4 text-white/40 hover:text-white font-display text-xs uppercase tracking-widest outline-none">Fermer</button>
+       <div id="tarot-modal-content" class="w-full flex flex-col items-center mt-2">
+          <!-- Dynamique -->
+       </div>
+    </div>
+  </div>
+
+  <!-- MODALE RÈGLES & POUVOIRS -->
   <div id="rulesModal" class="fixed inset-0 z-[250] hidden bg-black/90 backdrop-blur-lg flex items-center justify-center px-5 pointer-events-auto">
     <div class="luxury-card w-full max-w-md p-8 flex flex-col relative animate-pop max-h-[85vh]">
       <button onclick="toggleRules()" class="absolute top-4 right-4 text-white/40 hover:text-white font-display text-xs uppercase tracking-widest outline-none">Fermer</button>
       <h2 class="text-3xl font-serif italic mb-4 text-white tracking-wide">L'Étiquette & Privilèges</h2>
       <div class="text-white/70 space-y-4 font-display text-[11px] uppercase tracking-widest leading-relaxed overflow-y-auto scroll pr-2">
-        <p><span class="text-white">I. Déroulement :</span> L'hôte lance les tours. La cible s'évalue, le groupe vote à l'aveugle. L'écart avec la moyenne du groupe détermine les gorgées.</p>
+        <p><span class="text-white">I. Déroulement :</span> L'hôte lance les tours. La cible s'évalue, le groupe vote à l'aveugle. L'écart avec la moyenne détermine les gorgées.</p>
         <p><span class="text-white">II. La Part des Anges :</span> Tour clément aléatoire. Pas de gorgée, le pire score subit le gage de l'hôte.</p>
         <p><span class="text-white">III. Pacte de Sang :</span> Destinées liées entre deux joueurs. Partage des lourdes peines en cas d'écart critique.</p>
         <hr class="border-white/10 my-3">
