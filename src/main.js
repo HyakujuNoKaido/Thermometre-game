@@ -8,6 +8,8 @@ import {
 } from './game.js';
 import * as UI from './ui.js';
 
+// Attachement global complet pour UI
+window.tryReconnect = tryReconnect;
 window.createRoom = createRoom;
 window.joinRoom = joinRoom;
 window.startRound = startRound;
