@@ -1,5 +1,6 @@
 import { S, THEMES, JOKERS, esc, connectedArr, playersArr, haptic } from './store.js';
 import { icons } from './icons/index.js';
+import { activateCounter } from './game.js';
 
 export function toast(msg, ok=false) { 
   const el = document.createElement("div"); 
@@ -38,6 +39,17 @@ export function showSmashAlert(action) {
   alertBox.classList.remove("-translate-y-full");
   setTimeout(() => { alertBox.classList.add("-translate-y-full"); }, 2000); 
 }
+
+export function confirmCounter() {
+  document.getElementById("counterModal").classList.add("hidden");
+  if (window.activateCounter) window.activateCounter();
+}
+export function ignoreCounter() {
+  document.getElementById("counterModal").classList.add("hidden");
+}
+
+window.confirmCounter = confirmCounter;
+window.ignoreCounter = ignoreCounter;
 
 export function toggleRules() {
   const modal = document.getElementById('rulesModal');
@@ -85,7 +97,6 @@ export function updateThermometerColor(val) {
   }
 }
 
-// Fonction attachée à window pour l'animation 3D CSS de la carte
 window.triggerTarotCard = function() {
   const card = document.getElementById('tarot-card');
   if (!card) return;
@@ -96,27 +107,84 @@ window.triggerTarotCard = function() {
   }, 800);
 }
 
+// ----------------------------------------------------
+// NOUVEAUTÉ : Mise à jour en temps réel des inputs
+// ----------------------------------------------------
+window.updateName = function(val) {
+  S.name = val;
+  sessionStorage.setItem('thermo_name', val);
+  const ni = document.getElementById('nameI');
+  if (ni && ni.value !== val) ni.value = val;
+  const createB = document.getElementById('createB');
+  if (createB) createB.disabled = S.isLoading || !val.trim();
+}
+
+window.updateJoinCode = function(val) {
+  S.joinCode = val.toUpperCase();
+  const ji = document.getElementById('joinI');
+  if (ji && ji.value !== S.joinCode) ji.value = S.joinCode;
+}
+
+// ----------------------------------------------------
+// NOUVEAUTÉ : Transition douce inter-modes (Zéro Refresh)
+// ----------------------------------------------------
+window.pickMode = function(m) {
+  if (S.pendingMode === m) return;
+  S.pendingMode = m;
+  if (window.haptic) window.haptic('light');
+  
+  const t = THEMES[m];
+  document.documentElement.style.setProperty('--accent', t.accent);
+
+  Object.keys(THEMES).forEach(mode => {
+      const btn = document.getElementById(`btn-mode-${mode}`);
+      if (!btn) return;
+      const tm = THEMES[mode];
+      const act = (m === mode);
+      
+      const spanIcon = btn.querySelector('.mode-icon');
+      
+      if (act) {
+          btn.className = "py-4 border transition-all duration-500 glow-active text-white bg-white/5 flex flex-col items-center gap-2 rounded-sm";
+          btn.style.borderColor = tm.accent;
+          btn.style.boxShadow = `0 0 20px ${tm.accent}40`;
+          if(spanIcon) spanIcon.style.color = tm.accent;
+      } else {
+          btn.className = "py-4 border transition-all duration-500 border-white/10 text-white/30 flex flex-col items-center gap-2 rounded-sm";
+          btn.style.borderColor = "rgba(255,255,255,0.1)";
+          btn.style.boxShadow = "none";
+          if(spanIcon) spanIcon.style.color = "currentColor";
+      }
+  });
+
+  const createB = document.getElementById("createB");
+  if (createB) {
+      createB.style.borderColor = t.accent;
+      createB.style.color = t.accent;
+  }
+}
+
 function renderHome(t) { 
   let tableOptions = "";
   try {
     const tablePlayers = JSON.parse(localStorage.getItem('ja_players')) || [];
     if (tablePlayers.length > 0) {
       tableOptions = `<div class="flex gap-2 overflow-x-auto scroll pb-2 mt-2">` + 
-        tablePlayers.map(p => `<button onclick="document.getElementById('nameI').value='${esc(p.name)}'; document.getElementById('nameI').dispatchEvent(new Event('input'))" class="px-3 py-1.5 text-xs font-display border border-white/10 hover:border-white/40 text-white/60 transition-colors uppercase whitespace-nowrap">${esc(p.name)}</button>`).join('')
+        tablePlayers.map(p => `<button onclick="window.updateName('${esc(p.name)}')" class="px-3 py-1.5 text-xs font-display border border-white/10 hover:border-white/40 text-white/60 transition-colors uppercase whitespace-nowrap">${esc(p.name)}</button>`).join('')
       + `</div>`;
     }
   } catch(e) {}
 
   return `<div class="flex-1 flex flex-col justify-center pb-8 mt-12 animate-pop relative z-10">
     <div class="text-center mb-10">
-      <h1 class="text-4xl font-serif italic tracking-wide text-white mb-2">Le <span style="color:${t.accent}">Thermo</span>mètre</h1>
+      <h1 class="text-4xl font-serif italic tracking-wide text-white mb-2">Le <span style="color:var(--accent); transition: color 0.5s ease;">Thermo</span>mètre</h1>
       <p class="font-display text-[10px] text-white/40 uppercase tracking-widest">Évaluer. Sanctionner. Répéter.</p>
     </div>
 
     <div class="luxury-card p-6 flex flex-col gap-6 mb-6">
       <div class="flex flex-col gap-2">
         <label class="text-white/50 font-display text-[10px] uppercase tracking-widest">Identité à la table</label>
-        <input id="nameI" maxlength="15" placeholder="Votre nom" value="${esc(S.name)}" class="w-full bg-transparent border-b border-white/20 px-2 py-3 text-xl font-display outline-none focus:border-white transition-colors text-white uppercase placeholder:text-white/20 placeholder:capitalize"/>
+        <input id="nameI" oninput="window.updateName(this.value)" maxlength="15" placeholder="Votre nom" value="${esc(S.name)}" class="w-full bg-transparent border-b border-white/20 px-2 py-3 text-xl font-display outline-none focus:border-white transition-colors text-white uppercase placeholder:text-white/20 placeholder:capitalize"/>
         ${tableOptions}
       </div>
       
@@ -125,19 +193,19 @@ function renderHome(t) {
         <div class="grid grid-cols-3 gap-3">
           ${Object.keys(THEMES).map(m => {
             const act = S.pendingMode === m; const tm = THEMES[m];
-            return `<button onclick="window.pickMode('${m}'); window.haptic('light');" class="py-4 border transition-all ${act ? `glow-active text-white bg-white/5` : 'border-white/10 text-white/30'} flex flex-col items-center gap-2 rounded-sm" ${act ? `style="border-color:${tm.accent}; box-shadow: 0 0 20px ${tm.accent}40;"` : ''}>
-              <span style="color:${act ? tm.accent : 'currentColor'}">${tm.icon("w-5 h-5")}</span>
+            return `<button id="btn-mode-${m}" onclick="window.pickMode('${m}')" class="py-4 border transition-all duration-500 ${act ? `glow-active text-white bg-white/5` : 'border-white/10 text-white/30'} flex flex-col items-center gap-2 rounded-sm" ${act ? `style="border-color:${tm.accent}; box-shadow: 0 0 20px ${tm.accent}40;"` : 'style="border-color:rgba(255,255,255,0.1);"'}>
+              <span class="mode-icon transition-colors duration-500" style="color:${act ? tm.accent : 'currentColor'}">${tm.icon("w-5 h-5")}</span>
               <span class="font-display text-xs tracking-widest uppercase">${tm.label}</span>
             </button>`;
           }).join("")}
         </div>
       </div>
-      <button id="createB" class="w-full py-4 mt-4 luxury-btn" style="border-color:${t.accent}; color:${t.accent}; font-weight:700;" ${S.isLoading || !S.name ? 'disabled' : ''}>Créer le salon</button>
+      <button id="createB" onclick="window.createRoom()" class="w-full py-4 mt-4 luxury-btn transition-colors duration-500" style="border-color:var(--accent); color:var(--accent); font-weight:700;" ${S.isLoading || !S.name.trim() ? 'disabled' : ''}>Créer le salon</button>
     </div>
 
     <div class="luxury-card p-4 flex flex-row gap-4 items-center">
-      <input id="joinI" maxlength="4" placeholder="ROOM" value="${esc(S.joinCode)}" class="flex-1 min-w-0 bg-transparent border-none px-2 py-2 text-xl font-display tracking-[0.2em] text-center uppercase outline-none text-white placeholder:text-white/10"/>
-      <button id="joinB" class="py-3 px-6 border border-white/20 text-xs font-display uppercase tracking-widest hover:bg-white/10 transition-all text-white rounded-sm" ${S.isLoading ? 'disabled' : ''}>Rejoindre</button>
+      <input id="joinI" oninput="window.updateJoinCode(this.value)" maxlength="4" placeholder="ROOM" value="${esc(S.joinCode)}" class="flex-1 min-w-0 bg-transparent border-none px-2 py-2 text-xl font-display tracking-[0.2em] text-center uppercase outline-none text-white placeholder:text-white/10"/>
+      <button id="joinB" onclick="window.joinRoom()" class="py-3 px-6 border border-white/20 text-xs font-display uppercase tracking-widest hover:bg-white/10 transition-all text-white rounded-sm">Rejoindre</button>
     </div>
   </div>`; 
 }
@@ -209,7 +277,7 @@ function renderLobby(r, t) {
 
     <div class="mt-6">
        ${connectedArr(r).length < 2 ? `<p class="font-display text-xs text-center uppercase tracking-widest text-white/40 mb-4">En attente des invités...</p>` : ''}
-       ${isHost ? `<button id="startB" class="w-full py-4 luxury-btn" style="border-color:${t.accent}; color:${t.accent}" ${connectedArr(r).length < 2 ? 'disabled' : ''}>Ouvrir les débats</button>` : (!isHost && connectedArr(r).length >= 2 ? `<p class="font-display text-xs text-center uppercase tracking-widest text-white/40 animate-pulse">Le maître de cérémonie prépare la table...</p>` : "")}
+       ${isHost ? `<button onclick="window.startRound()" class="w-full py-4 luxury-btn" style="border-color:${t.accent}; color:${t.accent}" ${connectedArr(r).length < 2 ? 'disabled' : ''}>Ouvrir les débats</button>` : (!isHost && connectedArr(r).length >= 2 ? `<p class="font-display text-xs text-center uppercase tracking-widest text-white/40 animate-pulse">Le maître de cérémonie prépare la table...</p>` : "")}
     </div>
   </div>`;
 }
@@ -229,13 +297,13 @@ function renderVoting(r, t) {
           const stealablePlayers = connectedArr(r).filter(p => p.id !== S.pid && p.joker && !p.jokerConsumed);
           if (stealablePlayers.length > 0) {
               jokerActionHtml = `<div class="w-full luxury-card p-4 mb-4">
-                  <span class="text-white/50 font-display uppercase tracking-widest text-[10px] block mb-3">Subtiliser la carte de :</span>
+                  <span class="text-white/50 font-display uppercase tracking-widest text-[10px] block mb-3">Subtiliser un privilège à :</span>
                   <div class="flex gap-2 overflow-x-auto scroll pb-2">
                       ${stealablePlayers.map(p => `<button onclick="window.stealJoker('${p.id}')" class="shrink-0 px-4 py-2 border border-white/20 text-white font-display text-xs uppercase tracking-widest hover:bg-white/10 transition-colors rounded-sm">${esc(p.name)}</button>`).join("")}
                   </div>
               </div>`;
           } else {
-              jokerActionHtml = `<div class="w-full border border-white/10 p-3 mb-4 text-center text-white/30 text-xs font-display uppercase tracking-widest">Aucune carte dérobable</div>`;
+              jokerActionHtml = `<div class="w-full border border-white/10 p-3 mb-4 text-center text-white/30 text-xs font-display uppercase tracking-widest">Aucun privilège dérobable</div>`;
           }
       } else if (myJokerStr === "SHOT") {
           if (!me.jokerActive) {
@@ -296,7 +364,7 @@ function renderVoting(r, t) {
         
         <span id="sv" class="text-6xl font-display font-light text-white tracking-tighter" style="color:${t.accent}">${S.voteValue}%</span>
 
-        <button id="voteB" class="w-full py-4 luxury-btn mt-2 breathing bg-black/50" style="border-color:${t.accent}; color:${t.accent}">Sceller la décision</button>
+        <button onclick="window.vote()" class="w-full py-4 luxury-btn mt-2 breathing bg-black/50" style="border-color:${t.accent}; color:${t.accent}">Sceller la décision</button>
       </div>
     ` : `
       <div class="mt-10 flex flex-col items-center">
@@ -341,7 +409,7 @@ function renderReveal(r, t) {
               </div>`;
           }
           return `<div class="w-full border border-white/20 p-3 mb-2 text-center text-white text-[10px] font-display uppercase tracking-widest">
-            <span style="color:${t.accent}">${esc(log.name)}</span> a engagé son privilège
+            <span style="color:${t.accent}">${esc(log.name)}</span> a engagé sa carte
           </div>`;
       }).join("");
   }
@@ -420,7 +488,7 @@ function renderReveal(r, t) {
 
   const hostControls = isHost ? `
     <div class="flex flex-col gap-4 mt-6 w-full">
-      <button id="nextB" class="w-full py-4 luxury-btn bg-black/50" style="border-color:${t.accent}; color:${t.accent}">${r.maxRounds > 0 && r.round >= r.maxRounds ? 'Bilan Final' : 'Question Suivante'}</button>
+      <button onclick="window.nextRound()" class="w-full py-4 luxury-btn bg-black/50" style="border-color:${t.accent}; color:${t.accent}">${r.maxRounds > 0 && r.round >= r.maxRounds ? 'Bilan Final' : 'Question Suivante'}</button>
       <button onclick="window.endGame()" class="w-full py-4 luxury-btn !border-red-500/30 !text-red-500/80 hover:!bg-red-500/10 transition-colors bg-black/50">Clôturer la session</button>
     </div>
   ` : `<p class="font-display text-[10px] text-center uppercase tracking-widest text-white/40 mt-8">En attente de l'hôte...</p>`;
@@ -496,7 +564,7 @@ function renderStats(r, t) {
     </div>
     
     <div class="mt-8">
-      ${isHost ? `<button id="restartB" class="w-full py-4 luxury-btn bg-black/50" style="border-color:${t.accent}; color:${t.accent}">Nouvelle Session</button>` : `<p class="font-display text-[10px] text-center uppercase tracking-widest text-white/40">Session clôturée</p>`}
+      ${isHost ? `<button onclick="window.restart()" class="w-full py-4 luxury-btn bg-black/50" style="border-color:${t.accent}; color:${t.accent}">Nouvelle Session</button>` : `<p class="font-display text-[10px] text-center uppercase tracking-widest text-white/40">Session clôturée</p>`}
     </div>
   </div>`; 
 }
@@ -505,7 +573,6 @@ let afterRenderHook = null;
 export function onAfterRender(fn) { afterRenderHook = fn; }
 
 let lastViewKey = null;
-let lastPromptedActionId = null; 
 
 export function render() {
   applyBg(); const app = document.getElementById("app"); const t = THEMES[(S.room && S.room.mode) || S.pendingMode] || THEMES.Chill; let body = "";
