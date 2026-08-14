@@ -1,39 +1,30 @@
 import BANK from './data/questions.json';
 import { icons } from './icons/index.js';
 
-export const GEMINI_API_KEY = "AQ.Ab8RN6IB_6U4QMMkAf7W_tFyngxZv3X12jImgPfSGYpmMFp-cQ"; // À sécuriser côté backend idéalement
+export const GEMINI_API_KEY = "AQ.Ab8RN6IB_6U4QMMkAf7W_tFyngxZv3X12jImgPfSGYpmMFp-cQ";
 
-// Haptique de luxe
 export const haptic = (intensity = 'light') => {
   if (!navigator.vibrate) return;
   try {
     if (intensity === 'light') navigator.vibrate(10);
-    if (intensity === 'medium') navigator.vibrate(25);
-    if (intensity === 'heavy') navigator.vibrate([40, 30, 40]);
+    if (intensity === 'medium') navigator.vibrate(30);
+    if (intensity === 'heavy') navigator.vibrate([50, 40, 50]);
   } catch (e) {}
 };
 
-// Accents Couleurs du Speakeasy
 export const THEMES = {
-  Chill: { base:"#050505", accent:"#00F0FF", label:"CHILL", icon: icons.chill }, // Cyan Glacial
-  Spicy: { base:"#050505", accent:"#FFB800", label:"SPICY", icon: icons.spicy }, // Ambre
-  Hardcore: { base:"#050505", accent:"#FF003C", label:"HARDCORE", icon: icons.hardcore } // Rouge Sang
+  Chill: { base:"#050505", accent:"#00F0FF", label:"Chill", icon: icons.chill }, 
+  Spicy: { base:"#050505", accent:"#FFB800", label:"Spicy", icon: icons.spicy }, 
+  Hardcore: { base:"#050505", accent:"#FF003C", label:"Hardcore", icon: icons.hardcore } 
 };
 
-// Terminologie pure, pas d'émojis
 export const JOKERS = {
-  SHIELD: { name: "BOUCLIER", icon: icons.shield, desc: "Immunité totale. Aucune gorgée." },
-  MIRROR: { name: "MIROIR", icon: icons.mirror, desc: "Renvoyez la sanction à l'expéditeur." },
-  DOUBLE: { name: "DOUBLE", icon: icons.double, desc: "Quitte ou double sur vos gorgées." },
-  SHOT: { name: "CUL SEC", icon: icons.shot, desc: "Assignez un cul sec immédiat." },
-  THIEF: { name: "VOLEUR", icon: icons.thief, desc: "Dérobez le pouvoir d'un adversaire." }
+  SHIELD: { name: "Bouclier", icon: icons.shield, desc: "Immunité totale face aux sanctions." },
+  MIRROR: { name: "Miroir", icon: icons.mirror, desc: "Renvoyez l'affront à l'expéditeur." },
+  DOUBLE: { name: "Double", icon: icons.double, desc: "Quitte ou double sur la sentence." },
+  SHOT: { name: "Cul Sec", icon: icons.shot, desc: "Condamnez une cible de votre choix." },
+  THIEF: { name: "Voleur", icon: icons.thief, desc: "Dérobez furtivement un privilège." }
 };
-
-export const ROASTS = [
-  "{name} réside dans le déni absolu.",
-  "La lucidité de {name} est introuvable.",
-  "Un décalage total avec la réalité pour {name}."
-];
 
 export let QUESTIONS = {
   Chill: [...BANK.Chill],
