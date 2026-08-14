@@ -1,6 +1,6 @@
 import { S, THEMES, JOKERS, esc, connectedArr, playersArr, haptic } from './store.js';
 import { icons } from './icons/index.js';
-import { toggleBloodPact } from './game.js';
+import { toggleBloodPact, activateCounter } from './game.js';
 
 export function toast(msg, ok=false) { 
   const el = document.createElement("div"); 
@@ -95,7 +95,7 @@ export function updateThermometerColor(val) {
   }
 }
 
-// GESTION DU FLIP DE LA CARTE 3D ET DE SON VERSO TACTILE
+// GESTION DU FLIP DE LA CARTE 3D (AVEC TOUCHER MOBILE GARANTI)
 window.flipTarotCard = function(e) {
   if (e) { e.stopPropagation(); e.preventDefault(); }
   const card = document.getElementById('tarot-card-interactive');
@@ -179,7 +179,7 @@ window.pickMode = function(m) {
 
 function header() {
   const roomCodeHtml = (S.room && S.code) ? `
-    <div class="flex items-center gap-2 px-3 py-1.5 luxury-card border border-white/20">
+    <div class="flex items-center gap-2 px-3 py-1.5 luxury-card border border-white/25">
        <span class="font-display text-[8px] uppercase tracking-widest text-white/50">Room:</span>
        <span class="font-mono text-xs uppercase tracking-widest font-bold select-all" style="color:var(--accent)">${S.code}</span>
     </div>
@@ -190,7 +190,7 @@ function header() {
       ${roomCodeHtml}
     </div>
     <div class="flex items-center gap-2">
-      <button onclick="window.toggleRules()" class="px-3 py-1.5 luxury-card border border-white/20 font-display text-[9px] uppercase tracking-widest text-white/80 hover:text-white transition-colors">
+      <button onclick="window.toggleRules()" class="px-3 py-1.5 luxury-card border border-white/25 font-display text-[9px] uppercase tracking-widest text-white/80 hover:text-white transition-colors">
         L'Étiquette
       </button>
     </div>
@@ -240,7 +240,7 @@ function renderHome(t) {
       <input id="joinI" oninput="window.updateJoinCode(this.value)" maxlength="4" placeholder="ROOM" value="${esc(S.joinCode)}" class="flex-1 min-w-0 bg-transparent border-none px-2 py-2 text-xl font-display tracking-[0.2em] text-center uppercase outline-none text-white placeholder:text-white/10"/>
       <button id="joinB" onclick="window.joinRoom()" class="py-3 px-6 border border-white/20 text-xs font-display uppercase tracking-widest hover:bg-white/10 transition-all text-white rounded-sm">Rejoindre</button>
     </div>
-  </div>`; 
+  `; 
 }
 
 function renderLobby(r, t) { 
@@ -317,7 +317,7 @@ function renderLobby(r, t) {
        ${connectedArr(r).length < 2 ? `<p class="font-display text-xs text-center uppercase tracking-widest text-white/40 mb-4">En attente des invités...</p>` : ''}
        ${isHost ? `<button onclick="window.startRound()" class="w-full py-4 luxury-btn" style="border-color:${t.accent}; color:${t.accent}" ${connectedArr(r).length < 2 ? 'disabled' : ''}>Ouvrir les débats</button>` : (!isHost && connectedArr(r).length >= 2 ? `<p class="font-display text-xs text-center uppercase tracking-widest text-white/40 animate-pulse">Le maître de cérémonie prépare la table...</p>` : "")}
     </div>
-  `;
+  </div>`;
 }
 
 function renderVoting(r, t) { 
@@ -337,22 +337,22 @@ function renderVoting(r, t) {
           if (stealablePlayers.length > 0) {
               backContent = `<span class="text-white/50 font-display uppercase tracking-widest text-[8px] block mb-1">Dérober :</span>
               <div class="flex flex-col gap-1 w-full px-1 max-h-24 overflow-y-auto scroll">
-                  ${stealablePlayers.map(p => `<button onclick="window.confirmTarotAction('steal', '${p.id}', event)" class="w-full py-1.5 border border-white/20 text-white font-display text-[9px] uppercase tracking-widest hover:bg-white/10 transition-colors rounded-sm">${esc(p.name)}</button>`).join("")}
+                  ${stealablePlayers.map(p => `<button onclick="window.confirmTarotAction('steal', '${p.id}', event)" class="w-full py-2 border border-white/25 text-white font-display text-[9px] uppercase tracking-widest hover:bg-white/15 transition-colors rounded-sm">${esc(p.name)}</button>`).join("")}
               </div>`;
           } else {
-              backContent = `<span class="text-white/30 text-[9px] font-display uppercase tracking-widest text-center px-1">Aucune cible</span>`;
+              backContent = `<span class="text-white/40 text-[9px] font-display uppercase tracking-widest text-center px-1">Aucune cible</span>`;
           }
       } else if (myJokerStr === "SHOT") {
           const attackablePlayers = connectedArr(r).filter(p => p.id !== S.pid);
           backContent = `<span class="text-white/50 font-display uppercase tracking-widest text-[8px] block mb-1">Condamner :</span>
           <div class="flex flex-col gap-1 w-full px-1 max-h-24 overflow-y-auto scroll">
-              ${attackablePlayers.map(p => `<button onclick="window.confirmTarotAction('shot', '${p.id}', event)" class="w-full py-1.5 border border-white/20 text-white font-display text-[9px] uppercase tracking-widest hover:bg-white/10 transition-colors rounded-sm">${esc(p.name)}</button>`).join("")}
+              ${attackablePlayers.map(p => `<button onclick="window.confirmTarotAction('shot', '${p.id}', event)" class="w-full py-2 border border-white/25 text-white font-display text-[9px] uppercase tracking-widest hover:bg-white/15 transition-colors rounded-sm">${esc(p.name)}</button>`).join("")}
           </div>`;
       } else {
           backContent = `
             <span class="text-white font-serif italic text-xs mb-2">Confirmer ?</span>
-            <button onclick="window.confirmTarotAction('toggle', null, event)" class="w-[85%] py-2 border text-white font-display text-[9px] uppercase tracking-widest hover:bg-white/10 transition-colors rounded-sm" style="border-color:${t.accent}">Oui</button>
-            <button onclick="window.unflipTarotCard(event)" class="w-[85%] mt-1 py-1.5 border border-white/10 text-white/40 font-display text-[8px] uppercase tracking-widest hover:text-white transition-colors rounded-sm">Retour</button>
+            <button onclick="window.confirmTarotAction('toggle', null, event)" class="w-[90%] py-2.5 border text-white font-display text-[10px] uppercase tracking-widest hover:bg-white/15 transition-colors rounded-sm font-bold" style="border-color:${t.accent}">Confirmer</button>
+            <button onclick="window.unflipTarotCard(event)" class="w-[90%] mt-1.5 py-2 border border-white/20 text-white/60 font-display text-[9px] uppercase tracking-widest hover:text-white transition-colors rounded-sm">Retour</button>
           `;
       }
 
@@ -360,9 +360,9 @@ function renderVoting(r, t) {
       <div class="tarot-scene-interactive mb-4">
         <div id="tarot-card-interactive" class="tarot-card-interactive" ontouchstart="window.flipTarotCard(event)" onclick="window.flipTarotCard(event)">
            <div class="tarot-face tarot-front">
-              <span style="color:${t.accent}" class="mb-2 drop-shadow-md">${myJoker.icon("w-10 h-10")}</span>
-              <span class="font-serif italic text-white text-lg tracking-wide text-center leading-none">${esc(myJoker.name)}</span>
-              <span class="font-display text-[8px] text-white/40 uppercase tracking-widest mt-2 border border-white/10 px-2 py-1 rounded-sm bg-black/40">Abattre la carte</span>
+              <span style="color:${t.accent}" class="mb-2 drop-shadow-md">${myJoker.icon("w-9 h-9")}</span>
+              <span class="font-serif italic text-white text-base tracking-wide text-center leading-none">${esc(myJoker.name)}</span>
+              <span class="font-display text-[8px] text-white/50 uppercase tracking-widest mt-2 border border-white/20 px-2.5 py-1 rounded-sm bg-black/50">Abattre la carte</span>
            </div>
            <div class="tarot-face tarot-back" style="border-color:${t.accent}">
               ${backContent}
@@ -382,7 +382,7 @@ function renderVoting(r, t) {
   
   let angelHtml = "";
   if (r.angelRound) {
-      angelHtml = `<div class="w-full border border-[#FFD700]/30 bg-[#FFD700]/5 p-2 text-center text-[#FFD700] font-serif italic text-xs tracking-wide mt-2">
+      angelHtml = `<div class="w-full border border-[#FFD700]/30 bg-[#FFD700]/5 p-2.5 text-center text-[#FFD700] font-serif italic text-xs tracking-wide mt-2">
         ${icons.angel("w-4 h-4 mx-auto mb-0.5")} La Part des Anges : Ce tour, la table ne boit pas.
       </div>`;
   }
@@ -584,7 +584,7 @@ function renderReveal(r, t) {
       
       ${hostControls}
     </div>
-  </div>`; 
+  `; 
 }
 
 function renderStats(r, t) { 
