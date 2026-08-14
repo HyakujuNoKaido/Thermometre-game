@@ -11,7 +11,6 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<!-- Typographies de luxe, douces mais affirmées -->
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Playfair+Display:ital,wght@0,600;1,600&display=swap" rel="stylesheet">
 
 <link rel="icon" href="./icon.svg" type="image/svg+xml" />
@@ -25,22 +24,19 @@
 
 <body>
 
-<!-- Calque pour le flash du Reveal -->
 <div id="flash-overlay" class="fixed inset-0 bg-white opacity-0 pointer-events-none z-[200]"></div>
 
 <div class="fixed inset-0 w-full h-full overflow-hidden z-0">
-  <!-- Bruit de fond premium -->
   <div class="noise-overlay"></div>
 
-  <!-- Bouton de retour Hub -->
-  <button id="hubReturnBtn" class="fixed top-[env(safe-area-inset-top,10px)] left-4 mt-4 z-50 flex items-center gap-2 text-white/50 hover:text-white transition-colors font-display text-xs uppercase tracking-widest outline-none">
+  <!-- FIX : z-[200] et pointer-events-auto pour garantir le clic -->
+  <button id="hubReturnBtn" class="fixed top-[env(safe-area-inset-top,10px)] left-4 mt-4 z-[200] flex items-center gap-2 text-white/50 hover:text-white transition-colors font-display text-xs uppercase tracking-widest outline-none cursor-pointer pointer-events-auto">
     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
     La Carte
   </button>
 
   <div id="toasts" class="fixed top-[calc(env(safe-area-inset-top,10px)+4rem)] left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2 w-[90%] max-w-sm pointer-events-none mt-4"></div>
 
-  <!-- Overlay Alerte Pouvoir (Ambiance Speakeasy) -->
   <div id="smash-alert" class="fixed inset-0 z-[100] bg-black/95 backdrop-blur-lg flex flex-col items-center justify-center pointer-events-none hidden transition-opacity duration-300">
     <div class="relative z-10 flex flex-col items-center w-full px-6 text-center">
        <div id="smash-icon" class="mb-6 flex justify-center w-full"></div>
@@ -49,8 +45,7 @@
     </div>
   </div>
 
-  <!-- Modale Riposte -->
-  <div id="counterModal" class="fixed inset-0 z-[60] hidden bg-black/90 backdrop-blur-lg flex items-center justify-center px-5">
+  <div id="counterModal" class="fixed inset-0 z-[60] hidden bg-black/90 backdrop-blur-lg flex items-center justify-center px-5 pointer-events-auto">
     <div class="luxury-card w-full max-w-sm p-8 text-center flex flex-col items-center relative overflow-hidden animate-pop">
        <div class="relative z-10 w-full flex flex-col items-center">
           <h2 class="text-2xl font-serif italic mb-2 text-white tracking-wide" id="counter-title">Offensive ciblée</h2>
@@ -63,7 +58,7 @@
     </div>
   </div>
 
-  <div id="rulesModal" class="fixed inset-0 z-[60] hidden bg-black/90 backdrop-blur-lg flex items-center justify-center px-5">
+  <div id="rulesModal" class="fixed inset-0 z-[60] hidden bg-black/90 backdrop-blur-lg flex items-center justify-center px-5 pointer-events-auto">
     <div class="luxury-card w-full max-w-sm p-8 flex flex-col relative animate-pop">
       <button onclick="toggleRules()" class="absolute top-4 right-4 text-white/40 hover:text-white font-display text-xs uppercase tracking-widest outline-none">Fermer</button>
       <h2 class="text-3xl font-serif italic mb-6 text-white tracking-wide">L'Étiquette</h2>
@@ -80,7 +75,6 @@
   <div id="app" class="w-full max-w-md mx-auto h-full overflow-x-hidden overflow-y-auto px-5 pt-16 pb-8 flex flex-col relative z-10 fade-in" style="-webkit-overflow-scrolling: touch;">
     <!-- Injecté par ui.js -->
   </div>
-  
 </div>
 
 <script type="module" src="./src/main.js"></script>
