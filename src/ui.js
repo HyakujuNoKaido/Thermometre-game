@@ -9,49 +9,43 @@ export function toast(msg, ok=false) {
   setTimeout(() => { el.classList.remove('fade-in'); el.classList.add('fade-out'); setTimeout(() => el.remove(), 600); }, 2500); 
 }
 
+// ALERTE VOLANTE (CARTE 3D ANIMÉE)
 export function showSmashAlert(action) {
   const container = document.getElementById("smash-alert");
   if (!container) return;
 
   let title = "Privilège";
-  let sub = `${esc(action.actor)} abat ses cartes`;
+  let sub = `${esc(action.actor)} abat sa carte`;
   let color = "var(--accent)"; 
-  let iconSvg = icons.logo("w-12 h-12");
+  let iconSvg = icons.logo("w-10 h-10");
 
-  if (action.type === "SHOT") { title = "Ciblage"; sub = `${esc(action.actor)} condamne ${esc(action.target)}`; iconSvg = icons.shot("w-12 h-12"); color = "#ef4444"; } 
-  else if (action.type === "THIEF") { title = "Vol"; sub = `${esc(action.actor)} dépouille ${esc(action.target)}`; iconSvg = icons.thief("w-12 h-12"); } 
-  else if (action.type === "SHIELD") { title = "Immunité"; sub = `${esc(action.actor)} se protège`; iconSvg = icons.shield("w-12 h-12"); } 
-  else if (action.type === "DOUBLE") { title = "Risque"; sub = `${esc(action.actor)} double la mise`; iconSvg = icons.double("w-12 h-12"); } 
-  else if (action.type === "MIRROR") { title = "Réflection"; sub = `${esc(action.actor)} se prépare`; iconSvg = icons.mirror("w-12 h-12"); color = "#ec4899"; } 
-  else if (action.type === "COUNTER") { title = "Riposte"; sub = `${esc(action.actor)} contre-attaque !`; iconSvg = action.joker === 'SHIELD' ? icons.shield("w-12 h-12") : icons.mirror("w-12 h-12"); color = "#06b6d4"; }
+  if (action.type === "SHOT") { title = "Ciblage"; sub = `${esc(action.actor)} condamne ${esc(action.target)}`; iconSvg = icons.shot("w-10 h-10"); color = "#ef4444"; } 
+  else if (action.type === "THIEF") { title = "Vol"; sub = `${esc(action.actor)} dépouille ${esc(action.target)}`; iconSvg = icons.thief("w-10 h-10"); } 
+  else if (action.type === "SHIELD") { title = "Immunité"; sub = `${esc(action.actor)} se protège`; iconSvg = icons.shield("w-10 h-10"); } 
+  else if (action.type === "DOUBLE") { title = "Risque"; sub = `${esc(action.actor)} double la mise`; iconSvg = icons.double("w-10 h-10"); } 
+  else if (action.type === "MIRROR") { title = "Réflection"; sub = `${esc(action.actor)} se prépare`; iconSvg = icons.mirror("w-10 h-10"); color = "#ec4899"; } 
+  else if (action.type === "COUNTER") { title = "Riposte"; sub = `${esc(action.actor)} contre-attaque !`; iconSvg = action.joker === 'SHIELD' ? icons.shield("w-10 h-10") : icons.mirror("w-10 h-10"); color = "#06b6d4"; }
 
   container.innerHTML = `
-    <div class="card-alert-container flex flex-col items-center justify-center w-full h-full relative z-10 pointer-events-none">
-       <div class="card-alert" style="box-shadow: 0 0 50px ${color}60">
-          <div class="card-alert-face"></div>
-          <div class="card-alert-face card-alert-back" style="border-color:${color}">
-             <span style="color:${color}" class="mb-4 drop-shadow-md">${iconSvg}</span>
-             <span class="font-serif italic text-white text-2xl tracking-wide px-2 text-center leading-none">${title}</span>
-          </div>
+    <div class="flex flex-col items-center justify-center w-full h-full relative z-10 pointer-events-none px-4">
+       <div class="card-alert" style="box-shadow: 0 0 50px ${color}80; border: 1px solid ${color};">
+          <span style="color:${color}" class="mb-3 drop-shadow-md">${iconSvg}</span>
+          <span class="font-serif italic text-white text-xl tracking-wide px-2 text-center leading-none">${title}</span>
        </div>
-       <div class="mt-8 text-center animate-pop" style="animation-delay: 1.5s; opacity: 0; animation-fill-mode: forwards;">
-          <span class="font-display text-[10px] uppercase tracking-widest text-white/80 border border-white/20 px-4 py-2 bg-black/50">${sub}</span>
+       <div class="mt-6 text-center animate-pop bg-black/90 border border-white/20 px-4 py-2 rounded-sm shadow-2xl">
+          <span class="font-display text-[10px] uppercase tracking-widest text-white">${sub}</span>
        </div>
     </div>
   `;
 
   container.classList.remove("hidden");
-  container.classList.add("fade-in");
+  // FORCE REFLOW : Garantit que l'animation CSS se joue à chaque appel
+  void container.offsetWidth;
 
   setTimeout(() => { 
-    container.classList.remove("fade-in");
-    container.classList.add("fade-out");
-    setTimeout(() => {
-        container.classList.add("hidden");
-        container.classList.remove("fade-out");
-        container.innerHTML = '';
-    }, 600);
-  }, 4500); 
+    container.classList.add("hidden");
+    container.innerHTML = '';
+  }, 2600); 
 }
 
 export function toggleRules() {
@@ -330,9 +324,9 @@ function renderVoting(r, t) {
           </div>`;
       } else {
           backContent = `
-            <span class="text-white font-serif italic text-sm mb-3 text-center">Confirmer ?</span>
-            <button onclick="window.confirmTarotAction('toggle', null, event)" class="w-[80%] py-2 border text-white font-display text-[10px] uppercase tracking-widest hover:bg-white/10 transition-colors rounded-sm" style="border-color:${t.accent}">Oui</button>
-            <button onclick="window.unflipTarotCard(event)" class="w-[80%] mt-2 py-1.5 border border-white/10 text-white/40 font-display text-[9px] uppercase tracking-widest hover:text-white transition-colors rounded-sm">Retour</button>
+            <span class="text-white font-serif italic text-xs mb-2 text-center">Confirmer ?</span>
+            <button onclick="window.confirmTarotAction('toggle', null, event)" class="w-[80%] py-1.5 border text-white font-display text-[9px] uppercase tracking-widest hover:bg-white/10 transition-colors rounded-sm" style="border-color:${t.accent}">Oui</button>
+            <button onclick="window.unflipTarotCard(event)" class="w-[80%] mt-1 py-1 border border-white/10 text-white/40 font-display text-[8px] uppercase tracking-widest hover:text-white transition-colors rounded-sm">Retour</button>
           `;
       }
 
