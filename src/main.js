@@ -8,7 +8,7 @@ import {
 } from './game.js';
 import * as UI from './ui.js';
 
-// Attachement global complet pour UI
+// Attachement global complet pour l'UI (HTML onclick)
 window.tryReconnect = tryReconnect;
 window.createRoom = createRoom;
 window.joinRoom = joinRoom;
@@ -58,6 +58,14 @@ function bindInputs() {
   const g = id => document.getElementById(id);
   const ni = g("nameI"); if (ni) ni.oninput = e => { S.name = e.target.value; sessionStorage.setItem('thermo_name', S.name); };
   const ji = g("joinI"); if (ji) ji.oninput = e => S.joinCode = e.target.value.toUpperCase();
+
+  // FIX : Retrait de 'Game.' qui faisait planter les clics
+  if (g("createB")) g("createB").onclick = createRoom;
+  if (g("joinB")) g("joinB").onclick = joinRoom;
+  if (g("startB")) g("startB").onclick = startRound;
+  if (g("voteB")) g("voteB").onclick = vote;
+  if (g("nextB")) g("nextB").onclick = nextRound;
+  if (g("restartB")) g("restartB").onclick = restart;
 
   const sl = g("slider");
   const sliderContainer = document.getElementById("slider-container");
