@@ -8,7 +8,7 @@ import {
 } from './game.js';
 import * as UI from './ui.js';
 
-// Attachement global complet pour l'UI (HTML onclick)
+// Liaisons pour le HTML onclick
 window.tryReconnect = tryReconnect;
 window.createRoom = createRoom;
 window.joinRoom = joinRoom;
@@ -59,16 +59,7 @@ function bindInputs() {
   const ni = g("nameI"); if (ni) ni.oninput = e => { S.name = e.target.value; sessionStorage.setItem('thermo_name', S.name); };
   const ji = g("joinI"); if (ji) ji.oninput = e => S.joinCode = e.target.value.toUpperCase();
 
-  // FIX : Retrait de 'Game.' qui faisait planter les clics
-  if (g("createB")) g("createB").onclick = createRoom;
-  if (g("joinB")) g("joinB").onclick = joinRoom;
-  if (g("startB")) g("startB").onclick = startRound;
-  if (g("voteB")) g("voteB").onclick = vote;
-  if (g("nextB")) g("nextB").onclick = nextRound;
-  if (g("restartB")) g("restartB").onclick = restart;
-
   const sl = g("slider");
-  const sliderContainer = document.getElementById("slider-container");
   if (sl) {
     sl.value = S.voteValue; 
     UI.updateThermometerColor(S.voteValue);
@@ -85,12 +76,6 @@ function bindInputs() {
         if (val > 80) haptic('heavy');
         else if (val > 50) haptic('medium');
         else haptic('light');
-      }
-
-      if (sliderContainer) {
-         if (val > 85) sliderContainer.className = "relative w-full h-40 flex items-center justify-center opacity-0 shake-heavy";
-         else if (val > 65) sliderContainer.className = "relative w-full h-40 flex items-center justify-center opacity-0 shake-light";
-         else sliderContainer.className = "relative w-full h-40 flex items-center justify-center opacity-0";
       }
     };
   }
@@ -139,16 +124,17 @@ UI.onAfterRender(function() {
     const flashEl = document.getElementById("flash-overlay");
     if (flashEl) flashEl.classList.remove("animate-flash");
   }
+  
+  const returnBtn = document.getElementById('hubReturnBtn');
+  if(returnBtn) returnBtn.onclick = handleHubReturn;
 });
 
 async function initApp() {
   syncLaTablePlayers();
   
-  const returnBtn = document.getElementById('hubReturnBtn');
-  if(returnBtn) returnBtn.onclick = handleHubReturn;
-
   const urlRoom = new URLSearchParams(window.location.search).get("room");
   if (urlRoom) S.joinCode = urlRoom.toUpperCase();
+  
   if (await tryReconnect()) return;
   UI.render();
 }
