@@ -1,7 +1,8 @@
 <!DOCTYPE html>
-<html lang="fr" class="bg-[#050505] h-full overflow-hidden">
+<html lang="fr">
 <head>
 <meta charset="UTF-8" />
+<!-- La clé pour IOS est viewport-fit=cover combiné aux CSS -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no, viewport-fit=cover" />
 <title>Le Thermomètre | La Carte</title>
 <meta name="theme-color" content="#050505" />
@@ -21,24 +22,24 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 </head>
 
-<body class="bg-[#050505] text-white h-full overflow-hidden m-0 p-0 selection:bg-transparent">
+<body>
 
 <div id="gold-overlay" class="fixed inset-0 bg-[#FFD700] mix-blend-overlay opacity-0 pointer-events-none z-[150] transition-opacity duration-1000"></div>
 
-<!-- CONTENEUR PLEIN ÉCRAN ABSOLU (Couvre l'écran de haut en bas sans bande noire) -->
-<div class="fixed inset-0 w-screen h-screen overflow-hidden z-10 bg-[#050505]" style="width: 100vw; height: 100vh; height: 100dvh;">
+<!-- LE WRAPPER GLOBAL : pure absolue, sans interférence de tailles Tailwind -->
+<div class="absolute inset-0 z-10 bg-[#050505] overflow-hidden">
   <div class="noise-overlay"></div>
 
-  <button id="hubReturnBtn" class="fixed top-0 left-4 z-[200] flex items-center gap-2 text-white/50 hover:text-white transition-colors font-display text-xs uppercase tracking-widest outline-none cursor-pointer pointer-events-auto" style="padding-top: max(env(safe-area-inset-top), 16px);">
+  <button id="hubReturnBtn" class="absolute top-0 left-4 z-[200] flex items-center gap-2 text-white/50 hover:text-white transition-colors font-display text-xs uppercase tracking-widest outline-none cursor-pointer pointer-events-auto" style="padding-top: max(env(safe-area-inset-top), 16px);">
     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
     La Carte
   </button>
 
-  <div id="toasts" class="fixed top-[calc(env(safe-area-inset-top,20px)+3rem)] left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2 w-[90%] max-w-sm pointer-events-none mt-4"></div>
+  <div id="toasts" class="absolute top-[calc(env(safe-area-inset-top,20px)+3rem)] left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2 w-[90%] max-w-sm pointer-events-none mt-4"></div>
 
-  <div id="smash-alert" class="fixed inset-0 z-[300] flex flex-col items-center justify-center pointer-events-none hidden bg-black/80 backdrop-blur-sm"></div>
+  <div id="smash-alert" class="absolute inset-0 z-[300] flex flex-col items-center justify-center pointer-events-none hidden bg-black/80 backdrop-blur-sm"></div>
 
-  <div id="counterModal" class="fixed inset-0 z-[280] hidden bg-black/90 backdrop-blur-lg flex items-center justify-center px-5 pointer-events-auto">
+  <div id="counterModal" class="absolute inset-0 z-[280] hidden bg-black/90 backdrop-blur-lg flex items-center justify-center px-5 pointer-events-auto">
     <div class="luxury-card w-full max-w-sm p-8 text-center flex flex-col items-center relative overflow-hidden animate-pop">
        <div class="relative z-10 w-full flex flex-col items-center">
           <h2 class="text-2xl font-serif italic mb-2 text-white tracking-wide" id="counter-title">Offensive ciblée</h2>
@@ -51,7 +52,7 @@
     </div>
   </div>
 
-  <div id="rulesModal" class="fixed inset-0 z-[250] hidden bg-black/90 backdrop-blur-lg flex items-center justify-center px-5 pointer-events-auto">
+  <div id="rulesModal" class="absolute inset-0 z-[250] hidden bg-black/90 backdrop-blur-lg flex items-center justify-center px-5 pointer-events-auto">
     <div class="luxury-card w-full max-w-md p-8 flex flex-col relative animate-pop max-h-[85vh]">
       <button onclick="toggleRules()" class="absolute top-4 right-4 text-white/40 hover:text-white font-display text-xs uppercase tracking-widest outline-none">Fermer</button>
       <h2 class="text-3xl font-serif italic mb-4 text-white tracking-wide">L'Étiquette & Privilèges</h2>
@@ -70,8 +71,7 @@
     </div>
   </div>
 
-  <!-- ZONE DE L'APPLICATION AVEC GESTION COMPLÈTE DES ENCOCHES BORDERLESS -->
-  <div id="app" class="w-full max-w-md mx-auto h-full overflow-x-hidden overflow-y-auto px-5 flex flex-col relative z-20 fade-in" style="padding-top: max(env(safe-area-inset-top), 40px); padding-bottom: max(env(safe-area-inset-bottom), 30px); -webkit-overflow-scrolling: touch;">
+  <div id="app" class="relative z-20 fade-in" style="padding-top: max(env(safe-area-inset-top), 40px); padding-bottom: max(env(safe-area-inset-bottom), 30px);">
     <!-- Injecté par ui.js -->
   </div>
 </div>
