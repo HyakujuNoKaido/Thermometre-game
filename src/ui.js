@@ -9,7 +9,7 @@ export function toast(msg, ok=false) {
   setTimeout(() => { el.classList.remove('fade-in'); el.classList.add('fade-out'); setTimeout(() => el.remove(), 600); }, 2500); 
 }
 
-// ALERTE VOLANTE (CARTE 3D ANIMÉE)
+// ALERTE CARTE VOLANTE (GLOBALE SUR TOUS LES ÉCRANS)
 export function showSmashAlert(action) {
   const container = document.getElementById("smash-alert");
   if (!container) return;
@@ -17,35 +17,36 @@ export function showSmashAlert(action) {
   let title = "Privilège";
   let sub = `${esc(action.actor)} abat sa carte`;
   let color = "var(--accent)"; 
-  let iconSvg = icons.logo("w-10 h-10");
+  let iconSvg = icons.logo("w-12 h-12");
 
-  if (action.type === "SHOT") { title = "Ciblage"; sub = `${esc(action.actor)} condamne ${esc(action.target)}`; iconSvg = icons.shot("w-10 h-10"); color = "#ef4444"; } 
-  else if (action.type === "THIEF") { title = "Vol"; sub = `${esc(action.actor)} dépouille ${esc(action.target)}`; iconSvg = icons.thief("w-10 h-10"); } 
-  else if (action.type === "SHIELD") { title = "Immunité"; sub = `${esc(action.actor)} se protège`; iconSvg = icons.shield("w-10 h-10"); } 
-  else if (action.type === "DOUBLE") { title = "Risque"; sub = `${esc(action.actor)} double la mise`; iconSvg = icons.double("w-10 h-10"); } 
-  else if (action.type === "MIRROR") { title = "Réflection"; sub = `${esc(action.actor)} se prépare`; iconSvg = icons.mirror("w-10 h-10"); color = "#ec4899"; } 
-  else if (action.type === "COUNTER") { title = "Riposte"; sub = `${esc(action.actor)} contre-attaque !`; iconSvg = action.joker === 'SHIELD' ? icons.shield("w-10 h-10") : icons.mirror("w-10 h-10"); color = "#06b6d4"; }
+  if (action.type === "SHOT") { title = "Cul Sec"; sub = `${esc(action.actor)} condamne ${esc(action.target)}`; iconSvg = icons.shot("w-12 h-12"); color = "#ef4444"; } 
+  else if (action.type === "THIEF") { title = "Voleur"; sub = `${esc(action.actor)} dépouille ${esc(action.target)}`; iconSvg = icons.thief("w-12 h-12"); } 
+  else if (action.type === "SHIELD") { title = "Bouclier"; sub = `${esc(action.actor)} se protège`; iconSvg = icons.shield("w-12 h-12"); color = "#06b6d4"; } 
+  else if (action.type === "DOUBLE") { title = "Double"; sub = `${esc(action.actor)} double la mise`; iconSvg = icons.double("w-12 h-12"); color = "#eab308"; } 
+  else if (action.type === "MIRROR") { title = "Miroir"; sub = `${esc(action.actor)} renvoie l'attaque`; iconSvg = icons.mirror("w-12 h-12"); color = "#ec4899"; } 
+  else if (action.type === "COUNTER") { title = "Riposte"; sub = `${esc(action.actor)} contre-attaque !`; iconSvg = action.joker === 'SHIELD' ? icons.shield("w-12 h-12") : icons.mirror("w-12 h-12"); color = "#06b6d4"; }
 
   container.innerHTML = `
-    <div class="flex flex-col items-center justify-center w-full h-full relative z-10 pointer-events-none px-4">
-       <div class="card-alert" style="box-shadow: 0 0 50px ${color}80; border: 1px solid ${color};">
-          <span style="color:${color}" class="mb-3 drop-shadow-md">${iconSvg}</span>
-          <span class="font-serif italic text-white text-xl tracking-wide px-2 text-center leading-none">${title}</span>
+    <div class="flex flex-col items-center justify-center w-full h-full relative z-50 pointer-events-none px-4">
+       <div class="flying-tarot-alert" style="box-shadow: 0 0 60px ${color}80; border: 1px solid ${color};">
+          <span style="color:${color}" class="mb-3 drop-shadow-[0_0_15px_${color}]">${iconSvg}</span>
+          <span class="font-serif italic text-white text-2xl tracking-wide px-2 text-center leading-none mb-1">${title}</span>
+          <span class="font-display text-[8px] uppercase tracking-[0.2em] text-white/50">Sortilège actif</span>
        </div>
-       <div class="mt-6 text-center animate-pop bg-black/90 border border-white/20 px-4 py-2 rounded-sm shadow-2xl">
-          <span class="font-display text-[10px] uppercase tracking-widest text-white">${sub}</span>
+       <div class="mt-6 text-center animate-pop bg-black/90 border border-white/20 px-6 py-2.5 rounded-sm shadow-2xl backdrop-blur-md">
+          <span class="font-display text-xs uppercase tracking-widest text-white font-bold">${sub}</span>
        </div>
     </div>
   `;
 
   container.classList.remove("hidden");
-  // FORCE REFLOW : Garantit que l'animation CSS se joue à chaque appel
+  // FORCE REFLOW POUR LANCER L'ANIMATION SUR TOUS LES MOBILES
   void container.offsetWidth;
 
   setTimeout(() => { 
     container.classList.add("hidden");
     container.innerHTML = '';
-  }, 2600); 
+  }, 3500); 
 }
 
 export function toggleRules() {
@@ -94,7 +95,7 @@ export function updateThermometerColor(val) {
   }
 }
 
-// GESTION DU TOUCHER SUR LA CARTE INTERACTIVE
+// GESTION DU TOUCHER SUR LA CARTE INTERACTIVE (DOUBLE TAP / FLIP)
 window.flipTarotCard = function(e) {
   if (e) { e.stopPropagation(); e.preventDefault(); }
   const card = document.getElementById('tarot-card-interactive');
@@ -309,24 +310,24 @@ function renderVoting(r, t) {
       if (myJokerStr === "THIEF") {
           const stealablePlayers = connectedArr(r).filter(p => p.id !== S.pid && p.joker && !p.jokerConsumed);
           if (stealablePlayers.length > 0) {
-              backContent = `<span class="text-white/50 font-display uppercase tracking-widest text-[8px] block mb-2">Dérober la carte de :</span>
-              <div class="flex flex-col gap-1 w-full px-2 max-h-24 overflow-y-auto scroll">
-                  ${stealablePlayers.map(p => `<button onclick="window.confirmTarotAction('steal', '${p.id}', event)" class="w-full py-1.5 border border-white/20 text-white font-display text-[9px] uppercase tracking-widest hover:bg-white/10 transition-colors rounded-sm">${esc(p.name)}</button>`).join("")}
+              backContent = `<span class="text-white/50 font-display uppercase tracking-widest text-[8px] block mb-1">Dérober :</span>
+              <div class="flex flex-col gap-1 w-full px-1 max-h-20 overflow-y-auto scroll">
+                  ${stealablePlayers.map(p => `<button onclick="window.confirmTarotAction('steal', '${p.id}', event)" class="w-full py-1 border border-white/20 text-white font-display text-[8px] uppercase tracking-widest hover:bg-white/10 transition-colors rounded-sm">${esc(p.name)}</button>`).join("")}
               </div>`;
           } else {
-              backContent = `<span class="text-white/30 text-[9px] font-display uppercase tracking-widest text-center px-2">Aucune cible valide</span>`;
+              backContent = `<span class="text-white/30 text-[8px] font-display uppercase tracking-widest text-center px-1">Aucune cible</span>`;
           }
       } else if (myJokerStr === "SHOT") {
           const attackablePlayers = connectedArr(r).filter(p => p.id !== S.pid);
-          backContent = `<span class="text-white/50 font-display uppercase tracking-widest text-[8px] block mb-2">Condamner :</span>
-          <div class="flex flex-col gap-1 w-full px-2 max-h-24 overflow-y-auto scroll">
-              ${attackablePlayers.map(p => `<button onclick="window.confirmTarotAction('shot', '${p.id}', event)" class="w-full py-1.5 border border-white/20 text-white font-display text-[9px] uppercase tracking-widest hover:bg-white/10 transition-colors rounded-sm">${esc(p.name)}</button>`).join("")}
+          backContent = `<span class="text-white/50 font-display uppercase tracking-widest text-[8px] block mb-1">Condamner :</span>
+          <div class="flex flex-col gap-1 w-full px-1 max-h-20 overflow-y-auto scroll">
+              ${attackablePlayers.map(p => `<button onclick="window.confirmTarotAction('shot', '${p.id}', event)" class="w-full py-1 border border-white/20 text-white font-display text-[8px] uppercase tracking-widest hover:bg-white/10 transition-colors rounded-sm">${esc(p.name)}</button>`).join("")}
           </div>`;
       } else {
           backContent = `
-            <span class="text-white font-serif italic text-xs mb-2 text-center">Confirmer ?</span>
-            <button onclick="window.confirmTarotAction('toggle', null, event)" class="w-[80%] py-1.5 border text-white font-display text-[9px] uppercase tracking-widest hover:bg-white/10 transition-colors rounded-sm" style="border-color:${t.accent}">Oui</button>
-            <button onclick="window.unflipTarotCard(event)" class="w-[80%] mt-1 py-1 border border-white/10 text-white/40 font-display text-[8px] uppercase tracking-widest hover:text-white transition-colors rounded-sm">Retour</button>
+            <span class="text-white font-serif italic text-xs mb-1">Confirmer ?</span>
+            <button onclick="window.confirmTarotAction('toggle', null, event)" class="w-[85%] py-1.5 border text-white font-display text-[9px] uppercase tracking-widest hover:bg-white/10 transition-colors rounded-sm" style="border-color:${t.accent}">Oui</button>
+            <button onclick="window.unflipTarotCard(event)" class="w-[85%] mt-1 py-1 border border-white/10 text-white/40 font-display text-[8px] uppercase tracking-widest hover:text-white transition-colors rounded-sm">Retour</button>
           `;
       }
 
@@ -334,9 +335,9 @@ function renderVoting(r, t) {
       <div class="tarot-scene-interactive mb-4">
         <div id="tarot-card-interactive" class="tarot-card-interactive" ontouchstart="window.flipTarotCard(event)" onclick="window.flipTarotCard(event)">
            <div class="tarot-face tarot-front">
-              <span style="color:${t.accent}" class="mb-2 drop-shadow-md">${myJoker.icon("w-10 h-10")}</span>
-              <span class="font-serif italic text-white text-lg tracking-wide text-center leading-none">${esc(myJoker.name)}</span>
-              <span class="font-display text-[8px] text-white/40 uppercase tracking-widest mt-2 border border-white/10 px-2 py-1 rounded-sm bg-black/40">Abattre la carte</span>
+              <span style="color:${t.accent}" class="mb-1 drop-shadow-md">${myJoker.icon("w-8 h-8")}</span>
+              <span class="font-serif italic text-white text-base tracking-wide text-center leading-none">${esc(myJoker.name)}</span>
+              <span class="font-display text-[7px] text-white/40 uppercase tracking-widest mt-1 border border-white/10 px-1.5 py-0.5 rounded-sm bg-black/40">Abattre</span>
            </div>
            <div class="tarot-face tarot-back" style="border-color:${t.accent}">
               ${backContent}
