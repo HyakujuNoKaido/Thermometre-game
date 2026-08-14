@@ -6,11 +6,12 @@ let revealing = false;
 let promoting = false;
 let lastActionId = null;
 
-// Nettoyage de salle si tout le monde est parti
+// Nettoyage absolu Firebase (supprime la Room si le dossier players est vide)
 async function cleanRoomIfEmpty(code) {
+  if (!code) return;
   try {
     const snap = await db.ref(`rooms/${code}/players`).get();
-    if (!snap.exists() || Object.keys(snap.val()).length === 0) {
+    if (!snap.exists() || Object.keys(snap.val() || {}).length === 0) {
       await db.ref(`rooms/${code}`).remove();
     }
   } catch(e) {}
@@ -82,9 +83,8 @@ function enterRoom(code, pid) {
   
   const connRef = db.ref(`rooms/${code}/players/${pid}/connected`);
   connRef.onDisconnect().cancel(); 
-  // Suppression réelle du noeud au lieu de juste connected: false pour libérer la DB
   db.ref(`rooms/${code}/players/${pid}`).onDisconnect().remove().then(() => {
-    db.ref(`rooms/${code}/players`).onDisconnect().cancel(); // Éviter suppression globale erronée
+    db.ref(`rooms/${code}/players`).onDisconnect().cancel(); 
   });
 
   S.roomRef = db.ref("rooms/" + code);
@@ -191,12 +191,19 @@ function detach() {
   S.code = null; S.pid = null; history.replaceState(null, "", window.location.pathname);
 }
 
+// LA CORRECTION DU QUITTER (Supprime le joueur et la room si vide)
 export async function quitGame() { 
   try { 
-    if (S.code && S.pid) await db.ref(`rooms/${S.code}/players/${S.pid}`).remove(); 
-    cleanRoomIfEmpty(S.code);
+    const code = S.code;
+    const pid = S.pid;
+    detach(); 
+    S.screen = "HOME"; 
+    render(); 
+    if (code && pid) {
+      await db.ref(`rooms/${code}/players/${pid}`).remove(); 
+      cleanRoomIfEmpty(code);
+    }
   } catch(e) {}
-  detach(); S.screen = "HOME"; render(); 
 }
 
 export async function changeMaxRounds(num) { if(S.pid !== S.room.hostId) return; await S.roomRef.update({ maxRounds: num }); }
@@ -291,7 +298,6 @@ export async function hostAutoReveal() {
 
     const hasJoker = (id, jName) => { const p = r.players[id]; return p && p.jokerActive && p.joker === jName && !p.jokerConsumed; };
 
-    // --- NOUVEAU CALCUL : LE PRIX DU CONSENSUS ---
     const tid = r.question.targetId; 
     const tv = votes[tid] !== undefined ? votes[tid] : 50; 
     const allVotes = Object.values(votes);
@@ -328,7 +334,6 @@ export async function hostAutoReveal() {
       const playerDiff = Math.abs(votes[id] - average);
       let sips = 0;
       
-      // Pénalité pour le groupe : si la cible boit, ceux qui ont encore plus mal jugé que la cible boivent aussi.
       if (targetSips > 0 && playerDiff > targetDiff + 5) {
           sips = 1;
       }
