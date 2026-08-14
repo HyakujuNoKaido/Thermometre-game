@@ -96,8 +96,10 @@ function applyBg() {
   document.documentElement.style.setProperty('--accent', t.accent);
 }
 
+// FIX: Affiche de nouveau le pourcentage qui manquait à cause de la refonte
 export function updateThermometerColor(val) {
-  // Le visuel gère tout désormais via la variable CSS.
+  const sv = document.getElementById("sv");
+  if (sv) sv.textContent = val + "%";
 }
 
 function renderHome(t) { 
@@ -201,8 +203,9 @@ function renderLobby(r, t) {
         ${ps.map(p => `
           <div class="flex items-center justify-between py-2 border-b border-white/5 last:border-0">
             <div class="flex items-center gap-4">
-              <span class="font-display font-light text-white text-lg capitalize tracking-wide">${esc(p.name)}</span>
+              <span class="font-display font-light text-white text-lg capitalize tracking-wide ${p.connected === false ? 'opacity-40' : ''}">${esc(p.name)}</span>
               ${p.id === S.pid ? `<span class="text-[9px] font-display uppercase tracking-widest border border-white/20 text-white/60 px-2 py-0.5">Vous</span>` : ''}
+              ${p.connected === false ? `<span class="text-[9px] font-display uppercase tracking-widest text-red-500/80">Absent</span>` : ''}
             </div>
             ${isHost ? `<button onclick="window.cycleJoker('${p.id}')" class="text-white/40 hover:text-white transition-colors" title="Modifier le pouvoir">${JOKERS[p.joker]?.icon("w-5 h-5")}</button>` : `<div class="text-white/20">${JOKERS[p.joker]?.icon("w-5 h-5")}</div>`}
           </div>
@@ -378,18 +381,22 @@ function renderReveal(r, t) {
     </div>`;
   }
 
-  const recapList = connectedArr(r).map(p => {
+  // FIX: On boucle sur TOUS les joueurs de la room, même ceux ayant refresh (déco fantôme) pour qu'ils s'affichent
+  const recapList = playersArr(r).map(p => {
        const v = (r.votes || {})[p.id];
        const isTarget = p.id === res.targetId;
-       return `<div class="flex justify-between items-center py-2 border-b border-white/5 last:border-0 ${isTarget ? 'text-white' : 'text-white/60'}">
-         <span class="text-sm font-display font-light capitalize tracking-wide">${esc(p.name)} ${isTarget ? '<span class="text-[9px] font-display text-white/40 tracking-widest uppercase">(Cible)</span>' : ''}</span>
+       const opacityClass = p.connected === false ? 'opacity-40' : '';
+       return `<div class="flex justify-between items-center py-2 border-b border-white/5 last:border-0 ${isTarget ? 'text-white' : 'text-white/60'} ${opacityClass}">
+         <span class="text-sm font-display font-light capitalize tracking-wide">${esc(p.name)} ${isTarget ? '<span class="text-[9px] font-display text-white/40 tracking-widest uppercase">(Cible)</span>' : ''} ${p.connected === false ? '<span class="text-[9px] font-display text-red-500/80 tracking-widest uppercase ml-1">Absent</span>' : ''}</span>
          <span class="font-display font-light text-xl" ${isTarget ? `style="color:${t.accent}"` : ''}>${v !== undefined ? v.toString().padStart(2, '0') + '%' : '---'}</span>
        </div>`;
   }).join("");
 
+  // FIX: Ajout du bouton Clôturer la Session en avance pour l'hôte
   const hostControls = isHost ? `
     <div class="flex flex-col gap-4 mt-6 w-full">
       <button id="nextB" class="w-full py-4 luxury-btn" style="border-color:${t.accent}; color:${t.accent}">${r.maxRounds > 0 && r.round >= r.maxRounds ? 'Bilan Final' : 'Question Suivante'}</button>
+      <button onclick="window.endGame()" class="w-full py-4 luxury-btn !border-red-500/30 !text-red-500/80 hover:!bg-red-500/10 transition-colors">Clôturer la session</button>
     </div>
   ` : `<p class="font-display text-[10px] text-center uppercase tracking-widest text-white/40 mt-8">En attente de l'hôte...</p>`;
 
