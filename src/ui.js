@@ -1,6 +1,7 @@
 import { S, THEMES, JOKERS, esc, connectedArr, playersArr, haptic } from './store.js';
 import { icons } from './icons/index.js';
 import { activateCounter } from './game.js';
+import { init3D, update3DThermometer, toggle3DThermometer, resetTarotCard, burnTarotCard } from './webgl.js';
 
 export function toast(msg, ok=false) { 
   const el = document.createElement("div"); 
@@ -22,44 +23,20 @@ export function showSmashAlert(action) {
   let color = "var(--accent)"; 
   let iconSvg = icons.logo("w-20 h-20 sm:w-28 sm:h-28 mx-auto text-white opacity-80");
 
-  if (action.type === "SHOT") {
-      title = "Ciblage";
-      sub = `${esc(action.actor)} condamne ${esc(action.target)}`;
-      iconSvg = icons.alert("w-16 h-16 mx-auto text-white");
-  } else if (action.type === "THIEF") {
-      title = "Vol Subtil";
-      sub = `${esc(action.actor)} dépouille ${esc(action.target)}`;
-      iconSvg = icons.thief("w-16 h-16 mx-auto text-white");
-  } else if (action.type === "SHIELD") {
-      title = "Immunité";
-      sub = `${esc(action.actor)} se protège`;
-      iconSvg = icons.shield("w-16 h-16 mx-auto text-white");
-  } else if (action.type === "DOUBLE") {
-      title = "Risque Maximal";
-      sub = `${esc(action.actor)} double les enjeux`;
-      iconSvg = icons.double("w-16 h-16 mx-auto text-white");
-  } else if (action.type === "MIRROR") {
-      title = "Réflection";
-      sub = `${esc(action.actor)} prépare sa défense`;
-      iconSvg = icons.mirror("w-16 h-16 mx-auto text-white");
-  } else if (action.type === "COUNTER") {
-      title = "Contre-Offensive";
-      sub = `${esc(action.actor)} riposte vigoureusement`;
-      iconSvg = action.joker === 'SHIELD' ? icons.shield("w-16 h-16 mx-auto text-white") : icons.mirror("w-16 h-16 mx-auto text-white");
-  }
+  if (action.type === "SHOT") { title = "Ciblage"; sub = `${esc(action.actor)} condamne ${esc(action.target)}`; iconSvg = icons.shot("w-16 h-16 mx-auto text-white"); } 
+  else if (action.type === "THIEF") { title = "Vol Subtil"; sub = `${esc(action.actor)} dépouille ${esc(action.target)}`; iconSvg = icons.thief("w-16 h-16 mx-auto text-white"); } 
+  else if (action.type === "SHIELD") { title = "Immunité"; sub = `${esc(action.actor)} se protège`; iconSvg = icons.shield("w-16 h-16 mx-auto text-white"); } 
+  else if (action.type === "DOUBLE") { title = "Risque Maximal"; sub = `${esc(action.actor)} double les enjeux`; iconSvg = icons.double("w-16 h-16 mx-auto text-white"); } 
+  else if (action.type === "MIRROR") { title = "Réflection"; sub = `${esc(action.actor)} prépare sa défense`; iconSvg = icons.mirror("w-16 h-16 mx-auto text-white"); } 
+  else if (action.type === "COUNTER") { title = "Contre-Offensive"; sub = `${esc(action.actor)} riposte vigoureusement`; iconSvg = action.joker === 'SHIELD' ? icons.shield("w-16 h-16 mx-auto text-white") : icons.mirror("w-16 h-16 mx-auto text-white"); }
 
   if(iconEl) iconEl.innerHTML = iconSvg;
-  if(titleEl) {
-      titleEl.textContent = title;
-      titleEl.style.color = color;
-  }
-  if(subEl) {
-      subEl.textContent = sub;
-  }
+  if(titleEl) { titleEl.textContent = title; titleEl.style.color = color; }
+  if(subEl) subEl.textContent = sub;
 
   container.classList.remove("hidden");
   container.classList.add("fade-in");
-  container.classList.add("animate-alert-glow"); // Ajoute de la vie à l'alerte
+  container.classList.add("animate-alert-glow"); 
 
   setTimeout(() => { 
     container.classList.remove("fade-in");
@@ -72,65 +49,58 @@ export function showSmashAlert(action) {
   }, 2800);
 }
 
-export function confirmCounter() {
-  document.getElementById("counterModal").classList.add("hidden");
-  activateCounter();
-}
-export function ignoreCounter() {
-  document.getElementById("counterModal").classList.add("hidden");
-}
-window.confirmCounter = confirmCounter;
-window.ignoreCounter = ignoreCounter;
+export function confirmCounter() { document.getElementById("counterModal").classList.add("hidden"); activateCounter(); }
+export function ignoreCounter() { document.getElementById("counterModal").classList.add("hidden"); }
+window.confirmCounter = confirmCounter; window.ignoreCounter = ignoreCounter;
 
 export function toggleRules() {
   const modal = document.getElementById('rulesModal');
   if (!modal) return;
-  if (modal.classList.contains('hidden')) {
-    modal.classList.remove('hidden');
-  } else {
-    modal.classList.add('hidden');
-  }
+  if (modal.classList.contains('hidden')) modal.classList.remove('hidden'); else modal.classList.add('hidden');
 }
 
 function applyBg() { 
-  const t = THEMES[(S.room && S.room.mode) || S.pendingMode] || THEMES.Chill;
+  let t = THEMES[(S.room && S.room.mode) || S.pendingMode] || THEMES.Chill;
+  const goldOverlay = document.getElementById("gold-overlay");
+  
+  // LA PART DES ANGES (Thème OR)
+  if (S.room && S.room.angelRound) {
+      t = { accent: "#FFD700" }; 
+      if (goldOverlay) { goldOverlay.classList.remove("opacity-0"); goldOverlay.classList.add("opacity-30"); }
+  } else {
+      if (goldOverlay) { goldOverlay.classList.add("opacity-0"); goldOverlay.classList.remove("opacity-30"); }
+  }
   document.documentElement.style.setProperty('--accent', t.accent);
 }
 
-// Fonction de conversion Hex -> RGB
-function hexToRgb(hex) {
-    var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    return result ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) } : {r: 255, g: 255, b: 255};
+export function updateThermometerColor(val) {
+  const sv = document.getElementById("sv");
+  if (sv) sv.textContent = val + "%";
+  // On envoie la valeur au WebGL
+  update3DThermometer(val);
 }
 
-export function updateThermometerColor(val) {
-  const t = THEMES[(S.room && S.room.mode) || S.pendingMode] || THEMES.Chill;
-  
-  // Mix de couleur dynamique: Du Theme Accent vers le Rouge Vif (#FF003C)
-  const start = hexToRgb(t.accent);
-  const end = {r: 255, g: 0, b: 60}; 
-  const ratio = val / 100;
-  const color = `rgb(${Math.round(start.r + (end.r - start.r) * ratio)}, ${Math.round(start.g + (end.g - start.g) * ratio)}, ${Math.round(start.b + (end.b - start.b) * ratio)})`;
-
-  const sv = document.getElementById("sv");
-  if (sv) {
-      sv.textContent = val + "%";
-      sv.style.color = color;
-      sv.style.textShadow = `0 0 20px ${color}`;
+// Fonction utilitaire pour lier le WebGL aux vues
+function handle3DVisibility(phase) {
+  // Le WebGL est initialisé une seule fois
+  init3D();
+  if (phase === "VOTING" && !(S.room.votes && S.room.votes[S.pid] !== undefined)) {
+     toggle3DThermometer(true);
+  } else {
+     toggle3DThermometer(false);
   }
 
-  const fill = document.getElementById("slider-fill");
-  const thumb = document.getElementById("slider-thumb");
-  
-  if(fill) {
-      fill.style.width = val + "%";
-      fill.style.background = color;
-      fill.style.boxShadow = `0 0 ${10 + (val/5)}px ${color}`;
-  }
-  if(thumb) {
-      thumb.style.left = val + "%";
-      thumb.style.background = '#fff';
-      thumb.style.boxShadow = `0 0 ${15 + (val/3)}px ${color}`;
+  // La Carte Tarot est visible si on a un pouvoir et qu'on ne l'a pas consommé
+  if (S.room && S.room.players && S.room.players[S.pid]) {
+      const me = S.room.players[S.pid];
+      if (me.joker && !me.jokerConsumed && phase !== "HOME") {
+          resetTarotCard(true);
+          if (me.jokerActive) burnTarotCard();
+      } else {
+          resetTarotCard(false);
+      }
+  } else {
+      resetTarotCard(false);
   }
 }
 
@@ -145,7 +115,7 @@ function renderHome(t) {
     }
   } catch(e) {}
 
-  return `<div class="flex-1 flex flex-col justify-center pb-8 mt-12 animate-pop">
+  return `<div class="flex-1 flex flex-col justify-center pb-8 mt-12 animate-pop relative z-10">
     <div class="text-center mb-10">
       <h1 class="text-4xl font-serif italic tracking-wide text-white mb-2">Le <span style="color:${t.accent}">Thermo</span>mètre</h1>
       <p class="font-display text-[10px] text-white/40 uppercase tracking-widest">Évaluer. Sanctionner. Répéter.</p>
@@ -202,7 +172,7 @@ function renderLobby(r, t) {
          <h2 class="text-xs font-display uppercase tracking-widest text-white/50">Privilèges</h2>
          <button onclick="window.randomizeJokers()" class="text-[10px] font-display uppercase tracking-widest text-white/60 hover:text-white border border-white/20 px-3 py-1.5 rounded-sm transition-colors">Mélanger</button>
       </div>
-      <p class="text-xs text-white/40 font-display mt-2 leading-relaxed">En tant qu'hôte, vous pouvez redistribuer les privilèges de chacun.</p>
+      <p class="text-xs text-white/40 font-display mt-2 leading-relaxed">Le jeu de Tarot 3D sera distribué aux invités à l'ouverture.</p>
     </div>
   ` : `
     <div class="luxury-card p-5 flex items-center gap-5 mt-4">
@@ -210,12 +180,12 @@ function renderLobby(r, t) {
       <div class="flex flex-col min-w-0 gap-1">
         <span class="text-[10px] font-display uppercase tracking-widest text-white/50">Votre privilège</span>
         <span class="text-sm font-serif italic text-white tracking-wide capitalize">${myJoker ? esc(myJoker.name) : 'Aucun'}</span>
-        <span class="text-[11px] text-white/40 font-display leading-snug">${myJoker ? esc(myJoker.desc) : ''}</span>
+        <span class="text-[11px] text-white/40 font-display leading-snug">La carte flottera à l'écran durant la partie.</span>
       </div>
     </div>
   `;
 
-  return `<div class="flex-1 flex flex-col pb-8 mt-10">
+  return `<div class="flex-1 flex flex-col pb-8 mt-10 relative z-10">
     <div class="flex justify-between items-center mb-6 px-2">
       <button onclick="window.toggleRules()" class="font-display text-[10px] uppercase tracking-widest text-white/50 border border-white/10 px-3 py-1.5 rounded-sm hover:text-white transition-colors">L'Étiquette</button>
       <button onclick="window.quitGame()" class="font-display text-[10px] uppercase tracking-widest text-red-500/80 border border-red-500/30 px-3 py-1.5 rounded-sm hover:text-red-500 transition-colors">Quitter</button>
@@ -290,35 +260,40 @@ function renderVoting(r, t) {
           }
       } else {
           if (!me.jokerActive) {
-              jokerActionHtml = `<button onclick="window.toggleJoker()" class="w-full py-4 luxury-btn mb-4">Engager le privilège : ${esc(myJoker.name)}</button>`;
+              jokerActionHtml = `<button onclick="window.toggleJoker();" class="w-full py-4 luxury-btn mb-4">Consumer le privilège : ${esc(myJoker.name)}</button>`;
           } else {
-              jokerActionHtml = `<button onclick="window.toggleJoker()" class="w-full py-4 luxury-card !bg-white/5 border border-white/10 text-white/50 font-display text-xs uppercase tracking-widest mb-4 hover:text-white transition-colors">Privilège engagé (Annuler)</button>`;
+              jokerActionHtml = `<button class="w-full py-4 luxury-card !bg-white/5 border border-white/10 text-white/50 font-display text-xs uppercase tracking-widest mb-4 pointer-events-none">Privilège en action...</button>`;
           }
       }
-  } else if (me.jokerConsumed) {
-      jokerActionHtml = `<div class="w-full border border-white/10 p-3 mb-4 text-center text-white/30 text-[10px] font-display uppercase tracking-widest">Privilège épuisé</div>`;
+  }
+
+  let pactHtml = "";
+  if (r.bloodPact && (r.bloodPact.p1 === S.pid || r.bloodPact.p2 === S.pid)) {
+      const partnerId = r.bloodPact.p1 === S.pid ? r.bloodPact.p2 : r.bloodPact.p1;
+      const partnerName = r.players[partnerId]?.name || "Inconnu";
+      pactHtml = `<div class="w-full bg-red-600/20 border-b border-red-500/50 py-2 text-center fixed top-0 left-0 z-50 text-red-200 font-display text-[9px] uppercase tracking-widest">
+        🩸 PACTE DE SANG : Vos destinées sont liées à ${esc(partnerName)}.
+      </div>`;
   }
   
-  return `<div class="flex-1 flex flex-col justify-center gap-8 pb-8 mt-4 animate-pop">
+  return `${pactHtml}<div class="flex-1 flex flex-col justify-center gap-8 pb-8 mt-4 animate-pop relative z-10">
     <div class="text-center pt-8 relative">
-      <span class="absolute top-0 left-1/2 -translate-x-1/2 font-display text-[10px] uppercase tracking-widest text-white/30 border border-white/10 px-3 py-1">${roundCounter}</span>
-      <h2 class="text-3xl font-serif italic leading-snug mt-6 px-4">"${esc(q.text)}"</h2>
+      <span class="absolute top-0 left-1/2 -translate-x-1/2 font-display text-[10px] uppercase tracking-widest text-white/30 border border-white/10 px-3 py-1">${r.angelRound ? 'LA PART DES ANGES' : roundCounter}</span>
+      <h2 class="text-3xl font-serif italic leading-snug mt-6 px-4" style="${r.angelRound ? 'color:#FFD700' : ''}">"${esc(q.text)}"</h2>
       ${amTarget ? `<span class="mt-4 inline-block text-xs font-display uppercase tracking-widest border border-white/20 px-4 py-2 glow-active bg-white/5 text-white" style="border-color:${t.accent}; box-shadow:0 0 15px ${t.accent}40">Cible : Vous-même</span>` : ''}
     </div>
 
     ${!voted ? `
       ${jokerActionHtml}
       <div class="mt-4 flex flex-col items-center gap-8 px-4">
+        <!-- Le Slider 3D se trouve en fond, on met un input transparent au-dessus -->
         <span id="sv" class="text-6xl font-display font-light text-white tracking-tighter" style="color:${t.accent}">${S.voteValue}%</span>
         
-        <div id="slider-container" class="relative w-full h-12 flex items-center">
-          <div class="absolute left-0 right-0 h-0.5 bg-white/10 rounded-full"></div>
-          <div id="slider-fill" class="absolute left-0 h-0.5 rounded-full transition-all duration-75" style="width: ${S.voteValue}%; background: ${t.accent}; box-shadow: 0 0 10px ${t.accent};"></div>
-          <div id="slider-thumb" class="absolute h-8 w-1.5 bg-white rounded-sm transition-all duration-75 transform -translate-x-1/2" style="left: ${S.voteValue}%; box-shadow: 0 0 15px ${t.accent};"></div>
-          <input type="range" id="slider" min="0" max="100" value="${S.voteValue}" class="thermo-slider absolute inset-0 z-10" />
+        <div id="slider-container" class="relative w-full h-40 flex items-center justify-center opacity-0">
+          <input type="range" id="slider" min="0" max="100" value="${S.voteValue}" class="absolute inset-0 w-full h-full cursor-pointer z-50" style="touch-action: pan-x;" />
         </div>
 
-        <button id="voteB" class="w-full py-4 luxury-btn mt-2 breathing" style="border-color:${t.accent}; color:${t.accent}">Sceller la décision</button>
+        <button id="voteB" class="w-full py-4 luxury-btn mt-2 breathing bg-black/50" style="border-color:${t.accent}; color:${t.accent}">Sceller la décision</button>
       </div>
     ` : `
       <div class="mt-10 flex flex-col items-center">
@@ -383,40 +358,49 @@ function renderReveal(r, t) {
   }
 
   let targetVerdictHtml = "";
-  if (res.givesSips > 0) {
-    targetVerdictHtml = `<div class="w-full border border-white/20 p-5 text-center text-white font-serif italic tracking-wide flex flex-col gap-2 mt-4">
-      <span class="text-2xl" style="color:${t.accent}">${esc(res.targetName)} distribue ${res.givesSips} gorgée${res.givesSips > 1 ? 's' : ''}</span>
-      <span class="text-xs font-display font-sans text-white/60 tracking-widest uppercase">${res.targetMsg}</span>
-    </div>`;
-  } else if (res.targetShot) {
-    targetVerdictHtml = `<div class="w-full border border-red-500/50 p-5 text-center text-white font-serif italic tracking-wide flex flex-col gap-2 mt-4">
-      <span class="text-2xl">Condamnation absolue : CUL SEC</span>
-      <span class="text-xs font-display font-sans text-white/60 tracking-widest uppercase">${res.targetMsg} (${res.targetDiff} pts d'écart)</span>
-    </div>`;
-  } else if (res.targetSips > 0) {
-    targetVerdictHtml = `<div class="w-full border border-white/20 p-5 text-center text-white font-serif italic tracking-wide flex flex-col gap-2 mt-4">
-      <span class="text-2xl">${esc(res.targetName)} boit ${res.targetSips} gorgée${res.targetSips > 1 ? 's' : ''}</span>
-      <span class="text-xs font-display font-sans text-white/60 tracking-widest uppercase">${res.targetMsg}</span>
+  if (r.angelRound) {
+    targetVerdictHtml = `<div class="w-full border border-[#FFD700]/50 p-5 text-center text-white font-serif italic tracking-wide flex flex-col gap-2 mt-4">
+      <span class="text-2xl" style="color:#FFD700">Clémence Divine</span>
+      <span class="text-xs font-display font-sans text-white/80 tracking-widest uppercase">${res.targetMsg}</span>
+      ${res.angelLoser ? `<span class="mt-2 text-[10px] font-display text-[#FFD700] uppercase tracking-widest border-t border-[#FFD700]/30 pt-2">Conséquence physique pour ${esc(res.angelLoser.name)} (${res.angelLoser.diff} pts d'écart)</span>` : ''}
     </div>`;
   } else {
-    targetVerdictHtml = `<div class="w-full border border-white/20 p-5 text-center text-white font-serif italic tracking-wide flex flex-col gap-2 mt-4">
-      <span class="text-2xl" style="color:${t.accent}">${esc(res.targetName)} ne boit pas.</span>
-      <span class="text-xs font-display font-sans text-white/60 tracking-widest uppercase">${res.targetMsg}</span>
-    </div>`;
+    if (res.givesSips > 0) {
+      targetVerdictHtml = `<div class="w-full border border-white/20 p-5 text-center text-white font-serif italic tracking-wide flex flex-col gap-2 mt-4">
+        <span class="text-2xl" style="color:${t.accent}">${esc(res.targetName)} distribue ${res.givesSips} gorgée${res.givesSips > 1 ? 's' : ''}</span>
+        <span class="text-xs font-display font-sans text-white/60 tracking-widest uppercase">${res.targetMsg}</span>
+      </div>`;
+    } else if (res.targetShot) {
+      targetVerdictHtml = `<div class="w-full border border-red-500/50 p-5 text-center text-white font-serif italic tracking-wide flex flex-col gap-2 mt-4">
+        <span class="text-2xl">Condamnation absolue : CUL SEC</span>
+        <span class="text-xs font-display font-sans text-white/60 tracking-widest uppercase">${res.targetMsg} (${res.targetDiff} pts d'écart)</span>
+      </div>`;
+    } else if (res.targetSips > 0) {
+      targetVerdictHtml = `<div class="w-full border border-white/20 p-5 text-center text-white font-serif italic tracking-wide flex flex-col gap-2 mt-4">
+        <span class="text-2xl">${esc(res.targetName)} boit ${res.targetSips} gorgée${res.targetSips > 1 ? 's' : ''}</span>
+        <span class="text-xs font-display font-sans text-white/60 tracking-widest uppercase">${res.targetMsg}</span>
+      </div>`;
+    } else {
+      targetVerdictHtml = `<div class="w-full border border-white/20 p-5 text-center text-white font-serif italic tracking-wide flex flex-col gap-2 mt-4">
+        <span class="text-2xl" style="color:${t.accent}">${esc(res.targetName)} ne boit pas.</span>
+        <span class="text-xs font-display font-sans text-white/60 tracking-widest uppercase">${res.targetMsg}</span>
+      </div>`;
+    }
   }
 
   let groupVerdictHtml = "";
-  const penalizedGroup = (res.groupResults || []).filter(p => p.sips > 0 || p.shot).sort((a,b) => b.diff - a.diff);
+  const penalizedGroup = (res.groupResults || []).filter(p => p.sips > 0 || p.shot || p.collateral).sort((a,b) => b.diff - a.diff);
   
-  if (penalizedGroup.length === 0) {
+  if (penalizedGroup.length === 0 && !r.angelRound) {
     groupVerdictHtml = `<div class="w-full border border-white/10 p-4 text-center text-white/50 font-display text-[10px] uppercase tracking-widest mt-4">Le groupe échappe aux pénalités</div>`;
-  } else {
+  } else if (!r.angelRound) {
     const listHtml = penalizedGroup.map(p => {
       const penalty = p.shot ? "CUL SEC" : `${p.sips} gorgée${p.sips > 1 ? 's' : ''}`;
-      return `<div class="flex justify-between items-center text-xs font-display uppercase py-2 border-b border-white/5 last:border-0"><span class="text-white">${esc(p.name)} <span class="text-white/30 text-[9px] tracking-widest">(${p.diff} pts)</span></span> <span class="text-white/80">${penalty}</span></div>`;
+      const colMsg = p.collateral ? `<span class="text-red-400 block text-[8px]">+ ${p.collateral}</span>` : "";
+      return `<div class="flex justify-between items-center text-xs font-display uppercase py-2 border-b border-white/5 last:border-0"><span class="text-white">${esc(p.name)} <span class="text-white/30 text-[9px] tracking-widest">(${p.diff} pts)</span>${colMsg}</span> <span class="text-white/80">${penalty}</span></div>`;
     }).join("");
     groupVerdictHtml = `<div class="w-full border border-white/20 p-4 text-left mt-4">
-      <span class="block text-center text-white/50 font-display uppercase text-[9px] tracking-widest mb-4">Balles Perdues (Erreur pire que la cible)</span>
+      <span class="block text-center text-white/50 font-display uppercase text-[9px] tracking-widest mb-4">Balles Perdues & Dégâts collatéraux</span>
       ${listHtml}
     </div>`;
   }
@@ -433,12 +417,12 @@ function renderReveal(r, t) {
 
   const hostControls = isHost ? `
     <div class="flex flex-col gap-4 mt-6 w-full">
-      <button id="nextB" class="w-full py-4 luxury-btn" style="border-color:${t.accent}; color:${t.accent}">${r.maxRounds > 0 && r.round >= r.maxRounds ? 'Bilan Final' : 'Question Suivante'}</button>
-      <button onclick="window.endGame()" class="w-full py-4 luxury-btn !border-red-500/30 !text-red-500/80 hover:!bg-red-500/10 transition-colors">Clôturer la session</button>
+      <button id="nextB" class="w-full py-4 luxury-btn bg-black/50" style="border-color:${t.accent}; color:${t.accent}">${r.maxRounds > 0 && r.round >= r.maxRounds ? 'Bilan Final' : 'Question Suivante'}</button>
+      <button onclick="window.endGame()" class="w-full py-4 luxury-btn !border-red-500/30 !text-red-500/80 hover:!bg-red-500/10 transition-colors bg-black/50">Clôturer la session</button>
     </div>
   ` : `<p class="font-display text-[10px] text-center uppercase tracking-widest text-white/40 mt-8">En attente de l'hôte...</p>`;
 
-  return `<div class="flex-1 flex flex-col gap-5 pb-8 mt-6">
+  return `<div class="flex-1 flex flex-col gap-5 pb-8 mt-6 relative z-10">
     <div class="text-center">
       <p class="text-white/40 text-[9px] font-display uppercase tracking-widest">Le Verdict Social</p>
       <h2 class="text-2xl font-serif italic text-white tracking-wide mt-2 capitalize">${esc(res.targetName)} VS Moyenne</h2>
@@ -484,7 +468,7 @@ function renderReveal(r, t) {
 
 function renderStats(r, t) { 
   const rk = r.ranking; const isHost = S.pid === r.hostId;
-  return `<div class="flex-1 flex flex-col gap-6 pb-8 mt-10">
+  return `<div class="flex-1 flex flex-col gap-6 pb-8 mt-10 relative z-10">
     <div class="text-center mb-4">
       <h2 class="text-3xl font-serif italic tracking-wide text-white">Fin de Session</h2>
     </div>
@@ -509,7 +493,7 @@ function renderStats(r, t) {
     </div>
     
     <div class="mt-8">
-      ${isHost ? `<button id="restartB" class="w-full py-4 luxury-btn" style="border-color:${t.accent}; color:${t.accent}">Nouvelle Session</button>` : `<p class="font-display text-[10px] text-center uppercase tracking-widest text-white/40">Session clôturée</p>`}
+      ${isHost ? `<button id="restartB" class="w-full py-4 luxury-btn bg-black/50" style="border-color:${t.accent}; color:${t.accent}">Nouvelle Session</button>` : `<p class="font-display text-[10px] text-center uppercase tracking-widest text-white/40">Session clôturée</p>`}
     </div>
   </div>`; 
 }
@@ -554,7 +538,6 @@ export function render() {
 
   const active = document.activeElement;
   const activeId = active && active.id ? active.id : null;
-  
   if (activeId === "slider" && !isNewView) return; 
 
   const selStart = active && 'selectionStart' in active ? active.selectionStart : null;
@@ -566,6 +549,9 @@ export function render() {
   if (isNewView) {
     lastViewKey = viewKey;
   }
+
+  // Hook WebGL Visibility
+  handle3DVisibility(S.screen === "HOME" ? "HOME" : (S.room ? S.room.phase : "HOME"));
 
   if (activeId) {
     const n = document.getElementById(activeId);
