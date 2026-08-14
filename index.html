@@ -28,6 +28,9 @@
 <!-- L'ARCHITECTURE IOS BORDERLESS ABSOLUE -->
 <div class="app-wrapper">
   <div class="noise-overlay"></div>
+  
+  <!-- PARTICULES D'AMBIANCE DYNAMIQUES -->
+  <div id="particles-container" class="absolute inset-0 z-[2] pointer-events-none overflow-hidden"></div>
 
   <button id="hubReturnBtn" class="absolute left-4 z-[200] flex items-center gap-2 text-white/50 hover:text-white transition-colors font-display text-xs uppercase tracking-widest outline-none cursor-pointer pointer-events-auto" style="top: max(env(safe-area-inset-top), 16px);">
     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
@@ -36,7 +39,7 @@
 
   <div id="toasts" class="absolute left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2 w-[90%] max-w-sm pointer-events-none" style="top: calc(max(env(safe-area-inset-top), 20px) + 3rem);"></div>
 
-  <div id="smash-alert" class="absolute inset-0 z-[300] flex flex-col items-center justify-center pointer-events-none hidden bg-black/80 backdrop-blur-sm"></div>
+  <div id="smash-alert" class="absolute inset-0 z-[300] flex flex-col items-center justify-center pointer-events-none hidden"></div>
 
   <div id="counterModal" class="absolute inset-0 z-[280] hidden bg-black/90 backdrop-blur-lg flex items-center justify-center px-5 pointer-events-auto">
     <div class="luxury-card w-full max-w-sm p-8 text-center flex flex-col items-center relative overflow-hidden animate-pop">
