@@ -28,9 +28,7 @@ export async function tryReconnect() {
         enterRoom(code, pid); 
         return true;
       }
-    } catch(e) {
-        console.error("Firebase Error:", e);
-    }
+    } catch(e) {}
   }
   return false;
 }
@@ -41,7 +39,10 @@ export async function createRoom() {
   try {
     let code; for (let i=0; i<5; i++) { code = genCode(); const s = await db.ref("rooms/" + code).get(); if (!s.exists()) break; }
     const pid = genId();
-    await db.ref("rooms/" + code).set({ mode: S.pendingMode, phase: "LOBBY", round: 0, hostId: pid, maxRounds: 10, createdAt: ServerValue.TIMESTAMP, players: { [pid]: { name: S.name.trim().slice(0, 20), joker: rand(Object.keys(JOKERS)), score: 0, jokerConsumed: false, jokerActive: false, connected: true } } });
+    await db.ref("rooms/" + code).set({ 
+        mode: S.pendingMode, phase: "LOBBY", round: 0, hostId: pid, maxRounds: 10, bloodPactEnabled: true,
+        createdAt: ServerValue.TIMESTAMP, players: { [pid]: { name: S.name.trim().slice(0, 20), joker: rand(Object.keys(JOKERS)), score: 0, jokerConsumed: false, jokerActive: false, connected: true } } 
+    });
     sessionStorage.setItem('thermo_code', code); sessionStorage.setItem('thermo_pid', pid);
     enterRoom(code, pid);
   } catch(e) { toast("Connexion au club impossible."); } finally { S.isLoading = false; if (!S.room) render(); }
@@ -99,6 +100,14 @@ function enterRoom(code, pid) {
     }
     promoteHostIfNeeded(); hostAutoReveal(); render();
   });
+}
+
+// Fonction pour l'hôte : Activer/Désactiver le Pacte de Sang
+export async function toggleBloodPact() {
+  if (S.pid !== S.room.hostId) return;
+  haptic('light');
+  const current = S.room.bloodPactEnabled !== false;
+  await S.roomRef.update({ bloodPactEnabled: !current });
 }
 
 export async function toggleJoker() {
@@ -199,9 +208,12 @@ export async function startRound() {
       startedAt: ServerValue.TIMESTAMP 
   };
 
-  if (conn.length >= 3 && (!r.bloodPact || r.round === 0)) {
+  // Pacte de Sang activé et autorisé par l'hôte
+  if (r.bloodPactEnabled !== false && conn.length >= 3 && (!r.bloodPact || r.round === 0)) {
       const shuffled = [...conn].sort(() => 0.5 - Math.random());
       upd.bloodPact = { p1: shuffled[0].id, p2: shuffled[1].id };
+  } else {
+      upd.bloodPact = null;
   }
 
   upd.angelRound = Math.random() < 0.15;
@@ -251,7 +263,7 @@ export async function hostAutoReveal() {
     Object.keys(r.players).forEach(id => {
        const p = r.players[id];
        if (p.jokerActive && !p.jokerConsumed && (p.joker === "SHIELD" || p.joker === "MIRROR")) {
-           if (!usedJokersLog.find(l => l.id === id)) usedJokersLog.push({ id, name: p.name, joker: p.joker });
+           if (!usedJokersLog.find(l => l.id === id)) usedJokersLog.push({ id: p.name, joker: p.joker });
        }
     });
 
