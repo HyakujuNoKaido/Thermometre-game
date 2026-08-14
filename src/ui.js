@@ -1,6 +1,5 @@
 import { S, THEMES, JOKERS, esc, connectedArr, playersArr, haptic } from './store.js';
 import { icons } from './icons/index.js';
-import { activateCounter } from './game.js';
 
 export function toast(msg, ok=false) { 
   const el = document.createElement("div"); 
@@ -37,19 +36,8 @@ export function showSmashAlert(action) {
   if(borderEl) { borderEl.style.borderColor = color; borderEl.style.boxShadow = `0 10px 30px ${color}40`; }
 
   alertBox.classList.remove("-translate-y-full");
-  setTimeout(() => { alertBox.classList.add("-translate-y-full"); }, 2000); // 2 secondes max
+  setTimeout(() => { alertBox.classList.add("-translate-y-full"); }, 2000); 
 }
-
-export function confirmCounter() {
-  document.getElementById("counterModal").classList.add("hidden");
-  if (window.activateCounter) window.activateCounter();
-}
-export function ignoreCounter() {
-  document.getElementById("counterModal").classList.add("hidden");
-}
-
-window.confirmCounter = confirmCounter;
-window.ignoreCounter = ignoreCounter;
 
 export function toggleRules() {
   const modal = document.getElementById('rulesModal');
@@ -75,11 +63,10 @@ function hexToRgb(hex) {
     return result ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) } : {r: 255, g: 255, b: 255};
 }
 
-// Mise à jour couleur du thermomètre de verre
 export function updateThermometerColor(val) {
   const t = THEMES[(S.room && S.room.mode) || S.pendingMode] || THEMES.Chill;
   const start = hexToRgb(t.accent);
-  const end = {r: 255, g: 0, b: 60}; // Rouge
+  const end = {r: 255, g: 0, b: 60}; 
   const ratio = val <= 50 ? 0 : (val - 50) / 50; 
   const color = `rgb(${Math.round(start.r + (end.r - start.r) * ratio)}, ${Math.round(start.g + (end.g - start.g) * ratio)}, ${Math.round(start.b + (end.b - start.b) * ratio)})`;
 
@@ -98,7 +85,7 @@ export function updateThermometerColor(val) {
   }
 }
 
-// Gère le retournement 3D CSS de la carte Tarot
+// Fonction attachée à window pour l'animation 3D CSS de la carte
 window.triggerTarotCard = function() {
   const card = document.getElementById('tarot-card');
   if (!card) return;
@@ -174,18 +161,18 @@ function renderLobby(r, t) {
   const jokerSection = isHost ? `
     <div class="luxury-card p-5 flex flex-col gap-3 mt-4">
       <div class="flex justify-between items-center">
-         <h2 class="text-xs font-display uppercase tracking-widest text-white/50">Le Jeu de Tarot (Privilèges)</h2>
-         <button onclick="window.randomizeJokers()" class="text-[10px] font-display uppercase tracking-widest text-white/60 hover:text-white border border-white/20 px-3 py-1.5 rounded-sm transition-colors">Battre les cartes</button>
+         <h2 class="text-xs font-display uppercase tracking-widest text-white/50">Privilèges</h2>
+         <button onclick="window.randomizeJokers()" class="text-[10px] font-display uppercase tracking-widest text-white/60 hover:text-white border border-white/20 px-3 py-1.5 rounded-sm transition-colors">Mélanger</button>
       </div>
-      <p class="text-xs text-white/40 font-display mt-2 leading-relaxed">Les privilèges sont distribués aléatoirement. L'hôte peut rectifier un tirage ci-dessous.</p>
+      <p class="text-xs text-white/40 font-display mt-2 leading-relaxed">En tant qu'hôte, vous pouvez redistribuer les privilèges de chacun.</p>
     </div>
   ` : `
     <div class="luxury-card p-5 flex items-center gap-5 mt-4">
       <div class="w-12 h-12 shrink-0 border border-white/20 flex items-center justify-center text-white" style="color:${t.accent}">${myJoker ? myJoker.icon("w-6 h-6") : ''}</div>
       <div class="flex flex-col min-w-0 gap-1">
-        <span class="text-[10px] font-display uppercase tracking-widest text-white/50">Votre Carte</span>
+        <span class="text-[10px] font-display uppercase tracking-widest text-white/50">Votre privilège</span>
         <span class="text-sm font-serif italic text-white tracking-wide capitalize">${myJoker ? esc(myJoker.name) : 'Aucun'}</span>
-        <span class="text-[11px] text-white/40 font-display leading-snug">${myJoker ? esc(myJoker.desc) : ''}</span>
+        <span class="text-[11px] text-white/40 font-display leading-snug">La carte flottera à l'écran durant la partie.</span>
       </div>
     </div>
   `;
@@ -214,7 +201,7 @@ function renderLobby(r, t) {
               ${p.id === S.pid ? `<span class="text-[9px] font-display uppercase tracking-widest border border-white/20 text-white/60 px-2 py-0.5">Vous</span>` : ''}
               ${p.connected === false ? `<span class="text-[9px] font-display uppercase tracking-widest text-red-500/80">Absent</span>` : ''}
             </div>
-            ${isHost ? `<button onclick="window.cycleJoker('${p.id}')" class="text-white/40 hover:text-white transition-colors" title="Modifier la carte">${JOKERS[p.joker]?.icon("w-5 h-5")}</button>` : `<div class="text-white/20">${JOKERS[p.joker]?.icon("w-5 h-5")}</div>`}
+            ${isHost ? `<button onclick="window.cycleJoker('${p.id}')" class="text-white/40 hover:text-white transition-colors" title="Modifier le pouvoir">${JOKERS[p.joker]?.icon("w-5 h-5")}</button>` : `<div class="text-white/20">${JOKERS[p.joker]?.icon("w-5 h-5")}</div>`}
           </div>
         `).join("")}
       </div>
@@ -264,7 +251,6 @@ function renderVoting(r, t) {
               jokerActionHtml = `<button onclick="window.cancelShotTarget()" class="w-full py-4 luxury-card !bg-white/5 border border-white/10 text-white/50 font-display text-xs uppercase tracking-widest mb-4 hover:text-white transition-colors">Sentence programmée pour ${esc(targetName)} (Annuler)</button>`;
           }
       } else {
-          // La Carte 3D CSS
           if (!me.jokerActive) {
               jokerActionHtml = `
               <div class="tarot-scene mb-6" onclick="window.triggerTarotCard()">
@@ -302,7 +288,7 @@ function renderVoting(r, t) {
     ${!voted ? `
       ${jokerActionHtml}
       <div class="mt-4 flex flex-col items-center gap-6 px-4">
-        <!-- Le vrai Thermomètre en Verre -->
+        
         <div class="relative w-full h-10 glass-tube rounded-full overflow-hidden flex items-center p-1">
            <div id="slider-fill" class="h-full rounded-full mercury-fluid pointer-events-none" style="width: ${S.voteValue}%; background: ${t.accent};"></div>
            <input type="range" id="slider" min="0" max="100" value="${S.voteValue}" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-50" style="touch-action: pan-x;" />
@@ -355,7 +341,7 @@ function renderReveal(r, t) {
               </div>`;
           }
           return `<div class="w-full border border-white/20 p-3 mb-2 text-center text-white text-[10px] font-display uppercase tracking-widest">
-            <span style="color:${t.accent}">${esc(log.name)}</span> a engagé sa carte
+            <span style="color:${t.accent}">${esc(log.name)}</span> a engagé son privilège
           </div>`;
       }).join("");
   }
@@ -519,6 +505,7 @@ let afterRenderHook = null;
 export function onAfterRender(fn) { afterRenderHook = fn; }
 
 let lastViewKey = null;
+let lastPromptedActionId = null; 
 
 export function render() {
   applyBg(); const app = document.getElementById("app"); const t = THEMES[(S.room && S.room.mode) || S.pendingMode] || THEMES.Chill; let body = "";
@@ -533,6 +520,11 @@ export function render() {
           const modal = document.getElementById("counterModal");
           if (modal && modal.classList.contains("hidden")) {
              document.getElementById("counter-desc").innerHTML = `${esc(r.lastAction.actor)} vous assigne un CUL SEC`;
+             const btnYes = document.getElementById("counter-btn-yes");
+             if(btnYes) {
+                 if (me.joker === 'SHIELD') btnYes.innerHTML = "Activer Bouclier";
+                 else btnYes.innerHTML = "Renvoyer (Miroir)";
+             }
              modal.classList.remove("hidden");
           }
       }
