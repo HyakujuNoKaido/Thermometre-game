@@ -102,7 +102,33 @@ function enterRoom(code, pid) {
   });
 }
 
-// Fonction pour l'hôte : Activer/Désactiver le Pacte de Sang
+// PROMOTION ROBUSTE DE L'HÔTE EN CAS DE DÉPART
+async function promoteHostIfNeeded() { 
+  const r = S.room; 
+  if (!r || !r.players || promoting) return; 
+  
+  const currentHost = r.players[r.hostId];
+  const isHostMissing = !currentHost || currentHost.connected === false;
+  
+  if (isHostMissing) { 
+    const conn = connectedArr(r).sort((a, b) => a.id < b.id ? -1 : 1); 
+    if (conn.length > 0) {
+      const newHostId = conn[0].id;
+      if (r.hostId !== newHostId) {
+        promoting = true;
+        try { 
+          await S.roomRef.update({ hostId: newHostId }); 
+          if (newHostId === S.pid) {
+            toast("Vous dirigez la table.", true);
+          }
+        } catch(e) {} finally { 
+          promoting = false; 
+        }
+      }
+    }
+  } 
+}
+
 export async function toggleBloodPact() {
   if (S.pid !== S.room.hostId) return;
   haptic('light');
@@ -173,18 +199,6 @@ export async function changeMaxRounds(num) { if(S.pid !== S.room.hostId) return;
 export function pickMode(m) { S.pendingMode = m; render(); }
 export async function chooseMode(m) { haptic('light'); await S.roomRef.update({ mode: m }); }
 
-async function promoteHostIfNeeded() { 
-  const r = S.room; if (!r || !r.players || promoting || r.hostId === S.pid) return; 
-  const host = r.players[r.hostId];
-  if (!host || host.connected === false) { 
-    const conn = connectedArr(r).sort((a, b) => a.id < b.id ? -1 : 1); 
-    if (conn.length > 0 && conn[0].id === S.pid) { 
-      promoting = true;
-      try { await S.roomRef.update({ hostId: S.pid }); toast("Vous dirigez la table.", true); } catch(e) {} finally { promoting = false; }
-    } 
-  } 
-}
-
 export async function startRound() {
   const r = S.room; if (S.pid !== r.hostId) return;
   const conn = connectedArr(r);
@@ -208,7 +222,6 @@ export async function startRound() {
       startedAt: ServerValue.TIMESTAMP 
   };
 
-  // Pacte de Sang activé et autorisé par l'hôte
   if (r.bloodPactEnabled !== false && conn.length >= 3 && (!r.bloodPact || r.round === 0)) {
       const shuffled = [...conn].sort(() => 0.5 - Math.random());
       upd.bloodPact = { p1: shuffled[0].id, p2: shuffled[1].id };
