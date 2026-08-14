@@ -1,4 +1,4 @@
-import { S, QUESTIONS, JOKERS, rand, genId, genCode, connectedArr, playersArr, vibrate } from './store.js';
+import { S, QUESTIONS, JOKERS, rand, genId, genCode, connectedArr, playersArr, haptic } from './store.js';
 import { db, ServerValue } from './firebase.js';
 import { render, toast, showSmashAlert } from './ui.js';
 
@@ -24,24 +24,24 @@ export async function tryReconnect() {
 }
 
 export async function createRoom() {
-  if (!S.name.trim()) return toast("Veuillez saisir un pseudonyme valide."); 
-  if (S.isLoading) return; vibrate(20); S.isLoading = true; render(); 
+  if (!S.name.trim()) return toast("IDENTITÉ REQUISE"); 
+  if (S.isLoading) return; haptic('medium'); S.isLoading = true; render(); 
   try {
     let code; for (let i=0; i<5; i++) { code = genCode(); const s = await db.ref("rooms/" + code).get(); if (!s.exists()) break; }
     const pid = genId();
     await db.ref("rooms/" + code).set({ mode: S.pendingMode, phase: "LOBBY", round: 0, hostId: pid, maxRounds: 10, timer: 0, createdAt: ServerValue.TIMESTAMP, players: { [pid]: { name: S.name.trim().slice(0, 20), joker: rand(Object.keys(JOKERS)), score: 0, jokerConsumed: false, jokerActive: false, connected: true } } });
     sessionStorage.setItem('thermo_code', code); sessionStorage.setItem('thermo_pid', pid);
     enterRoom(code, pid);
-  } catch(e) { toast("Erreur de connexion au serveur."); } finally { S.isLoading = false; if (!S.room) render(); }
+  } catch(e) { toast("ERREUR SERVEUR"); } finally { S.isLoading = false; if (!S.room) render(); }
 }
 
 export async function joinRoom() {
-  if (!S.name.trim()) return toast("Veuillez saisir un pseudonyme valide.");
+  if (!S.name.trim()) return toast("IDENTITÉ REQUISE");
   const code = (S.joinCode || "").toUpperCase().trim(); 
-  if (S.isLoading) return; vibrate(20); S.isLoading = true; render();
+  if (S.isLoading) return; haptic('medium'); S.isLoading = true; render();
   try {
     const snap = await db.ref("rooms/" + code).get(); 
-    if (!snap.exists()) return toast("Salon introuvable.");
+    if (!snap.exists()) return toast("SALON ININTROUVABLE");
     const room = snap.val();
     
     const existingPlayerPair = Object.entries(room.players || {}).find(
@@ -52,18 +52,18 @@ export async function joinRoom() {
     if (existingPlayerPair) {
       pid = existingPlayerPair[0];
       await db.ref(`rooms/${code}/players/${pid}`).update({ connected: true });
-      toast("Te revoilà dans la partie !", true);
+      toast("CONNEXION RÉTABLIE", true);
     } else {
       pid = genId();
       const newPlayer = { name: S.name.trim().slice(0, 20), joker: rand(Object.keys(JOKERS)), score: 0, jokerConsumed: false, jokerActive: false, connected: true };
       const updates = { [`players/${pid}`]: newPlayer };
       if (room.phase === "VOTING" && room.expectedVoters) updates[`expectedVoters/${pid}`] = true;
       await db.ref("rooms/" + code).update(updates);
-      toast("Bienvenue dans le salon !", true);
+      toast("ACCÈS AUTORISÉ", true);
     }
     sessionStorage.setItem('thermo_code', code); sessionStorage.setItem('thermo_pid', pid);
     enterRoom(code, pid);
-  } catch (e) { toast("Erreur réseau."); } finally { S.isLoading = false; if (!S.room) render(); }
+  } catch (e) { toast("ERREUR RÉSEAU"); } finally { S.isLoading = false; if (!S.room) render(); }
 }
 
 function enterRoom(code, pid) {
@@ -73,7 +73,7 @@ function enterRoom(code, pid) {
   
   S.roomRef.on("value", snap => { 
     const room = snap.val();
-    if (!room || !room.players || !room.players[S.pid]) { detach(); S.screen = "HOME"; S.room = null; toast("Salon fermé ou déconnexion."); render(); return; }
+    if (!room || !room.players || !room.players[S.pid]) { detach(); S.screen = "HOME"; S.room = null; toast("SALON CLÔTURÉ"); render(); return; }
     S.room = room; 
     S.screen = "ROOM"; 
 
@@ -88,18 +88,17 @@ function enterRoom(code, pid) {
   });
 }
 
-// 💥 SYSTÈME DE POUVOIRS ET RIPOSTES
 export async function toggleJoker() {
   const me = S.room.players[S.pid];
   if (!me || me.jokerConsumed || !me.joker) return;
-  vibrate(10);
+  haptic('light');
   const upd = { [`players/${S.pid}/jokerActive`]: !me.jokerActive };
   if (!me.jokerActive) upd.lastAction = { id: Date.now(), type: me.joker, actor: me.name };
   await S.roomRef.update(upd);
 }
 
 export async function assignShotTarget(targetId) {
-  vibrate(20);
+  haptic('medium');
   const targetName = S.room.players[targetId].name;
   await S.roomRef.update({
     [`players/${S.pid}/shotTarget`]: targetId,
@@ -109,13 +108,12 @@ export async function assignShotTarget(targetId) {
 }
 
 export async function cancelShotTarget() {
-  vibrate(10);
+  haptic('light');
   await S.roomRef.update({ [`players/${S.pid}/shotTarget`]: null, [`players/${S.pid}/jokerActive`]: false });
 }
 
-// Fonction appelée quand un joueur accepte de contrer (via la modale UI)
 export async function activateCounter() {
-  vibrate([20, 50, 20]);
+  haptic('heavy');
   const me = S.room.players[S.pid];
   await S.roomRef.update({
     [`players/${S.pid}/jokerActive`]: true,
@@ -126,8 +124,8 @@ export async function activateCounter() {
 export async function stealJoker(targetId) {
   const r = S.room;
   const targetP = r.players[targetId];
-  if (!targetP || targetP.jokerConsumed || !targetP.joker) return toast("Impossible de voler ce joueur.");
-  vibrate(20);
+  if (!targetP || targetP.jokerConsumed || !targetP.joker) return toast("CIBLE NON VALIDE");
+  haptic('medium');
   const stolenJoker = targetP.joker;
   const actorName = S.room.players[S.pid].name;
 
@@ -141,12 +139,12 @@ export async function stealJoker(targetId) {
     lastAction: { id: Date.now(), type: 'THIEF', actor: actorName, target: targetP.name }
   });
   
-  setTimeout(() => toast(`Tu as volé le pouvoir : ${JOKERS[stolenJoker].name} ! 🥷`, true), 3500);
+  setTimeout(() => toast(`PRIVILÈGE DÉROBÉ : ${JOKERS[stolenJoker].name}`, true), 3500);
 }
 
 export async function randomizeJokers() {
   if (S.pid !== S.room.hostId) return;
-  vibrate(20);
+  haptic('medium');
   const updates = {};
   Object.keys(S.room.players).forEach(id => {
     updates[`players/${id}/joker`] = rand(Object.keys(JOKERS));
@@ -159,7 +157,7 @@ export async function randomizeJokers() {
 
 export async function cycleJoker(pid) {
   if (S.pid !== S.room.hostId) return;
-  vibrate(10);
+  haptic('light');
   const p = S.room.players[pid];
   if (!p) return;
   const keys = Object.keys(JOKERS);
@@ -182,7 +180,7 @@ export async function quitGame() {
 export async function kickPlayer(id) { await db.ref(`rooms/${S.code}/players/${id}`).remove(); }
 export async function changeMaxRounds(num) { if(S.pid !== S.room.hostId) return; await S.roomRef.update({ maxRounds: num }); }
 export function pickMode(m) { S.pendingMode = m; render(); }
-export async function chooseMode(m) { vibrate(10); await S.roomRef.update({ mode: m }); }
+export async function chooseMode(m) { haptic('light'); await S.roomRef.update({ mode: m }); }
 
 async function promoteHostIfNeeded() { 
   const r = S.room; if (!r || !r.players || promoting || r.hostId === S.pid) return; 
@@ -191,15 +189,15 @@ async function promoteHostIfNeeded() {
     const conn = connectedArr(r).sort((a, b) => a.id < b.id ? -1 : 1); 
     if (conn.length > 0 && conn[0].id === S.pid) { 
       promoting = true;
-      try { await S.roomRef.update({ hostId: S.pid }); toast("Vous êtes le nouvel hôte", true); } catch(e) {} finally { promoting = false; }
+      try { await S.roomRef.update({ hostId: S.pid }); toast("DROITS D'HÔTE ACQUIS", true); } catch(e) {} finally { promoting = false; }
     } 
   } 
 }
 
 export async function startRound() {
   const r = S.room; if (S.pid !== r.hostId) return;
-  if (connectedArr(r).length < 2) return toast("Il faut au moins 2 joueurs connectés.");
-  vibrate(50);
+  if (connectedArr(r).length < 2) return toast("MINIMUM 2 JOUEURS");
+  haptic('heavy');
   const t = rand(connectedArr(r)); const qText = rand(QUESTIONS[r.mode]).replace(/{name}/g, t.name);
   const expectedVoters = {}; connectedArr(r).forEach(p => expectedVoters[p.id] = true);
   
@@ -209,7 +207,7 @@ export async function startRound() {
 }
 
 export async function nextRound() { const r = S.room; if (r.maxRounds > 0 && r.round >= r.maxRounds) return endGame(); startRound(); }
-export async function vote() { vibrate([30, 50]); await db.ref(`rooms/${S.code}/votes/${S.pid}`).set(Number(S.voteValue)); }
+export async function vote() { haptic('heavy'); await db.ref(`rooms/${S.code}/votes/${S.pid}`).set(Number(S.voteValue)); }
 
 function getPenalty(diff) {
   if (diff <= 10) return { sips: 0, shot: false };
@@ -235,7 +233,6 @@ export async function hostAutoReveal() {
     const usedJokersLog = [];
     const jokerShotVictims = [];
     
-    // On isole d'abord tous les jokers actifs (sauf Miroir/Bouclier qui seront gérés dans l'attaque)
     Object.keys(r.players).forEach(id => {
        const p = r.players[id];
        if (p.jokerActive && p.joker && !p.jokerConsumed) {
@@ -245,7 +242,6 @@ export async function hostAutoReveal() {
        }
     });
 
-    // RESOLUTION DES ATTAQUES CUL SEC (SHOT vs SHIELD/MIRROR)
     const attackers = Object.keys(r.players).filter(id => r.players[id].jokerActive && r.players[id].joker === "SHOT" && r.players[id].shotTarget);
     
     attackers.forEach(atkId => {
@@ -255,14 +251,11 @@ export async function hostAutoReveal() {
 
         if (victim && victim.jokerActive && !victim.jokerConsumed) {
             if (victim.joker === "SHIELD") {
-                // Bloqué ! Personne ne boit. On log l'utilisation du bouclier.
                 usedJokersLog.push({ id: victimId, name: victim.name, joker: "SHIELD", blocked: p.name });
             } else if (victim.joker === "MIRROR") {
-                // Renvoyé ! L'attaquant boit !
                 usedJokersLog.push({ id: victimId, name: victim.name, joker: "MIRROR", reflectedTo: p.name });
                 jokerShotVictims.push({ id: atkId, name: p.name, originalTarget: victim.name });
             } else {
-                // L'attaque passe (ex: Double)
                 jokerShotVictims.push({ id: victimId, name: victim.name });
             }
         } else if (victim) {
@@ -270,7 +263,6 @@ export async function hostAutoReveal() {
         }
     });
 
-    // Ajouter Miroir/Bouclier au log s'ils ont été activés (ex: contre question) sans être ciblés par un SHOT
     Object.keys(r.players).forEach(id => {
        const p = r.players[id];
        if (p.jokerActive && !p.jokerConsumed && (p.joker === "SHIELD" || p.joker === "MIRROR")) {
@@ -293,18 +285,17 @@ export async function hostAutoReveal() {
     let targetShot = targetPenalty.shot;
     let targetMsg = "";
 
-    // Application des pouvoirs sur la question classique
     if (hasJoker(tid, "SHIELD") || hasJoker(tid, "MIRROR")) {
-        targetSips = 0; targetShot = false; targetMsg = "Intouchable grâce au pouvoir !";
+        targetSips = 0; targetShot = false; targetMsg = "Immunité par pouvoir";
     } else if (hasJoker(tid, "DOUBLE")) {
         targetSips *= 2; 
-        targetMsg = targetDiff <= 10 ? "Pari réussi (0 gorgée) !" : "Pari raté, gorgées doublées !";
+        targetMsg = targetDiff <= 10 ? "Pari double remporté" : "Pari raté, sanction doublée";
     } else {
         if (targetDiff <= 10) targetMsg = "Lucidité parfaite";
-        else if (targetDiff <= 20) targetMsg = "Léger déni";
-        else if (targetDiff <= 30) targetMsg = "À l'ouest";
-        else if (targetDiff <= 40) targetMsg = "Gros déni";
-        else targetMsg = "Voilage de face total";
+        else if (targetDiff <= 20) targetMsg = "Léger décalage";
+        else if (targetDiff <= 30) targetMsg = "Dissonance";
+        else if (targetDiff <= 40) targetMsg = "Déni important";
+        else targetMsg = "Déconnexion totale";
     }
 
     const groupResults = [];
