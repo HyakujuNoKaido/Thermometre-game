@@ -2,9 +2,8 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8" />
-<!-- La clé pour IOS est viewport-fit=cover combiné aux CSS -->
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no, viewport-fit=cover" />
-<title>Le Thermomètre | La Carte</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<title>Thermomètre | Club</title>
 <meta name="theme-color" content="#050505" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -26,16 +25,16 @@
 
 <div id="gold-overlay" class="fixed inset-0 bg-[#FFD700] mix-blend-overlay opacity-0 pointer-events-none z-[150] transition-opacity duration-1000"></div>
 
-<!-- LE WRAPPER GLOBAL : pure absolue, sans interférence de tailles Tailwind -->
-<div class="absolute inset-0 z-10 bg-[#050505] overflow-hidden">
+<!-- L'ARCHITECTURE IOS BORDERLESS ABSOLUE -->
+<div class="app-wrapper">
   <div class="noise-overlay"></div>
 
-  <button id="hubReturnBtn" class="absolute top-0 left-4 z-[200] flex items-center gap-2 text-white/50 hover:text-white transition-colors font-display text-xs uppercase tracking-widest outline-none cursor-pointer pointer-events-auto" style="padding-top: max(env(safe-area-inset-top), 16px);">
+  <button id="hubReturnBtn" class="absolute left-4 z-[200] flex items-center gap-2 text-white/50 hover:text-white transition-colors font-display text-xs uppercase tracking-widest outline-none cursor-pointer pointer-events-auto" style="top: max(env(safe-area-inset-top), 16px);">
     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
     La Carte
   </button>
 
-  <div id="toasts" class="absolute top-[calc(env(safe-area-inset-top,20px)+3rem)] left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2 w-[90%] max-w-sm pointer-events-none mt-4"></div>
+  <div id="toasts" class="absolute left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2 w-[90%] max-w-sm pointer-events-none" style="top: calc(max(env(safe-area-inset-top), 20px) + 3rem);"></div>
 
   <div id="smash-alert" class="absolute inset-0 z-[300] flex flex-col items-center justify-center pointer-events-none hidden bg-black/80 backdrop-blur-sm"></div>
 
@@ -71,7 +70,7 @@
     </div>
   </div>
 
-  <div id="app" class="relative z-20 fade-in" style="padding-top: max(env(safe-area-inset-top), 40px); padding-bottom: max(env(safe-area-inset-bottom), 30px);">
+  <div id="app" class="app-content w-full max-w-md mx-auto px-5 relative z-20 fade-in">
     <!-- Injecté par ui.js -->
   </div>
 </div>
