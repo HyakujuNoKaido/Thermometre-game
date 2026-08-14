@@ -1,6 +1,8 @@
 import BANK from './data/questions.json';
 import { icons } from './icons/index.js';
 
+export const GEMINI_API_KEY = "AQ.Ab8RN6IB_6U4QMMkAf7W_tFyngxZv3X12jImgPfSGYpmMFp-cQ";
+
 export const haptic = (intensity = 'light') => {
   if (!navigator.vibrate) return;
   try {
@@ -40,10 +42,9 @@ export const esc = s => (s || "").toString().replace(/[&<>"]/g, m => ({'&':'&amp
 export const playersArr = (room) => Object.entries(room.players || {}).map(([id, p]) => ({id, ...p})); 
 export const connectedArr = (room) => playersArr(room).filter(p => p.connected !== false); 
 
-// Pioche aléatoire sans répétition
 export const getQuestion = (mode, usedQuestions, name1, name2) => {
     let pool = QUESTIONS[mode].filter(q => !usedQuestions.includes(q));
-    if (pool.length === 0) pool = QUESTIONS[mode]; // Reset si tout est joué
+    if (pool.length === 0) pool = QUESTIONS[mode]; 
     const q = rand(pool);
     return { 
         text: q.replace(/{name}/g, name1).replace(/{name2}/g, name2), 
