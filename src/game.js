@@ -41,7 +41,7 @@ export async function createRoom() {
     const pid = genId();
     await db.ref("rooms/" + code).set({ 
         mode: S.pendingMode, phase: "LOBBY", round: 0, hostId: pid, maxRounds: 10, bloodPactEnabled: true,
-        createdAt: ServerValue.TIMESTAMP, players: { [pid]: { name: S.name.trim().slice(0, 20), joker: rand(Object.keys(JOKERS)), score: 0, jokerConsumed: false, jokerActive: false, connected: true } } 
+        createdAt: ServerValue.TIMESTAMP, players: { [pid]: { name: S.name.trim().slice(0, 20), joker: rand(Object.keys(JOKERS)), score: 0, jokerConsumed: false, jokerActive: false, connected: true, stats: { sipsGiven: 0, sipsTaken: 0, exact: 0 } } } 
     });
     sessionStorage.setItem('thermo_code', code); sessionStorage.setItem('thermo_pid', pid);
     enterRoom(code, pid);
@@ -64,7 +64,7 @@ export async function joinRoom() {
       await db.ref(`rooms/${code}/players/${pid}`).update({ connected: true });
     } else {
       pid = genId();
-      const newPlayer = { name: S.name.trim().slice(0, 20), joker: rand(Object.keys(JOKERS)), score: 0, jokerConsumed: false, jokerActive: false, connected: true };
+      const newPlayer = { name: S.name.trim().slice(0, 20), joker: rand(Object.keys(JOKERS)), score: 0, jokerConsumed: false, jokerActive: false, connected: true, stats: { sipsGiven: 0, sipsTaken: 0, exact: 0 } };
       const updates = { [`players/${pid}`]: newPlayer };
       if (room.phase === "VOTING" && room.expectedVoters) updates[`expectedVoters/${pid}`] = true;
       await db.ref("rooms/" + code).update(updates);
@@ -102,7 +102,6 @@ function enterRoom(code, pid) {
   });
 }
 
-// PROMOTION ROBUSTE DE L'HÔTE EN CAS DE DÉPART
 async function promoteHostIfNeeded() { 
   const r = S.room; 
   if (!r || !r.players || promoting) return; 
@@ -356,17 +355,39 @@ export async function hostAutoReveal() {
     };
     
     const updates = { phase: "REVEAL", result: result };
-    updates[`players/${tid}/score`] = (r.players[tid].score || 0) + targetDiff;
-    groupResults.forEach(p => { updates[`players/${p.id}/score`] = (r.players[p.id].score || 0) + p.diff; });
-    jokerShotVictims.forEach(v => { updates[`players/${v.id}/score`] = (r.players[v.id].score || 0) + 25; });
-
+    
+    // MAJ DES SCORES ET DES STATISTIQUES POUR LES TITRES
     Object.keys(r.players).forEach(id => {
-       if (r.players[id].jokerActive && !r.players[id].jokerConsumed) {
+       const p = r.players[id];
+       const currentStats = p.stats || { sipsGiven: 0, sipsTaken: 0, exact: 0 };
+       
+       if (id === tid) {
+           if (givesSips > 0) currentStats.sipsGiven += givesSips;
+           if (targetSips > 0) currentStats.sipsTaken += targetSips;
+           if (targetShot) currentStats.sipsTaken += 5;
+           if (targetDiff === 0) currentStats.exact += 1;
+       }
+
+       const gr = groupResults.find(g => g.id === id);
+       if (gr) {
+           if (gr.diff === 0) currentStats.exact += 1;
+           if (gr.sips > 0) currentStats.sipsTaken += gr.sips;
+           if (gr.shot) currentStats.sipsTaken += 5;
+           if (gr.collateral && typeof gr.collateral === 'number') currentStats.sipsTaken += gr.collateral;
+       }
+
+       updates[`players/${id}/stats`] = currentStats;
+
+       if (p.jokerActive && !p.jokerConsumed) {
           updates[`players/${id}/jokerConsumed`] = true;
           updates[`players/${id}/jokerActive`] = false;
           updates[`players/${id}/shotTarget`] = null;
        }
     });
+
+    updates[`players/${tid}/score`] = (r.players[tid].score || 0) + targetDiff;
+    groupResults.forEach(p => { updates[`players/${p.id}/score`] = (r.players[p.id].score || 0) + p.diff; });
+    jokerShotVictims.forEach(v => { updates[`players/${v.id}/score`] = (r.players[v.id].score || 0) + 25; });
 
     await S.roomRef.update(updates);
   } catch (err) { console.error(err); revealing = false; } finally { revealing = false; }
@@ -376,7 +397,33 @@ export async function endGame() {
   const r = S.room; if (!r) return;
   const ranked = playersArr(r).sort((a, b) => a.score - b.score);
   const w = ranked[0]; const l = ranked[ranked.length - 1]; 
-  await S.roomRef.update({ phase: "STATS", ranking: { winner: { name: w.name, score: w.score }, loser: { name: l.name, score: l.score }, all: ranked.map(p => ({ id: p.id, name: p.name, score: p.score })) } }); 
+
+  // ATTRIBUTION DES TITRES DE NOBLESSE
+  let oracle = null; let maxExact = 0;
+  let bourreau = null; let maxGiven = 0;
+  let victime = null; let maxTaken = 0;
+
+  ranked.forEach(p => {
+      const st = p.stats || { sipsGiven: 0, sipsTaken: 0, exact: 0 };
+      if (st.exact > maxExact) { maxExact = st.exact; oracle = p.name; }
+      if (st.sipsGiven > maxGiven) { maxGiven = st.sipsGiven; bourreau = p.name; }
+      if (st.sipsTaken > maxTaken) { maxTaken = st.sipsTaken; victime = p.name; }
+  });
+
+  const titles = {};
+  if (oracle) titles.oracle = { name: oracle, val: maxExact + " cibles parfaites" };
+  if (bourreau) titles.bourreau = { name: bourreau, val: maxGiven + " gorgées infligées" };
+  if (victime) titles.victime = { name: victime, val: maxTaken + " gorgées subies" };
+
+  await S.roomRef.update({ 
+      phase: "STATS", 
+      ranking: { 
+          winner: { name: w.name, score: w.score }, 
+          loser: { name: l.name, score: l.score }, 
+          all: ranked.map(p => ({ id: p.id, name: p.name, score: p.score })),
+          titles: titles
+      } 
+  }); 
 }
 
 export async function restart() { 
@@ -388,6 +435,7 @@ export async function restart() {
       upd[`players/${id}/jokerActive`] = false; 
       upd[`players/${id}/shotTarget`] = null; 
       upd[`players/${id}/joker`] = rand(Object.keys(JOKERS));
+      upd[`players/${id}/stats`] = { sipsGiven: 0, sipsTaken: 0, exact: 0 };
   }); 
   await S.roomRef.update(upd); 
 }
