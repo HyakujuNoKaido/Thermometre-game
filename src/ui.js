@@ -63,7 +63,6 @@ function applyBg() {
   let t = THEMES[(S.room && S.room.mode) || S.pendingMode] || THEMES.Chill;
   const goldOverlay = document.getElementById("gold-overlay");
   
-  // LA PART DES ANGES (Thème OR)
   if (S.room && S.room.angelRound) {
       t = { accent: "#FFD700" }; 
       if (goldOverlay) { goldOverlay.classList.remove("opacity-0"); goldOverlay.classList.add("opacity-30"); }
@@ -76,31 +75,36 @@ function applyBg() {
 export function updateThermometerColor(val) {
   const sv = document.getElementById("sv");
   if (sv) sv.textContent = val + "%";
-  // On envoie la valeur au WebGL
-  update3DThermometer(val);
+  
+  try {
+      update3DThermometer(val);
+  } catch (e) {
+      console.warn("WebGL Thermometer not ready yet.");
+  }
 }
 
-// Fonction utilitaire pour lier le WebGL aux vues
 function handle3DVisibility(phase) {
-  // Le WebGL est initialisé une seule fois
-  init3D();
-  if (phase === "VOTING" && !(S.room.votes && S.room.votes[S.pid] !== undefined)) {
-     toggle3DThermometer(true);
-  } else {
-     toggle3DThermometer(false);
-  }
+  try {
+      init3D();
+      if (phase === "VOTING" && !(S.room && S.room.votes && S.room.votes[S.pid] !== undefined)) {
+         toggle3DThermometer(true);
+      } else {
+         toggle3DThermometer(false);
+      }
 
-  // La Carte Tarot est visible si on a un pouvoir et qu'on ne l'a pas consommé
-  if (S.room && S.room.players && S.room.players[S.pid]) {
-      const me = S.room.players[S.pid];
-      if (me.joker && !me.jokerConsumed && phase !== "HOME") {
-          resetTarotCard(true);
-          if (me.jokerActive) burnTarotCard();
+      if (S.room && S.room.players && S.room.players[S.pid]) {
+          const me = S.room.players[S.pid];
+          if (me.joker && !me.jokerConsumed && phase !== "HOME") {
+              resetTarotCard(true);
+              if (me.jokerActive) burnTarotCard();
+          } else {
+              resetTarotCard(false);
+          }
       } else {
           resetTarotCard(false);
       }
-  } else {
-      resetTarotCard(false);
+  } catch(e) {
+      console.warn("Erreur d'initialisation WebGL :", e);
   }
 }
 
@@ -133,6 +137,7 @@ function renderHome(t) {
         <div class="grid grid-cols-3 gap-3">
           ${Object.keys(THEMES).map(m => {
             const act = S.pendingMode === m; const tm = THEMES[m];
+            // Correction des classes Tailwind dynamiques (on utilise inline style)
             return `<button onclick="window.pickMode('${m}'); window.haptic('light');" class="py-4 border transition-all ${act ? `glow-active text-white bg-white/5` : 'border-white/10 text-white/30'} flex flex-col items-center gap-2 rounded-sm" ${act ? `style="border-color:${tm.accent}; box-shadow: 0 0 20px ${tm.accent}40;"` : ''}>
               <span style="color:${act ? tm.accent : 'currentColor'}">${tm.icon("w-5 h-5")}</span>
               <span class="font-display text-xs tracking-widest uppercase">${tm.label}</span>
@@ -140,7 +145,8 @@ function renderHome(t) {
           }).join("")}
         </div>
       </div>
-      <button id="createB" class="w-full py-4 mt-4 luxury-btn" ${act => act ? `style="border-color:${t.accent}; color:${t.accent}"` : ""} ${S.isLoading || !S.name ? 'disabled' : ''}>Ouvrir un salon</button>
+      <!-- Correction du bouton "Créer le salon" -->
+      <button id="createB" class="w-full py-4 mt-4 luxury-btn" style="border-color:${t.accent}; color:${t.accent}; font-weight:700;" ${S.isLoading || !S.name ? 'disabled' : ''}>Créer le salon</button>
     </div>
 
     <div class="luxury-card p-4 flex flex-row gap-4 items-center">
@@ -160,7 +166,7 @@ function renderLobby(r, t) {
       <div class="luxury-card p-5 flex flex-col gap-4 mt-4">
         <h2 class="text-xs font-display uppercase tracking-widest text-white/50">Questions</h2>
         <div class="grid grid-cols-4 gap-2">
-          ${[5, 10, 15, 0].map(num => `<button onclick="window.changeMaxRounds(${num})" class="py-3 font-display text-xs border transition-all rounded-sm ${currentMax === num || (num === 0 && r.maxRounds === 0) ? `glow-active text-white bg-white/5` : 'border-white/10 text-white/40'}" ${currentMax === num || (num === 0 && r.maxRounds === 0) ? `style="border-color:${t.accent}; box-shadow: 0 0 15px ${t.accent}40"` : ''}>${num === 0 ? 'Infini' : num}</button>`).join("")}
+          ${[5, 10, 15, 0].map(num => `<button onclick="window.changeMaxRounds(${num})" class="py-3 font-display text-xs border transition-all rounded-sm ${currentMax === num || (num === 0 && r.maxRounds === 0) ? `glow-active text-white bg-white/5` : 'border-white/10 text-white/40'}" ${(currentMax === num || (num === 0 && r.maxRounds === 0)) ? `style="border-color:${t.accent}; box-shadow: 0 0 15px ${t.accent}40"` : ''}>${num === 0 ? 'Infini' : num}</button>`).join("")}
         </div>
       </div>
     `;
@@ -519,6 +525,12 @@ export function render() {
               const modal = document.getElementById("counterModal");
               if (modal) {
                  document.getElementById("counter-desc").innerHTML = `${esc(r.lastAction.actor)} vous assigne un CUL SEC`;
+                 const btn = document.getElementById("counter-btn-yes");
+                 if (me.joker === 'SHIELD') {
+                     btn.innerHTML = `Activer Immunité`;
+                 } else {
+                     btn.innerHTML = `Renvoyer (Miroir)`;
+                 }
                  modal.classList.remove("hidden");
               }
           }
@@ -550,7 +562,6 @@ export function render() {
     lastViewKey = viewKey;
   }
 
-  // Hook WebGL Visibility
   handle3DVisibility(S.screen === "HOME" ? "HOME" : (S.room ? S.room.phase : "HOME"));
 
   if (activeId) {
