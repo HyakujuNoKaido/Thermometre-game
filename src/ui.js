@@ -77,7 +77,6 @@ export function confirmCounter() {
 export function ignoreCounter() {
   document.getElementById("counterModal").classList.add("hidden");
 }
-
 window.confirmCounter = confirmCounter;
 window.ignoreCounter = ignoreCounter;
 
@@ -96,10 +95,38 @@ function applyBg() {
   document.documentElement.style.setProperty('--accent', t.accent);
 }
 
-// FIX: Affiche de nouveau le pourcentage qui manquait à cause de la refonte
+// Fonction utilitaire pour mélanger 2 couleurs hex (pour le slider)
+function mixHexColors(hex1, hex2, ratio) {
+  const r1 = parseInt(hex1.substring(1, 3), 16), g1 = parseInt(hex1.substring(3, 5), 16), b1 = parseInt(hex1.substring(5, 7), 16);
+  const r2 = parseInt(hex2.substring(1, 3), 16), g2 = parseInt(hex2.substring(3, 5), 16), b2 = parseInt(hex2.substring(5, 7), 16);
+  const r = Math.round(r1 * (1 - ratio) + r2 * ratio);
+  const g = Math.round(g1 * (1 - ratio) + g2 * ratio);
+  const b = Math.round(b1 * (1 - ratio) + b2 * ratio);
+  return `rgb(${r}, ${g}, ${b})`;
+}
+
 export function updateThermometerColor(val) {
   const sv = document.getElementById("sv");
   if (sv) sv.textContent = val + "%";
+
+  const t = THEMES[(S.room && S.room.mode) || S.pendingMode] || THEMES.Chill;
+  const targetColor = "#FF003C"; // Rouge absolu
+  // On commence à changer de couleur après 50%
+  let ratio = val <= 50 ? 0 : (val - 50) / 50; 
+  
+  const mixedColor = mixHexColors(t.accent, targetColor, ratio);
+  
+  const fill = document.getElementById("slider-fill");
+  const thumb = document.getElementById("slider-thumb");
+  if(fill) {
+      fill.style.width = val + "%";
+      fill.style.background = mixedColor;
+      fill.style.boxShadow = `0 0 ${10 + (val/5)}px ${mixedColor}`;
+  }
+  if(thumb) {
+      thumb.style.left = val + "%";
+      thumb.style.boxShadow = `0 0 ${15 + (val/4)}px ${mixedColor}`;
+  }
 }
 
 function renderHome(t) { 
@@ -131,14 +158,14 @@ function renderHome(t) {
         <div class="grid grid-cols-3 gap-3">
           ${Object.keys(THEMES).map(m => {
             const act = S.pendingMode === m; const tm = THEMES[m];
-            return `<button onclick="window.pickMode('${m}'); window.haptic('light');" class="py-4 border transition-all ${act ? `glow-active text-white bg-white/5` : 'border-white/10 text-white/30'} flex flex-col items-center gap-2 rounded-sm">
+            return `<button onclick="window.pickMode('${m}'); window.haptic('light');" class="py-4 border transition-all ${act ? `glow-active text-white bg-white/5` : 'border-white/10 text-white/30'} flex flex-col items-center gap-2 rounded-sm" ${act ? `style="border-color:${tm.accent}; box-shadow: 0 0 20px ${tm.accent}40;"` : ''}>
               <span style="color:${act ? tm.accent : 'currentColor'}">${tm.icon("w-5 h-5")}</span>
               <span class="font-display text-xs tracking-widest uppercase">${tm.label}</span>
             </button>`;
           }).join("")}
         </div>
       </div>
-      <button id="createB" class="w-full py-4 mt-4 luxury-btn" ${act => act ? `style="border-color:${t.accent}; color:${t.accent}"` : ""} ${S.isLoading ? 'disabled' : ''}>Ouvrir un salon</button>
+      <button id="createB" class="w-full py-4 mt-4 luxury-btn" ${S.pendingMode ? `style="border-color:${t.accent}; color:${t.accent}"` : ""} ${S.isLoading || !S.name ? 'disabled' : ''}>Ouvrir un salon</button>
     </div>
 
     <div class="luxury-card p-4 flex flex-row gap-4 items-center">
@@ -158,7 +185,7 @@ function renderLobby(r, t) {
       <div class="luxury-card p-5 flex flex-col gap-4 mt-4">
         <h2 class="text-xs font-display uppercase tracking-widest text-white/50">Questions</h2>
         <div class="grid grid-cols-4 gap-2">
-          ${[5, 10, 15, 0].map(num => `<button onclick="window.changeMaxRounds(${num})" class="py-3 font-display text-xs border transition-all rounded-sm ${currentMax === num || (num === 0 && r.maxRounds === 0) ? `glow-active text-white bg-white/5` : 'border-white/10 text-white/40'}">${num === 0 ? 'Infini' : num}</button>`).join("")}
+          ${[5, 10, 15, 0].map(num => `<button onclick="window.changeMaxRounds(${num})" class="py-3 font-display text-xs border transition-all rounded-sm ${currentMax === num || (num === 0 && r.maxRounds === 0) ? `glow-active text-white bg-white/5` : 'border-white/10 text-white/40'}" ${currentMax === num || (num === 0 && r.maxRounds === 0) ? `style="border-color:${t.accent}; box-shadow: 0 0 15px ${t.accent}40"` : ''}>${num === 0 ? 'Infini' : num}</button>`).join("")}
         </div>
       </div>
     `;
@@ -203,9 +230,8 @@ function renderLobby(r, t) {
         ${ps.map(p => `
           <div class="flex items-center justify-between py-2 border-b border-white/5 last:border-0">
             <div class="flex items-center gap-4">
-              <span class="font-display font-light text-white text-lg capitalize tracking-wide ${p.connected === false ? 'opacity-40' : ''}">${esc(p.name)}</span>
+              <span class="font-display font-light text-white text-lg capitalize tracking-wide">${esc(p.name)}</span>
               ${p.id === S.pid ? `<span class="text-[9px] font-display uppercase tracking-widest border border-white/20 text-white/60 px-2 py-0.5">Vous</span>` : ''}
-              ${p.connected === false ? `<span class="text-[9px] font-display uppercase tracking-widest text-red-500/80">Absent</span>` : ''}
             </div>
             ${isHost ? `<button onclick="window.cycleJoker('${p.id}')" class="text-white/40 hover:text-white transition-colors" title="Modifier le pouvoir">${JOKERS[p.joker]?.icon("w-5 h-5")}</button>` : `<div class="text-white/20">${JOKERS[p.joker]?.icon("w-5 h-5")}</div>`}
           </div>
@@ -271,7 +297,7 @@ function renderVoting(r, t) {
     <div class="text-center pt-8 relative">
       <span class="absolute top-0 left-1/2 -translate-x-1/2 font-display text-[10px] uppercase tracking-widest text-white/30 border border-white/10 px-3 py-1">${roundCounter}</span>
       <h2 class="text-3xl font-serif italic leading-snug mt-6 px-4">"${esc(q.text)}"</h2>
-      ${amTarget ? `<span class="mt-4 inline-block text-xs font-display uppercase tracking-widest border border-white/20 px-4 py-2 glow-active bg-white/5 text-white">Cible : Vous-même</span>` : ''}
+      ${amTarget ? `<span class="mt-4 inline-block text-xs font-display uppercase tracking-widest border border-white/20 px-4 py-2 glow-active bg-white/5 text-white" style="border-color:${t.accent}; box-shadow:0 0 15px ${t.accent}40">Cible : Vous-même</span>` : ''}
     </div>
 
     ${!voted ? `
@@ -280,7 +306,10 @@ function renderVoting(r, t) {
         <span id="sv" class="text-6xl font-display font-light text-white tracking-tighter">${S.voteValue}%</span>
         
         <div id="slider-container" class="relative w-full h-12 flex items-center">
-          <input type="range" id="slider" min="0" max="100" value="${S.voteValue}" class="thermo-slider absolute inset-0 z-10" />
+          <div class="absolute left-0 right-0 h-0.5 bg-white/10 rounded-full"></div>
+          <div id="slider-fill" class="absolute left-0 h-0.5 rounded-full transition-all duration-75" style="width: ${S.voteValue}%; background: ${t.accent}; box-shadow: 0 0 10px ${t.accent};"></div>
+          <div id="slider-thumb" class="absolute h-8 w-1.5 bg-white rounded-sm transition-all duration-75 transform -translate-x-1/2" style="left: ${S.voteValue}%; box-shadow: 0 0 15px ${t.accent};"></div>
+          <input type="range" id="slider" min="0" max="100" value="${S.voteValue}" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" style="touch-action: pan-x;" />
         </div>
 
         <button id="voteB" class="w-full py-4 luxury-btn mt-2" style="border-color:${t.accent}; color:${t.accent}">Sceller la décision</button>
@@ -348,7 +377,12 @@ function renderReveal(r, t) {
   }
 
   let targetVerdictHtml = "";
-  if (res.targetShot) {
+  if (res.givesSips > 0) {
+    targetVerdictHtml = `<div class="w-full border border-white/20 p-5 text-center text-white font-serif italic tracking-wide flex flex-col gap-2 mt-4">
+      <span class="text-2xl" style="color:${t.accent}">${esc(res.targetName)} distribue ${res.givesSips} gorgée${res.givesSips > 1 ? 's' : ''}</span>
+      <span class="text-xs font-display font-sans text-white/60 tracking-widest uppercase">${res.targetMsg}</span>
+    </div>`;
+  } else if (res.targetShot) {
     targetVerdictHtml = `<div class="w-full border border-red-500/50 p-5 text-center text-white font-serif italic tracking-wide flex flex-col gap-2 mt-4">
       <span class="text-2xl">Condamnation absolue : CUL SEC</span>
       <span class="text-xs font-display font-sans text-white/60 tracking-widest uppercase">${res.targetMsg} (${res.targetDiff} pts d'écart)</span>
@@ -369,30 +403,28 @@ function renderReveal(r, t) {
   const penalizedGroup = (res.groupResults || []).filter(p => p.sips > 0 || p.shot).sort((a,b) => b.diff - a.diff);
   
   if (penalizedGroup.length === 0) {
-    groupVerdictHtml = `<div class="w-full border border-white/10 p-4 text-center text-white/50 font-display text-[10px] uppercase tracking-widest mt-4">Le groupe échappe à la sentence</div>`;
+    groupVerdictHtml = `<div class="w-full border border-white/10 p-4 text-center text-white/50 font-display text-[10px] uppercase tracking-widest mt-4">Le groupe échappe aux pénalités</div>`;
   } else {
     const listHtml = penalizedGroup.map(p => {
       const penalty = p.shot ? "CUL SEC" : `${p.sips} gorgée${p.sips > 1 ? 's' : ''}`;
       return `<div class="flex justify-between items-center text-xs font-display uppercase py-2 border-b border-white/5 last:border-0"><span class="text-white">${esc(p.name)} <span class="text-white/30 text-[9px] tracking-widest">(${p.diff} pts)</span></span> <span class="text-white/80">${penalty}</span></div>`;
     }).join("");
     groupVerdictHtml = `<div class="w-full border border-white/20 p-4 text-left mt-4">
-      <span class="block text-center text-white/50 font-display uppercase text-[9px] tracking-widest mb-4">Sanctions du groupe</span>
+      <span class="block text-center text-white/50 font-display uppercase text-[9px] tracking-widest mb-4">Balles Perdues (Erreur pire que la cible)</span>
       ${listHtml}
     </div>`;
   }
 
-  // FIX: On boucle sur TOUS les joueurs de la room, même ceux ayant refresh (déco fantôme) pour qu'ils s'affichent
   const recapList = playersArr(r).map(p => {
        const v = (r.votes || {})[p.id];
        const isTarget = p.id === res.targetId;
        const opacityClass = p.connected === false ? 'opacity-40' : '';
        return `<div class="flex justify-between items-center py-2 border-b border-white/5 last:border-0 ${isTarget ? 'text-white' : 'text-white/60'} ${opacityClass}">
-         <span class="text-sm font-display font-light capitalize tracking-wide">${esc(p.name)} ${isTarget ? '<span class="text-[9px] font-display text-white/40 tracking-widest uppercase">(Cible)</span>' : ''} ${p.connected === false ? '<span class="text-[9px] font-display text-red-500/80 tracking-widest uppercase ml-1">Absent</span>' : ''}</span>
+         <span class="text-sm font-display font-light capitalize tracking-wide">${esc(p.name)} ${isTarget ? '<span class="text-[9px] font-display text-white/40 tracking-widest uppercase">(Cible)</span>' : ''}</span>
          <span class="font-display font-light text-xl" ${isTarget ? `style="color:${t.accent}"` : ''}>${v !== undefined ? v.toString().padStart(2, '0') + '%' : '---'}</span>
        </div>`;
   }).join("");
 
-  // FIX: Ajout du bouton Clôturer la Session en avance pour l'hôte
   const hostControls = isHost ? `
     <div class="flex flex-col gap-4 mt-6 w-full">
       <button id="nextB" class="w-full py-4 luxury-btn" style="border-color:${t.accent}; color:${t.accent}">${r.maxRounds > 0 && r.round >= r.maxRounds ? 'Bilan Final' : 'Question Suivante'}</button>
@@ -403,7 +435,7 @@ function renderReveal(r, t) {
   return `<div class="flex-1 flex flex-col gap-5 pb-8 mt-6">
     <div class="text-center">
       <p class="text-white/40 text-[9px] font-display uppercase tracking-widest">Le Verdict Social</p>
-      <h2 class="text-2xl font-serif italic text-white tracking-wide mt-2 capitalize">${esc(res.targetName)} VS Le Groupe</h2>
+      <h2 class="text-2xl font-serif italic text-white tracking-wide mt-2 capitalize">${esc(res.targetName)} VS Moyenne</h2>
     </div>
     
     <div class="text-center animate-pop mt-4 h-24 flex items-center justify-center">
@@ -451,7 +483,7 @@ function renderStats(r, t) {
       <h2 class="text-3xl font-serif italic tracking-wide text-white">Fin de Session</h2>
     </div>
     
-    <div class="luxury-card p-8 text-center flex flex-col items-center justify-center border border-white/20 glow-active">
+    <div class="luxury-card p-8 text-center flex flex-col items-center justify-center border border-white/20 glow-active" style="border-color:${t.accent}60">
       <span class="text-[9px] font-display uppercase tracking-widest text-white/50 mb-4">La plus grande lucidité</span>
       <p class="text-4xl font-display font-light text-white capitalize tracking-wide mb-4" style="color:${t.accent}">${esc(rk.winner.name)}</p>
       <span class="font-display text-[10px] text-white/60 border border-white/10 px-4 py-2 uppercase tracking-widest">${rk.winner.score} pts d'erreur cumulés</span>
@@ -497,12 +529,6 @@ export function render() {
               const modal = document.getElementById("counterModal");
               if (modal) {
                  document.getElementById("counter-desc").innerHTML = `${esc(r.lastAction.actor)} vous assigne un CUL SEC`;
-                 const btn = document.getElementById("counter-btn-yes");
-                 if (me.joker === 'SHIELD') {
-                     btn.innerHTML = `Activer Immunité`;
-                 } else {
-                     btn.innerHTML = `Renvoyer (Miroir)`;
-                 }
                  modal.classList.remove("hidden");
               }
           }
