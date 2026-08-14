@@ -16,7 +16,6 @@ async function cleanRoomIfEmpty(code) {
   } catch(e) {}
 }
 
-// FIX: Restauration de la fonction d'auto-reconnexion manquante
 export async function tryReconnect() {
   const code = sessionStorage.getItem('thermo_code'); 
   const pid = sessionStorage.getItem('thermo_pid');
