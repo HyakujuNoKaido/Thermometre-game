@@ -1,9 +1,32 @@
 import './style.css';
 import { S, haptic } from './store.js';
-import * as Game from './game.js';
+import {
+  tryReconnect, createRoom, joinRoom, startRound, vote, nextRound,
+  restart, activateCounter, stealJoker, assignShotTarget,
+  cancelShotTarget, toggleJoker, endGame, quitGame, changeMaxRounds,
+  pickMode, chooseMode, randomizeJokers, cycleJoker
+} from './game.js';
 import * as UI from './ui.js';
 
-Object.assign(window, Game);
+window.createRoom = createRoom;
+window.joinRoom = joinRoom;
+window.startRound = startRound;
+window.vote = vote;
+window.nextRound = nextRound;
+window.restart = restart;
+window.activateCounter = activateCounter;
+window.stealJoker = stealJoker;
+window.assignShotTarget = assignShotTarget;
+window.cancelShotTarget = cancelShotTarget;
+window.toggleJoker = toggleJoker;
+window.endGame = endGame;
+window.quitGame = quitGame;
+window.changeMaxRounds = changeMaxRounds;
+window.pickMode = pickMode;
+window.chooseMode = chooseMode;
+window.randomizeJokers = randomizeJokers;
+window.cycleJoker = cycleJoker;
+
 window.toggleRules = UI.toggleRules;
 window.haptic = haptic;
 
@@ -34,14 +57,8 @@ function bindInputs() {
   const ni = g("nameI"); if (ni) ni.oninput = e => { S.name = e.target.value; sessionStorage.setItem('thermo_name', S.name); };
   const ji = g("joinI"); if (ji) ji.oninput = e => S.joinCode = e.target.value.toUpperCase();
 
-  if (g("createB")) g("createB").onclick = Game.createRoom;
-  if (g("joinB")) g("joinB").onclick = Game.joinRoom;
-  if (g("startB")) g("startB").onclick = Game.startRound;
-  if (g("voteB")) g("voteB").onclick = Game.vote;
-  if (g("nextB")) g("nextB").onclick = Game.nextRound;
-  if (g("restartB")) g("restartB").onclick = Game.restart;
-
   const sl = g("slider");
+  const sliderContainer = document.getElementById("slider-container");
   if (sl) {
     sl.value = S.voteValue; 
     UI.updateThermometerColor(S.voteValue);
@@ -59,6 +76,12 @@ function bindInputs() {
         else if (val > 50) haptic('medium');
         else haptic('light');
       }
+
+      if (sliderContainer) {
+         if (val > 85) sliderContainer.className = "relative w-full h-40 flex items-center justify-center opacity-0 shake-heavy";
+         else if (val > 65) sliderContainer.className = "relative w-full h-40 flex items-center justify-center opacity-0 shake-light";
+         else sliderContainer.className = "relative w-full h-40 flex items-center justify-center opacity-0";
+      }
     };
   }
 }
@@ -75,7 +98,7 @@ UI.onAfterRender(function() {
     if (avgEl && detailsEl) {
       const target = Number(S.room.result?.average) || 0;
       let rolls = 0;
-      const maxRolls = 30; // Suspense un peu plus court (1.2s)
+      const maxRolls = 30; 
       
       avgEl.classList.remove("opacity-0");
       avgEl.classList.add("blur-[2px]");
@@ -116,7 +139,7 @@ async function initApp() {
 
   const urlRoom = new URLSearchParams(window.location.search).get("room");
   if (urlRoom) S.joinCode = urlRoom.toUpperCase();
-  if (await Game.tryReconnect()) return;
+  if (await tryReconnect()) return;
   UI.render();
 }
 
