@@ -4,7 +4,7 @@ import {
   tryReconnect, createRoom, joinRoom, startRound, vote, nextRound,
   restart, activateCounter, stealJoker, assignShotTarget,
   cancelShotTarget, toggleJoker, endGame, quitGame, changeMaxRounds,
-  pickMode, chooseMode, randomizeJokers, cycleJoker
+  pickMode, chooseMode, randomizeJokers, cycleJoker, toggleBloodPact
 } from './game.js';
 import * as UI from './ui.js';
 
@@ -27,6 +27,7 @@ window.pickMode = pickMode;
 window.chooseMode = chooseMode;
 window.randomizeJokers = randomizeJokers;
 window.cycleJoker = cycleJoker;
+window.toggleBloodPact = toggleBloodPact;
 
 window.toggleRules = UI.toggleRules;
 window.haptic = haptic;
