@@ -20,41 +20,64 @@ input, select, textarea, button { font-size: 16px !important; }
 * { -webkit-tap-highlight-color: transparent; }
 
 .font-display { font-family: 'Outfit', sans-serif; }
-.font-mono { font-family: 'Space Mono', monospace; }
+.font-serif { font-family: 'Playfair Display', serif; }
 
-/* Bruit de fond premium */
+/* Bruit de fond */
 .noise-overlay {
   position: fixed; inset: 0; z-index: 1; pointer-events: none;
   background: url('data:image/svg+xml;utf8,%3Csvg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"%3E%3Cfilter id="noiseFilter"%3E%3CfeTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" stitchTiles="stitch"/%3E%3C/filter%3E%3Crect width="100%25" height="100%25" filter="url(%23noiseFilter)"/%3E%3C/svg%3E');
   opacity: 0.04; mix-blend-mode: overlay;
 }
 
-/* Transitions natives du Hub */
+/* Animations de scène */
 .fade-in { animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 .fade-out { animation: fadeOut 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes fadeOut { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-10px); } }
 
+.animate-view { animation: smoothSlideUp 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; will-change: transform, opacity; }
 @keyframes smoothSlideUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
-.animate-view { animation: smoothSlideUp 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; will-change: transform, opacity; }
 
+.animate-pop { animation: pop .5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 @keyframes pop { 0% { opacity: 0; transform: scale(.95); } 100% { opacity: 1; transform: scale(1); } }
-.animate-pop { animation: pop .4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 
-/* UI Components de Luxe */
+/* Flash effect pour le Reveal */
+.animate-flash { animation: flashBang 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+@keyframes flashBang {
+  0% { opacity: 1; }
+  10% { opacity: 0.8; }
+  100% { opacity: 0; }
+}
+
+/* Tension building slider */
+.shake-light { animation: shake 0.4s infinite cubic-bezier(.36,.07,.19,.97); }
+.shake-heavy { animation: shake 0.2s infinite cubic-bezier(.36,.07,.19,.97); }
+@keyframes shake {
+  10%, 90% { transform: translate3d(-1px, 0, 0); }
+  20%, 80% { transform: translate3d(1px, 0, 0); }
+  30%, 50%, 70% { transform: translate3d(-2px, 0, 0); }
+  40%, 60% { transform: translate3d(2px, 0, 0); }
+}
+
+/* Éléments de luxe avec glow tamisé */
 .luxury-card {
-  background-color: rgba(5, 5, 5, 0.6);
+  background-color: rgba(10, 10, 10, 0.5);
   backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
   border-radius: 4px;
+}
+
+.glow-active {
+  box-shadow: 0 0 35px var(--accent);
+  border-color: var(--accent);
 }
 
 .luxury-btn {
   background: transparent;
   border: 1px solid rgba(255, 255, 255, 0.2);
-  color: #fff; text-transform: uppercase; letter-spacing: 0.2em;
-  font-family: 'Space Mono', monospace; font-size: 0.65rem;
+  color: #fff; text-transform: uppercase; letter-spacing: 0.15em;
+  font-family: 'Outfit', sans-serif; font-size: 0.75rem; font-weight: 600;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   border-radius: 2px;
   outline: none;
@@ -64,14 +87,14 @@ input, select, textarea, button { font-size: 16px !important; }
 }
 .luxury-btn:disabled { opacity: 0.3; cursor: not-allowed; }
 
-/* Curseur élégant */
+/* Slider fin et esthétique */
 .thermo-slider { 
   -webkit-appearance: none; appearance: none; width: 100%; height: 2px; 
   background: rgba(255,255,255,0.1); outline: none; cursor: pointer; touch-action: pan-y; 
 }
 .thermo-slider::-webkit-slider-thumb { 
-  -webkit-appearance: none; width: 4px; height: 32px; background: var(--accent, #fff); 
-  border-radius: 1px; box-shadow: 0 0 15px var(--accent, #fff); 
+  -webkit-appearance: none; width: 6px; height: 32px; background: var(--accent, #fff); 
+  border-radius: 2px; box-shadow: 0 0 15px var(--accent, #fff); 
   transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .thermo-slider::-webkit-slider-thumb:active { transform: scaleY(1.3); }
