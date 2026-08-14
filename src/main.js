@@ -20,10 +20,13 @@ function syncLaTablePlayers() {
 function handleHubReturn() {
   haptic('medium');
   const app = document.getElementById("app");
-  app.classList.remove('fade-in');
-  app.classList.add('fade-out');
+  if(app) {
+    app.classList.remove('fade-in');
+    app.classList.add('fade-out');
+  }
   setTimeout(() => {
-    window.location.href = '/la-carte'; 
+    // FIX : On remonte proprement à la racine du domaine où se trouve ton Hub.
+    window.location.href = '/'; 
   }, 600);
 }
 
@@ -44,7 +47,7 @@ function bindInputs() {
   if (sl) {
     sl.value = S.voteValue; 
     UI.updateThermometerColor(S.voteValue);
-    let lastStep = Math.round(S.voteValue / 5); // Déclencheur tous les 5%
+    let lastStep = Math.round(S.voteValue / 5); 
     
     sl.oninput = e => {
       const val = parseInt(e.target.value);
@@ -59,7 +62,6 @@ function bindInputs() {
         else haptic('light');
       }
 
-      // Effet visuel "danger"
       if (sliderContainer) {
          if (val > 85) sliderContainer.className = "relative w-full h-12 flex items-center shake-heavy";
          else if (val > 65) sliderContainer.className = "relative w-full h-12 flex items-center shake-light";
@@ -72,7 +74,6 @@ function bindInputs() {
 UI.onAfterRender(function() {
   bindInputs();
   
-  // Slot Machine / Tension Reveal Effect
   if (S.room && S.room.phase === "REVEAL" && !S.animDone) {
     S.animDone = true;
     const avgEl = document.getElementById("reveal-avg");
@@ -82,14 +83,13 @@ UI.onAfterRender(function() {
     if (avgEl && detailsEl) {
       const target = Number(S.room.result?.average) || 0;
       let rolls = 0;
-      const maxRolls = 40; // 40 rolls * 40ms = ~1.6 sec de suspense
+      const maxRolls = 40; 
       
       avgEl.classList.remove("opacity-0");
-      avgEl.classList.add("blur-[2px]"); // Effet de flou de mouvement
+      avgEl.classList.add("blur-[2px]");
       
       const interval = setInterval(() => {
         rolls++;
-        // Aléatoire frénétique
         avgEl.textContent = Math.floor(Math.random() * 101).toString().padStart(2, '0');
         haptic('light');
         
