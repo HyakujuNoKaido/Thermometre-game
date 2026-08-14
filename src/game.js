@@ -24,7 +24,7 @@ export async function tryReconnect() {
 }
 
 export async function createRoom() {
-  if (!S.name.trim()) return toast("IDENTITÉ REQUISE"); 
+  if (!S.name.trim()) return toast("Veuillez décliner votre identité."); 
   if (S.isLoading) return; haptic('medium'); S.isLoading = true; render(); 
   try {
     let code; for (let i=0; i<5; i++) { code = genCode(); const s = await db.ref("rooms/" + code).get(); if (!s.exists()) break; }
@@ -32,16 +32,16 @@ export async function createRoom() {
     await db.ref("rooms/" + code).set({ mode: S.pendingMode, phase: "LOBBY", round: 0, hostId: pid, maxRounds: 10, timer: 0, createdAt: ServerValue.TIMESTAMP, players: { [pid]: { name: S.name.trim().slice(0, 20), joker: rand(Object.keys(JOKERS)), score: 0, jokerConsumed: false, jokerActive: false, connected: true } } });
     sessionStorage.setItem('thermo_code', code); sessionStorage.setItem('thermo_pid', pid);
     enterRoom(code, pid);
-  } catch(e) { toast("ERREUR SERVEUR"); } finally { S.isLoading = false; if (!S.room) render(); }
+  } catch(e) { toast("Connexion au club impossible."); } finally { S.isLoading = false; if (!S.room) render(); }
 }
 
 export async function joinRoom() {
-  if (!S.name.trim()) return toast("IDENTITÉ REQUISE");
+  if (!S.name.trim()) return toast("Veuillez décliner votre identité.");
   const code = (S.joinCode || "").toUpperCase().trim(); 
   if (S.isLoading) return; haptic('medium'); S.isLoading = true; render();
   try {
     const snap = await db.ref("rooms/" + code).get(); 
-    if (!snap.exists()) return toast("SALON ININTROUVABLE");
+    if (!snap.exists()) return toast("Cette table n'existe pas.");
     const room = snap.val();
     
     const existingPlayerPair = Object.entries(room.players || {}).find(
@@ -52,18 +52,18 @@ export async function joinRoom() {
     if (existingPlayerPair) {
       pid = existingPlayerPair[0];
       await db.ref(`rooms/${code}/players/${pid}`).update({ connected: true });
-      toast("CONNEXION RÉTABLIE", true);
+      toast("Ravi de vous revoir.", true);
     } else {
       pid = genId();
       const newPlayer = { name: S.name.trim().slice(0, 20), joker: rand(Object.keys(JOKERS)), score: 0, jokerConsumed: false, jokerActive: false, connected: true };
       const updates = { [`players/${pid}`]: newPlayer };
       if (room.phase === "VOTING" && room.expectedVoters) updates[`expectedVoters/${pid}`] = true;
       await db.ref("rooms/" + code).update(updates);
-      toast("ACCÈS AUTORISÉ", true);
+      toast("Bienvenue à la table.", true);
     }
     sessionStorage.setItem('thermo_code', code); sessionStorage.setItem('thermo_pid', pid);
     enterRoom(code, pid);
-  } catch (e) { toast("ERREUR RÉSEAU"); } finally { S.isLoading = false; if (!S.room) render(); }
+  } catch (e) { toast("Le service est indisponible."); } finally { S.isLoading = false; if (!S.room) render(); }
 }
 
 function enterRoom(code, pid) {
@@ -73,7 +73,7 @@ function enterRoom(code, pid) {
   
   S.roomRef.on("value", snap => { 
     const room = snap.val();
-    if (!room || !room.players || !room.players[S.pid]) { detach(); S.screen = "HOME"; S.room = null; toast("SALON CLÔTURÉ"); render(); return; }
+    if (!room || !room.players || !room.players[S.pid]) { detach(); S.screen = "HOME"; S.room = null; toast("Cette table a été fermée."); render(); return; }
     S.room = room; 
     S.screen = "ROOM"; 
 
@@ -124,7 +124,7 @@ export async function activateCounter() {
 export async function stealJoker(targetId) {
   const r = S.room;
   const targetP = r.players[targetId];
-  if (!targetP || targetP.jokerConsumed || !targetP.joker) return toast("CIBLE NON VALIDE");
+  if (!targetP || targetP.jokerConsumed || !targetP.joker) return toast("Impossible de dérober cette cible.");
   haptic('medium');
   const stolenJoker = targetP.joker;
   const actorName = S.room.players[S.pid].name;
@@ -139,7 +139,7 @@ export async function stealJoker(targetId) {
     lastAction: { id: Date.now(), type: 'THIEF', actor: actorName, target: targetP.name }
   });
   
-  setTimeout(() => toast(`PRIVILÈGE DÉROBÉ : ${JOKERS[stolenJoker].name}`, true), 3500);
+  setTimeout(() => toast(`Privilège acquis : ${JOKERS[stolenJoker].name}`, true), 3500);
 }
 
 export async function randomizeJokers() {
@@ -189,14 +189,14 @@ async function promoteHostIfNeeded() {
     const conn = connectedArr(r).sort((a, b) => a.id < b.id ? -1 : 1); 
     if (conn.length > 0 && conn[0].id === S.pid) { 
       promoting = true;
-      try { await S.roomRef.update({ hostId: S.pid }); toast("DROITS D'HÔTE ACQUIS", true); } catch(e) {} finally { promoting = false; }
+      try { await S.roomRef.update({ hostId: S.pid }); toast("Vous avez la gestion de la table.", true); } catch(e) {} finally { promoting = false; }
     } 
   } 
 }
 
 export async function startRound() {
   const r = S.room; if (S.pid !== r.hostId) return;
-  if (connectedArr(r).length < 2) return toast("MINIMUM 2 JOUEURS");
+  if (connectedArr(r).length < 2) return toast("Invitez au moins un convive.");
   haptic('heavy');
   const t = rand(connectedArr(r)); const qText = rand(QUESTIONS[r.mode]).replace(/{name}/g, t.name);
   const expectedVoters = {}; connectedArr(r).forEach(p => expectedVoters[p.id] = true);
@@ -286,16 +286,16 @@ export async function hostAutoReveal() {
     let targetMsg = "";
 
     if (hasJoker(tid, "SHIELD") || hasJoker(tid, "MIRROR")) {
-        targetSips = 0; targetShot = false; targetMsg = "Immunité par pouvoir";
+        targetSips = 0; targetShot = false; targetMsg = "Immunité accordée par privilège.";
     } else if (hasJoker(tid, "DOUBLE")) {
         targetSips *= 2; 
-        targetMsg = targetDiff <= 10 ? "Pari double remporté" : "Pari raté, sanction doublée";
+        targetMsg = targetDiff <= 10 ? "Pari audacieux remporté." : "Pari raté, la sentence s'alourdit.";
     } else {
-        if (targetDiff <= 10) targetMsg = "Lucidité parfaite";
-        else if (targetDiff <= 20) targetMsg = "Léger décalage";
-        else if (targetDiff <= 30) targetMsg = "Dissonance";
-        else if (targetDiff <= 40) targetMsg = "Déni important";
-        else targetMsg = "Déconnexion totale";
+        if (targetDiff <= 10) targetMsg = "Lucidité parfaite.";
+        else if (targetDiff <= 20) targetMsg = "Légère dissonance.";
+        else if (targetDiff <= 30) targetMsg = "Le voile de l'illusion.";
+        else if (targetDiff <= 40) targetMsg = "Déni prononcé.";
+        else targetMsg = "Déconnexion clinique de la réalité.";
     }
 
     const groupResults = [];
