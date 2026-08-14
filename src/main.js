@@ -32,7 +32,6 @@ window.toggleBloodPact = toggleBloodPact;
 window.toggleRules = UI.toggleRules;
 window.haptic = haptic;
 
-// CORRECTION MOBILE : Force la hauteur réelle du viewport de l'appareil (iOS / Android)
 function setAppHeight() {
   const doc = document.documentElement;
   doc.style.setProperty('--app-height', `${window.innerHeight}px`);
@@ -63,24 +62,42 @@ function handleHubReturn() {
   }, 600);
 }
 
+// LOGIQUE DU SNAP MAGNÉTIQUE
 function bindInputs() {
   const sl = document.getElementById("slider");
   if (sl) {
     sl.value = S.voteValue; 
     UI.updateThermometerColor(S.voteValue);
-    let lastStep = Math.round(S.voteValue / 5); 
     
     sl.oninput = e => {
-      const val = parseInt(e.target.value);
+      let val = parseInt(e.target.value);
+      const snapPoints = [0, 25, 50, 75, 100];
+      let snapped = false;
+
+      for (let pt of snapPoints) {
+        if (Math.abs(val - pt) <= 4) {
+          val = pt;
+          e.target.value = val;
+          snapped = true;
+          break;
+        }
+      }
+
       S.voteValue = val;
       UI.updateThermometerColor(val);
       
-      const step = Math.round(val / 5);
-      if (step !== lastStep) { 
-        lastStep = step; 
-        if (val > 80) haptic('heavy');
-        else if (val > 50) haptic('medium');
-        else haptic('light');
+      if (snapped) {
+         if (S.lastSnap !== val) {
+            haptic('heavy');
+            S.lastSnap = val;
+         }
+      } else {
+         S.lastSnap = null;
+         const step = Math.round(val / 5);
+         if (step !== S.lastStep) { 
+            S.lastStep = step; 
+            haptic('light');
+         }
       }
     };
   }
