@@ -1,6 +1,5 @@
 import { S, THEMES, JOKERS, esc, connectedArr, playersArr, haptic } from './store.js';
 import { icons } from './icons/index.js';
-import { activateCounter } from './game.js';
 import { init3D, update3DThermometer, toggle3DThermometer, resetTarotCard, burnTarotCard } from './webgl.js';
 
 export function toast(msg, ok=false) { 
@@ -49,9 +48,17 @@ export function showSmashAlert(action) {
   }, 2800);
 }
 
-export function confirmCounter() { document.getElementById("counterModal").classList.add("hidden"); activateCounter(); }
-export function ignoreCounter() { document.getElementById("counterModal").classList.add("hidden"); }
-window.confirmCounter = confirmCounter; window.ignoreCounter = ignoreCounter;
+// FIX: On appelle la fonction de game.js via window pour briser la dépendance circulaire
+export function confirmCounter() {
+  document.getElementById("counterModal").classList.add("hidden");
+  if (window.activateCounter) window.activateCounter();
+}
+export function ignoreCounter() {
+  document.getElementById("counterModal").classList.add("hidden");
+}
+
+window.confirmCounter = confirmCounter;
+window.ignoreCounter = ignoreCounter;
 
 export function toggleRules() {
   const modal = document.getElementById('rulesModal');
@@ -72,14 +79,43 @@ function applyBg() {
   document.documentElement.style.setProperty('--accent', t.accent);
 }
 
+// Fonction de conversion Hex -> RGB
+function hexToRgb(hex) {
+    var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) } : {r: 255, g: 255, b: 255};
+}
+
 export function updateThermometerColor(val) {
+  const t = THEMES[(S.room && S.room.mode) || S.pendingMode] || THEMES.Chill;
+  const start = hexToRgb(t.accent);
+  const end = {r: 255, g: 0, b: 60}; 
+  const ratio = val <= 50 ? 0 : (val - 50) / 50; 
+  const color = `rgb(${Math.round(start.r + (end.r - start.r) * ratio)}, ${Math.round(start.g + (end.g - start.g) * ratio)}, ${Math.round(start.b + (end.b - start.b) * ratio)})`;
+
   const sv = document.getElementById("sv");
-  if (sv) sv.textContent = val + "%";
-  
+  if (sv) {
+      sv.textContent = val + "%";
+      sv.style.color = color;
+      sv.style.textShadow = `0 0 20px ${color}`;
+  }
+
+  const fill = document.getElementById("slider-fill");
+  const thumb = document.getElementById("slider-thumb");
+  if(fill) {
+      fill.style.width = val + "%";
+      fill.style.background = color;
+      fill.style.boxShadow = `0 0 ${10 + (val/5)}px ${color}`;
+  }
+  if(thumb) {
+      thumb.style.left = val + "%";
+      thumb.style.background = '#fff';
+      thumb.style.boxShadow = `0 0 ${15 + (val/3)}px ${color}`;
+  }
+
   try {
       update3DThermometer(val);
   } catch (e) {
-      console.warn("WebGL Thermometer not ready yet.");
+      // Évite le crash si Three.js n'est pas encore prêt
   }
 }
 
@@ -104,7 +140,7 @@ function handle3DVisibility(phase) {
           resetTarotCard(false);
       }
   } catch(e) {
-      console.warn("Erreur d'initialisation WebGL :", e);
+      console.warn("Moteur 3D désactivé :", e);
   }
 }
 
@@ -137,7 +173,6 @@ function renderHome(t) {
         <div class="grid grid-cols-3 gap-3">
           ${Object.keys(THEMES).map(m => {
             const act = S.pendingMode === m; const tm = THEMES[m];
-            // Correction des classes Tailwind dynamiques (on utilise inline style)
             return `<button onclick="window.pickMode('${m}'); window.haptic('light');" class="py-4 border transition-all ${act ? `glow-active text-white bg-white/5` : 'border-white/10 text-white/30'} flex flex-col items-center gap-2 rounded-sm" ${act ? `style="border-color:${tm.accent}; box-shadow: 0 0 20px ${tm.accent}40;"` : ''}>
               <span style="color:${act ? tm.accent : 'currentColor'}">${tm.icon("w-5 h-5")}</span>
               <span class="font-display text-xs tracking-widest uppercase">${tm.label}</span>
@@ -145,7 +180,6 @@ function renderHome(t) {
           }).join("")}
         </div>
       </div>
-      <!-- Correction du bouton "Créer le salon" -->
       <button id="createB" class="w-full py-4 mt-4 luxury-btn" style="border-color:${t.accent}; color:${t.accent}; font-weight:700;" ${S.isLoading || !S.name ? 'disabled' : ''}>Créer le salon</button>
     </div>
 
@@ -166,7 +200,7 @@ function renderLobby(r, t) {
       <div class="luxury-card p-5 flex flex-col gap-4 mt-4">
         <h2 class="text-xs font-display uppercase tracking-widest text-white/50">Questions</h2>
         <div class="grid grid-cols-4 gap-2">
-          ${[5, 10, 15, 0].map(num => `<button onclick="window.changeMaxRounds(${num})" class="py-3 font-display text-xs border transition-all rounded-sm ${currentMax === num || (num === 0 && r.maxRounds === 0) ? `glow-active text-white bg-white/5` : 'border-white/10 text-white/40'}" ${(currentMax === num || (num === 0 && r.maxRounds === 0)) ? `style="border-color:${t.accent}; box-shadow: 0 0 15px ${t.accent}40"` : ''}>${num === 0 ? 'Infini' : num}</button>`).join("")}
+          ${[5, 10, 15, 0].map(num => `<button onclick="window.changeMaxRounds(${num})" class="py-3 font-display text-xs border transition-all rounded-sm ${currentMax === num || (num === 0 && r.maxRounds === 0) ? `glow-active text-white bg-white/5` : 'border-white/10 text-white/40'}" ${currentMax === num || (num === 0 && r.maxRounds === 0) ? `style="border-color:${t.accent}; box-shadow: 0 0 15px ${t.accent}40"` : ''}>${num === 0 ? 'Infini' : num}</button>`).join("")}
         </div>
       </div>
     `;
@@ -178,7 +212,7 @@ function renderLobby(r, t) {
          <h2 class="text-xs font-display uppercase tracking-widest text-white/50">Privilèges</h2>
          <button onclick="window.randomizeJokers()" class="text-[10px] font-display uppercase tracking-widest text-white/60 hover:text-white border border-white/20 px-3 py-1.5 rounded-sm transition-colors">Mélanger</button>
       </div>
-      <p class="text-xs text-white/40 font-display mt-2 leading-relaxed">Le jeu de Tarot 3D sera distribué aux invités à l'ouverture.</p>
+      <p class="text-xs text-white/40 font-display mt-2 leading-relaxed">En tant qu'hôte, vous pouvez redistribuer les privilèges de chacun.</p>
     </div>
   ` : `
     <div class="luxury-card p-5 flex items-center gap-5 mt-4">
@@ -295,7 +329,7 @@ function renderVoting(r, t) {
         <!-- Le Slider 3D se trouve en fond, on met un input transparent au-dessus -->
         <span id="sv" class="text-6xl font-display font-light text-white tracking-tighter" style="color:${t.accent}">${S.voteValue}%</span>
         
-        <div id="slider-container" class="relative w-full h-40 flex items-center justify-center opacity-0">
+        <div id="slider-container" class="relative w-full h-24 flex items-center justify-center opacity-0">
           <input type="range" id="slider" min="0" max="100" value="${S.voteValue}" class="absolute inset-0 w-full h-full cursor-pointer z-50" style="touch-action: pan-x;" />
         </div>
 
@@ -525,12 +559,6 @@ export function render() {
               const modal = document.getElementById("counterModal");
               if (modal) {
                  document.getElementById("counter-desc").innerHTML = `${esc(r.lastAction.actor)} vous assigne un CUL SEC`;
-                 const btn = document.getElementById("counter-btn-yes");
-                 if (me.joker === 'SHIELD') {
-                     btn.innerHTML = `Activer Immunité`;
-                 } else {
-                     btn.innerHTML = `Renvoyer (Miroir)`;
-                 }
                  modal.classList.remove("hidden");
               }
           }
