@@ -1,7 +1,14 @@
 
 {
   "Chill": [
-    "Quelle est la probabilité pour que {name} passe plus de 10 minutes à chercher ses lunettes ou ses clés alors qu'elles sont sous ses yeux ?",
+   "À quel point (en %) {name} est-il capable de s'endormir devant un film choisi par {name2} ?",
+    "Quelle est la probabilité pour que {name} emprunte de l'argent à {name2} sans jamais le rendre ?",
+    "Quel est le pourcentage de chances que {name} ignore les appels de {name2} parce qu'il/elle a 'la flemme' ?",
+    "Combien de chances sur 100 y a-t-il pour que {name} soit le/la seul(e) à rire à une blague nulle de {name2} ?",
+    "À quel pourcentage {name} serait-il prêt à s'habiller exactement comme {name2} pour une soirée ?",
+    "Quelle est la probabilité que {name} lise un message de {name2} et mette 3 jours à y répondre ?",
+    "À quel point (de 0 à 100%) {name} se croit meilleur(e) conducteur/trice que {name2} ?",
+  "Quelle est la probabilité pour que {name} passe plus de 10 minutes à chercher ses lunettes ou ses clés alors qu'elles sont sous ses yeux ?",
     "Quel est le pourcentage de chances que {name} simule un problème de réseau pour couper court à un appel téléphonique ennuyeux ?",
     "À quel point (de 0 à 100%) {name} est-il capable de commander un plat au restaurant et de regretter instantanément son choix en voyant l'assiette du voisin ?",
     "Combien de chances sur 100 y a-t-il pour que {name} achète un abonnement à la salle de sport ou une formation en ligne sans y aller plus de deux fois ?",
@@ -121,8 +128,16 @@
     "Quel est le pourcentage de chances que {name} ait déjà utilisé la même phrase d'accroche 'spontanée' avec au moins 10 personnes différentes ?",
     "À quel point (de 0 à 100%) {name} serait capable de porter des sous-vêtements particulièrement sexys à un rendez-vous médical juste pour l'ego ?",
     "Combien de chances sur 100 y a-t-il pour que {name} s'inscrive à une activité qu'il/elle déteste uniquement parce que la zone est remplie de célibataires attirants ?",
-    "Quelle est la probabilité pour que {name} pratique le 'breadcrumbing' (laisser des miettes d'attention) juste pour garder quelqu'un sous le coude ?"
+    "Quelle est la probabilité pour que {name} pratique le 'breadcrumbing' (laisser des miettes d'attention) juste pour garder quelqu'un sous le coude ?",
+    "Quelle est la probabilité pour que {name} ait déjà stalké secrètement l'ex de {name2} ?",
+    "Quel est le pourcentage de chances que {name} puisse séduire {name2} s'il/elle s'y mettait vraiment ?",
+    "À quel point (en %) {name} a-t-il déjà jugé les choix amoureux catastrophiques de {name2} ?",
+    "Combien de chances sur 100 y a-t-il pour que {name} fasse un compliment hypocrite à {name2} ce soir ?",
+    "Quelle est la probabilité que {name} fouille dans le téléphone de {name2} s'il restait déverrouillé ?",
+    "À quel pourcentage {name} serait capable de voler un rendez-vous (date) à {name2} ?",
+    "Quel est le pourcentage de chances que {name} balance un gros secret de {name2} après 3 verres ?"
   ],
+  
   "Hardcore": [
     "Quelle est la probabilité pour que {name} s'approprie anonymement le mérite d'une excellente idée collective si personne ne peut prouver le contraire ?",
     "Quel est le pourcentage de chances que {name} accepte de rompre définitivement le contact avec un ami d'enfance contre une garantie de réussite professionnelle absolue ?",
@@ -141,6 +156,13 @@
     "Quelle est la probabilité pour que {name} utilise une information extrêmement destructrice pour faire du chantage à quelqu'un qui a freiné sa carrière ?",
     "Quel est le pourcentage de chances que {name} assiste à un accident de la route impliquant un piéton en pleine nuit et prenne la fuite pour ne pas être impliqué(e) ?",
     "À quel point (de 0 à 100%) {name} serait capable de falsifier le testament d'un parent riche pour s'assurer d'obtenir la part de son frère ou de sa sœur ?",
+    "Quelle est la probabilité pour que {name} sacrifie la carrière de {name2} pour obtenir une promotion ?",
+    "À quel pourcentage {name} accepterait-il de témoigner contre {name2} pour s'éviter la prison ?",
+    "Quel est le pourcentage de chances que {name} ait déjà menti à {name2} sur un sujet grave ?",
+    "Combien de chances sur 100 y a-t-il pour que {name} couche avec le/la partenaire de {name2} si personne ne le savait ?",
+    "Quelle est la probabilité que {name} raye la voiture de {name2} par jalousie et fasse l'ignorant ?",
+    "À quel pourcentage {name} serait prêt à vider le compte en banque de {name2} si c'était indétectable ?",
+    "Quel est le pourcentage de chances que {name} refuse de sauver {name2} d'un incendie par peur pour sa propre vie ?",
     "Combien de chances sur 100 y a-t-il pour que {name} sabote délibérément le projet professionnel d'un ami proche par pure jalousie ?",
     "Quelle est la probabilité pour que {name} regarde quelqu'un être lynché publiquement pour une rumeur qu'il/elle a lui-même/elle-même inventée sans jamais avouer ?",
     "Quel est le pourcentage de chances que {name} sauve sa propre vie dans une situation de survie en sacrifiant délibérément celle de la personne assise à sa droite ?",
