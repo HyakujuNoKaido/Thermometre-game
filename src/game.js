@@ -1,4 +1,4 @@
-import { S, QUESTIONS, JOKERS, rand, genId, genCode, connectedArr, playersArr, haptic } from './store.js';
+import { S, JOKERS, rand, genId, genCode, connectedArr, playersArr, haptic, getQuestion } from './store.js';
 import { db, ServerValue } from './firebase.js';
 import { render, toast, showSmashAlert } from './ui.js';
 
@@ -6,7 +6,6 @@ let revealing = false;
 let promoting = false;
 let lastActionId = null;
 
-// Nettoyage absolu Firebase (supprime la Room si le dossier players est vide)
 async function cleanRoomIfEmpty(code) {
   if (!code) return;
   try {
@@ -17,30 +16,13 @@ async function cleanRoomIfEmpty(code) {
   } catch(e) {}
 }
 
-export async function tryReconnect() {
-  const code = sessionStorage.getItem('thermo_code'); 
-  const pid = sessionStorage.getItem('thermo_pid');
-  if (code && pid) {
-    try {
-      const snap = await db.ref("rooms/" + code).get();
-      if (snap.exists() && snap.val().players && snap.val().players[pid]) {
-        S.name = snap.val().players[pid].name;
-        await db.ref(`rooms/${code}/players/${pid}`).update({ connected: true });
-        enterRoom(code, pid); 
-        return true;
-      }
-    } catch(e) {}
-  }
-  return false;
-}
-
 export async function createRoom() {
   if (!S.name.trim()) return toast("Veuillez décliner votre identité."); 
   if (S.isLoading) return; haptic('medium'); S.isLoading = true; render(); 
   try {
     let code; for (let i=0; i<5; i++) { code = genCode(); const s = await db.ref("rooms/" + code).get(); if (!s.exists()) break; }
     const pid = genId();
-    await db.ref("rooms/" + code).set({ mode: S.pendingMode, phase: "LOBBY", round: 0, hostId: pid, maxRounds: 10, timer: 0, createdAt: ServerValue.TIMESTAMP, players: { [pid]: { name: S.name.trim().slice(0, 20), joker: rand(Object.keys(JOKERS)), score: 0, jokerConsumed: false, jokerActive: false, connected: true } } });
+    await db.ref("rooms/" + code).set({ mode: S.pendingMode, phase: "LOBBY", round: 0, hostId: pid, maxRounds: 10, createdAt: ServerValue.TIMESTAMP, players: { [pid]: { name: S.name.trim().slice(0, 20), joker: rand(Object.keys(JOKERS)), score: 0, jokerConsumed: false, jokerActive: false, connected: true } } });
     sessionStorage.setItem('thermo_code', code); sessionStorage.setItem('thermo_pid', pid);
     enterRoom(code, pid);
   } catch(e) { toast("Connexion au club impossible."); } finally { S.isLoading = false; if (!S.room) render(); }
@@ -55,22 +37,17 @@ export async function joinRoom() {
     if (!snap.exists()) return toast("Cette table n'existe pas.");
     const room = snap.val();
     
-    const existingPlayerPair = Object.entries(room.players || {}).find(
-      ([id, p]) => p.name.toLowerCase() === S.name.trim().toLowerCase()
-    );
-
+    const existingPlayerPair = Object.entries(room.players || {}).find(([id, p]) => p.name.toLowerCase() === S.name.trim().toLowerCase());
     let pid;
     if (existingPlayerPair) {
       pid = existingPlayerPair[0];
       await db.ref(`rooms/${code}/players/${pid}`).update({ connected: true });
-      toast("Ravi de vous revoir.", true);
     } else {
       pid = genId();
       const newPlayer = { name: S.name.trim().slice(0, 20), joker: rand(Object.keys(JOKERS)), score: 0, jokerConsumed: false, jokerActive: false, connected: true };
       const updates = { [`players/${pid}`]: newPlayer };
       if (room.phase === "VOTING" && room.expectedVoters) updates[`expectedVoters/${pid}`] = true;
       await db.ref("rooms/" + code).update(updates);
-      toast("Bienvenue à la table.", true);
     }
     sessionStorage.setItem('thermo_code', code); sessionStorage.setItem('thermo_pid', pid);
     enterRoom(code, pid);
@@ -79,7 +56,7 @@ export async function joinRoom() {
 
 function enterRoom(code, pid) {
   S.code = code; S.pid = pid; history.replaceState(null, "", "?room=" + code);
-  if (S.roomRef) { S.roomRef.off(); }
+  if (S.roomRef) S.roomRef.off(); 
   
   const connRef = db.ref(`rooms/${code}/players/${pid}/connected`);
   connRef.onDisconnect().cancel(); 
@@ -92,24 +69,22 @@ function enterRoom(code, pid) {
     const room = snap.val();
     if (!room || !room.players || !room.players[S.pid]) { 
       cleanRoomIfEmpty(code); 
-      detach(); S.screen = "HOME"; S.room = null; toast("Cette table a été fermée."); render(); return; 
+      detach(); S.screen = "HOME"; S.room = null; render(); return; 
     }
     S.room = room; 
     S.screen = "ROOM"; 
 
     if (room.lastAction && room.lastAction.id !== lastActionId) {
        lastActionId = room.lastAction.id;
-       if (Date.now() - room.lastAction.id < 10000) {
-           showSmashAlert(room.lastAction);
-       }
+       if (Date.now() - room.lastAction.id < 10000) showSmashAlert(room.lastAction);
     }
     promoteHostIfNeeded(); hostAutoReveal(); render();
   });
 }
 
+// Reste de tes fonctions Jokers (identiques)
 export async function toggleJoker() {
-  const me = S.room.players[S.pid];
-  if (!me || me.jokerConsumed || !me.joker) return;
+  const me = S.room.players[S.pid]; if (!me || me.jokerConsumed || !me.joker) return;
   haptic('light');
   const upd = { [`players/${S.pid}/jokerActive`]: !me.jokerActive };
   if (!me.jokerActive) upd.lastAction = { id: Date.now(), type: me.joker, actor: me.name };
@@ -117,71 +92,37 @@ export async function toggleJoker() {
 }
 
 export async function assignShotTarget(targetId) {
-  haptic('medium');
-  const targetName = S.room.players[targetId].name;
-  await S.roomRef.update({
-    [`players/${S.pid}/shotTarget`]: targetId,
-    [`players/${S.pid}/jokerActive`]: true,
-    lastAction: { id: Date.now(), type: 'SHOT', actor: S.room.players[S.pid].name, target: targetName, targetId: targetId }
-  });
+  haptic('medium'); const targetName = S.room.players[targetId].name;
+  await S.roomRef.update({ [`players/${S.pid}/shotTarget`]: targetId, [`players/${S.pid}/jokerActive`]: true, lastAction: { id: Date.now(), type: 'SHOT', actor: S.room.players[S.pid].name, target: targetName, targetId: targetId } });
 }
-
-export async function cancelShotTarget() {
-  haptic('light');
-  await S.roomRef.update({ [`players/${S.pid}/shotTarget`]: null, [`players/${S.pid}/jokerActive`]: false });
-}
-
-export async function activateCounter() {
-  haptic('heavy');
-  const me = S.room.players[S.pid];
-  await S.roomRef.update({
-    [`players/${S.pid}/jokerActive`]: true,
-    lastAction: { id: Date.now(), type: 'COUNTER', actor: me.name, joker: me.joker }
-  });
-}
+export async function cancelShotTarget() { haptic('light'); await S.roomRef.update({ [`players/${S.pid}/shotTarget`]: null, [`players/${S.pid}/jokerActive`]: false }); }
+export async function activateCounter() { haptic('heavy'); const me = S.room.players[S.pid]; await S.roomRef.update({ [`players/${S.pid}/jokerActive`]: true, lastAction: { id: Date.now(), type: 'COUNTER', actor: me.name, joker: me.joker } }); }
 
 export async function stealJoker(targetId) {
-  const r = S.room;
-  const targetP = r.players[targetId];
+  const r = S.room; const targetP = r.players[targetId];
   if (!targetP || targetP.jokerConsumed || !targetP.joker) return toast("Cible protégée.");
   haptic('medium');
-  const stolenJoker = targetP.joker;
-  const actorName = S.room.players[S.pid].name;
-
   await S.roomRef.update({
-    [`players/${S.pid}/joker`]: stolenJoker,
-    [`players/${S.pid}/jokerActive`]: false,
-    [`players/${S.pid}/jokerConsumed`]: false,
-    [`players/${targetId}/joker`]: null,
-    [`players/${targetId}/jokerActive`]: false,
-    [`players/${targetId}/jokerConsumed`]: true,
-    lastAction: { id: Date.now(), type: 'THIEF', actor: actorName, target: targetP.name }
+    [`players/${S.pid}/joker`]: targetP.joker, [`players/${S.pid}/jokerActive`]: false, [`players/${S.pid}/jokerConsumed`]: false,
+    [`players/${targetId}/joker`]: null, [`players/${targetId}/jokerActive`]: false, [`players/${targetId}/jokerConsumed`]: true,
+    lastAction: { id: Date.now(), type: 'THIEF', actor: S.room.players[S.pid].name, target: targetP.name }
   });
-  
-  setTimeout(() => toast(`Privilège acquis : ${JOKERS[stolenJoker].name}`, true), 3500);
 }
 
 export async function randomizeJokers() {
-  if (S.pid !== S.room.hostId) return;
-  haptic('medium');
+  if (S.pid !== S.room.hostId) return; haptic('medium');
   const updates = {};
   Object.keys(S.room.players).forEach(id => {
     updates[`players/${id}/joker`] = rand(Object.keys(JOKERS));
-    updates[`players/${id}/jokerConsumed`] = false;
-    updates[`players/${id}/jokerActive`] = false;
-    updates[`players/${id}/shotTarget`] = null;
+    updates[`players/${id}/jokerConsumed`] = false; updates[`players/${id}/jokerActive`] = false; updates[`players/${id}/shotTarget`] = null;
   });
   await S.roomRef.update(updates);
 }
 
 export async function cycleJoker(pid) {
-  if (S.pid !== S.room.hostId) return;
-  haptic('light');
-  const p = S.room.players[pid];
-  if (!p) return;
-  const keys = Object.keys(JOKERS);
-  let idx = keys.indexOf(p.joker);
-  idx = (idx + 1) % keys.length;
+  if (S.pid !== S.room.hostId) return; haptic('light');
+  const p = S.room.players[pid]; if (!p) return;
+  const keys = Object.keys(JOKERS); let idx = keys.indexOf(p.joker); idx = (idx + 1) % keys.length;
   await S.roomRef.update({ [`players/${pid}/joker`]: keys[idx], [`players/${pid}/jokerConsumed`]: false, [`players/${pid}/jokerActive`]: false, [`players/${pid}/shotTarget`]: null });
 }
 
@@ -191,18 +132,10 @@ function detach() {
   S.code = null; S.pid = null; history.replaceState(null, "", window.location.pathname);
 }
 
-// LA CORRECTION DU QUITTER (Supprime le joueur et la room si vide)
 export async function quitGame() { 
   try { 
-    const code = S.code;
-    const pid = S.pid;
-    detach(); 
-    S.screen = "HOME"; 
-    render(); 
-    if (code && pid) {
-      await db.ref(`rooms/${code}/players/${pid}`).remove(); 
-      cleanRoomIfEmpty(code);
-    }
+    const code = S.code; const pid = S.pid; detach(); S.screen = "HOME"; render(); 
+    if (code && pid) { await db.ref(`rooms/${code}/players/${pid}`).remove(); cleanRoomIfEmpty(code); }
   } catch(e) {}
 }
 
@@ -222,6 +155,7 @@ async function promoteHostIfNeeded() {
   } 
 }
 
+// LANCEMENT DU ROUND (Questions Aléatoires, Pacte de Sang, Part des Anges)
 export async function startRound() {
   const r = S.room; if (S.pid !== r.hostId) return;
   const conn = connectedArr(r);
@@ -232,10 +166,28 @@ export async function startRound() {
   const others = conn.filter(p => p.id !== t.id);
   const t2 = others.length > 0 ? rand(others) : t;
 
-  const qText = rand(QUESTIONS[r.mode]).replace(/{name}/g, t.name).replace(/{name2}/g, t2.name);
+  const used = r.usedQuestions || [];
+  const qData = getQuestion(r.mode, used, t.name, t2.name);
+  used.push(qData.raw);
+
   const expectedVoters = {}; conn.forEach(p => expectedVoters[p.id] = true);
   
-  const upd = { phase: "VOTING", round: (r.round || 0) + 1, question: {text: qText, targetId: t.id, targetName: t.name}, expectedVoters, votes: null, result: null, startedAt: ServerValue.TIMESTAMP };
+  const upd = { 
+      phase: "VOTING", round: (r.round || 0) + 1, 
+      question: {text: qData.text, targetId: t.id, targetName: t.name}, 
+      expectedVoters, votes: null, result: null, usedQuestions: used, 
+      startedAt: ServerValue.TIMESTAMP 
+  };
+
+  // Le Pacte de Sang (Défini au 1er round)
+  if (conn.length >= 3 && (!r.bloodPact || r.round === 0)) {
+      const shuffled = [...conn].sort(() => 0.5 - Math.random());
+      upd.bloodPact = { p1: shuffled[0].id, p2: shuffled[1].id };
+  }
+
+  // La Part des Anges (15% de chance)
+  upd.angelRound = Math.random() < 0.15;
+
   Object.keys(r.players).forEach(id => { upd[`players/${id}/jokerActive`] = false; });
   await S.roomRef.update(upd);
 }
@@ -259,6 +211,7 @@ export async function hostAutoReveal() {
     const usedJokersLog = [];
     const jokerShotVictims = [];
     
+    // GESTION DES POUVOIRS...
     Object.keys(r.players).forEach(id => {
        const p = r.players[id];
        if (p.jokerActive && p.joker && !p.jokerConsumed && p.joker !== "SHIELD" && p.joker !== "MIRROR") {
@@ -267,37 +220,27 @@ export async function hostAutoReveal() {
     });
 
     const attackers = Object.keys(r.players).filter(id => r.players[id].jokerActive && r.players[id].joker === "SHOT" && r.players[id].shotTarget);
-    
     attackers.forEach(atkId => {
-        const p = r.players[atkId];
-        const victimId = p.shotTarget;
-        const victim = r.players[victimId];
-
+        const p = r.players[atkId]; const victimId = p.shotTarget; const victim = r.players[victimId];
         if (victim && victim.jokerActive && !victim.jokerConsumed) {
-            if (victim.joker === "SHIELD") {
-                usedJokersLog.push({ id: victimId, name: victim.name, joker: "SHIELD", blocked: p.name });
-            } else if (victim.joker === "MIRROR") {
+            if (victim.joker === "SHIELD") usedJokersLog.push({ id: victimId, name: victim.name, joker: "SHIELD", blocked: p.name });
+            else if (victim.joker === "MIRROR") {
                 usedJokersLog.push({ id: victimId, name: victim.name, joker: "MIRROR", reflectedTo: p.name });
                 jokerShotVictims.push({ id: atkId, name: p.name, originalTarget: victim.name });
-            } else {
-                jokerShotVictims.push({ id: victimId, name: victim.name });
-            }
-        } else if (victim) {
-            jokerShotVictims.push({ id: victimId, name: victim.name });
-        }
+            } else jokerShotVictims.push({ id: victimId, name: victim.name });
+        } else if (victim) jokerShotVictims.push({ id: victimId, name: victim.name });
     });
 
     Object.keys(r.players).forEach(id => {
        const p = r.players[id];
        if (p.jokerActive && !p.jokerConsumed && (p.joker === "SHIELD" || p.joker === "MIRROR")) {
-           if (!usedJokersLog.find(l => l.id === id)) {
-               usedJokersLog.push({ id, name: p.name, joker: p.joker });
-           }
+           if (!usedJokersLog.find(l => l.id === id)) usedJokersLog.push({ id, name: p.name, joker: p.joker });
        }
     });
 
     const hasJoker = (id, jName) => { const p = r.players[id]; return p && p.jokerActive && p.joker === jName && !p.jokerConsumed; };
 
+    // CALCULS DES SANCTIONS
     const tid = r.question.targetId; 
     const tv = votes[tid] !== undefined ? votes[tid] : 50; 
     const allVotes = Object.values(votes);
@@ -305,27 +248,30 @@ export async function hostAutoReveal() {
     
     const targetDiff = Math.abs(tv - average);
     let targetSips = 0; let targetShot = false; let targetMsg = ""; let givesSips = 0;
+    let angelLoser = null;
 
-    if (targetDiff <= 10) {
-        givesSips = 3;
-        targetMsg = "Lucidité parfaite. Cible distribue 3 gorgées.";
-    } else if (targetDiff <= 20) {
-        targetSips = 1; targetMsg = "Légère dissonance (1 gorgée).";
-    } else if (targetDiff <= 30) {
-        targetSips = 2; targetMsg = "Le voile de l'illusion (2 gorgées).";
+    if (r.angelRound) {
+        targetSips = 0; givesSips = 0; targetMsg = "La Part des Anges. Clémence absolue.";
+        let maxDiff = -1; let angelLoserId = null;
+        Object.keys(votes).forEach(id => {
+            const d = Math.abs(votes[id] - average);
+            if(d > maxDiff) { maxDiff = d; angelLoserId = id; }
+        });
+        if (angelLoserId) angelLoser = { name: r.players[angelLoserId].name, diff: maxDiff };
     } else {
-        targetSips = 4; targetMsg = "Déconnexion absolue (4 gorgées).";
-    }
+        if (targetDiff <= 10) { givesSips = 3; targetMsg = "Lucidité parfaite. Cible distribue 3 gorgées."; } 
+        else if (targetDiff <= 20) { targetSips = 1; targetMsg = "Légère dissonance (1 gorgée)."; } 
+        else if (targetDiff <= 30) { targetSips = 2; targetMsg = "Le voile de l'illusion (2 gorgées)."; } 
+        else { targetSips = 4; targetMsg = "Déconnexion absolue (4 gorgées)."; }
 
-    if (hasJoker(tid, "DOUBLE")) {
-        if (givesSips > 0) givesSips *= 2;
-        if (targetSips > 0) targetSips *= 2;
-        targetMsg = givesSips > 0 ? "Pari gagné ! Distribuez le double." : "Pari raté, sanction doublée.";
-    }
-
-    if (hasJoker(tid, "SHIELD") || hasJoker(tid, "MIRROR")) {
-        targetSips = 0; givesSips = 0;
-        targetMsg = "Immunité accordée par privilège.";
+        if (hasJoker(tid, "DOUBLE")) {
+            if (givesSips > 0) givesSips *= 2;
+            if (targetSips > 0) targetSips *= 2;
+            targetMsg = givesSips > 0 ? "Pari gagné ! Distribuez le double." : "Pari raté, sanction doublée.";
+        }
+        if (hasJoker(tid, "SHIELD") || hasJoker(tid, "MIRROR")) {
+            targetSips = 0; givesSips = 0; targetMsg = "Immunité accordée par privilège.";
+        }
     }
 
     const groupResults = [];
@@ -334,26 +280,46 @@ export async function hostAutoReveal() {
       const playerDiff = Math.abs(votes[id] - average);
       let sips = 0;
       
-      if (targetSips > 0 && playerDiff > targetDiff + 5) {
-          sips = 1;
+      if (!r.angelRound && targetSips > 0 && playerDiff > targetDiff + 5) {
+          sips = 1; // Balle perdue
       }
       
       if (hasJoker(id, "SHIELD") || hasJoker(id, "MIRROR")) sips = 0;
       if (hasJoker(id, "DOUBLE")) sips *= 2;
       
-      groupResults.push({ id, name: r.players[id].name, diff: playerDiff, sips, shot: false });
+      groupResults.push({ id, name: r.players[id].name, diff: playerDiff, sips, shot: false, collateral: 0 });
     });
+
+    // PACTE DE SANG : Dommages Collatéraux
+    if (r.bloodPact && !r.angelRound) {
+        const applyCollateral = (partnerId, penaltySips, penaltyShot) => {
+            if (penaltyShot || penaltySips >= 3) {
+                const partnerRes = groupResults.find(g => g.id === partnerId);
+                if (partnerRes && !hasJoker(partnerId, "SHIELD")) { 
+                    partnerRes.collateral = penaltyShot ? 'CUL SEC (Pacte)' : Math.ceil(penaltySips / 2); 
+                    partnerRes.sips += Math.ceil(penaltySips / 2);
+                }
+            }
+        };
+        // Si la cible principale a pris cher
+        if (tid === r.bloodPact.p1) applyCollateral(r.bloodPact.p2, targetSips, targetShot);
+        if (tid === r.bloodPact.p2) applyCollateral(r.bloodPact.p1, targetSips, targetShot);
+        // Si un membre du groupe a pris cher (ex: shot via pouvoir)
+        jokerShotVictims.forEach(v => {
+            if (v.id === r.bloodPact.p1) applyCollateral(r.bloodPact.p2, 0, true);
+            if (v.id === r.bloodPact.p2) applyCollateral(r.bloodPact.p1, 0, true);
+        });
+    }
 
     const result = { 
       average, targetVote: tv, targetName: r.question.targetName || "La cible", 
       targetId: tid, targetDiff, targetSips, targetShot, targetMsg, givesSips,
-      groupResults, usedJokersLog, jokerShotVictims
+      groupResults, usedJokersLog, jokerShotVictims, angelLoser
     };
     
     const updates = { phase: "REVEAL", result: result };
     updates[`players/${tid}/score`] = (r.players[tid].score || 0) + targetDiff;
     groupResults.forEach(p => { updates[`players/${p.id}/score`] = (r.players[p.id].score || 0) + p.diff; });
-    
     jokerShotVictims.forEach(v => { updates[`players/${v.id}/score`] = (r.players[v.id].score || 0) + 25; });
 
     Object.keys(r.players).forEach(id => {
@@ -377,7 +343,7 @@ export async function endGame() {
 
 export async function restart() { 
   const r = S.room; if (S.pid !== r.hostId) return; 
-  const upd = { phase: "LOBBY", round: 0, votes: null, result: null, ranking: null };
+  const upd = { phase: "LOBBY", round: 0, votes: null, result: null, ranking: null, usedQuestions: null, angelRound: null };
   Object.keys(r.players).forEach(id => { 
       upd[`players/${id}/score`] = 0; 
       upd[`players/${id}/jokerConsumed`] = false; 
