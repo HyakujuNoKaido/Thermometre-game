@@ -59,6 +59,7 @@ export function showSmashAlert(action) {
 
   container.classList.remove("hidden");
   container.classList.add("fade-in");
+  container.classList.add("animate-alert-glow"); // Ajoute de la vie à l'alerte
 
   setTimeout(() => { 
     container.classList.remove("fade-in");
@@ -66,6 +67,7 @@ export function showSmashAlert(action) {
     setTimeout(() => {
         container.classList.add("hidden");
         container.classList.remove("fade-out");
+        container.classList.remove("animate-alert-glow");
     }, 600);
   }, 2800);
 }
@@ -95,37 +97,40 @@ function applyBg() {
   document.documentElement.style.setProperty('--accent', t.accent);
 }
 
-// Fonction utilitaire pour mélanger 2 couleurs hex (pour le slider)
-function mixHexColors(hex1, hex2, ratio) {
-  const r1 = parseInt(hex1.substring(1, 3), 16), g1 = parseInt(hex1.substring(3, 5), 16), b1 = parseInt(hex1.substring(5, 7), 16);
-  const r2 = parseInt(hex2.substring(1, 3), 16), g2 = parseInt(hex2.substring(3, 5), 16), b2 = parseInt(hex2.substring(5, 7), 16);
-  const r = Math.round(r1 * (1 - ratio) + r2 * ratio);
-  const g = Math.round(g1 * (1 - ratio) + g2 * ratio);
-  const b = Math.round(b1 * (1 - ratio) + b2 * ratio);
-  return `rgb(${r}, ${g}, ${b})`;
+// Fonction de conversion Hex -> RGB
+function hexToRgb(hex) {
+    var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) } : {r: 255, g: 255, b: 255};
 }
 
 export function updateThermometerColor(val) {
-  const sv = document.getElementById("sv");
-  if (sv) sv.textContent = val + "%";
-
   const t = THEMES[(S.room && S.room.mode) || S.pendingMode] || THEMES.Chill;
-  const targetColor = "#FF003C"; // Rouge absolu
-  // On commence à changer de couleur après 50%
-  let ratio = val <= 50 ? 0 : (val - 50) / 50; 
   
-  const mixedColor = mixHexColors(t.accent, targetColor, ratio);
-  
+  // Mix de couleur dynamique: Du Theme Accent vers le Rouge Vif (#FF003C)
+  const start = hexToRgb(t.accent);
+  const end = {r: 255, g: 0, b: 60}; 
+  const ratio = val / 100;
+  const color = `rgb(${Math.round(start.r + (end.r - start.r) * ratio)}, ${Math.round(start.g + (end.g - start.g) * ratio)}, ${Math.round(start.b + (end.b - start.b) * ratio)})`;
+
+  const sv = document.getElementById("sv");
+  if (sv) {
+      sv.textContent = val + "%";
+      sv.style.color = color;
+      sv.style.textShadow = `0 0 20px ${color}`;
+  }
+
   const fill = document.getElementById("slider-fill");
   const thumb = document.getElementById("slider-thumb");
+  
   if(fill) {
       fill.style.width = val + "%";
-      fill.style.background = mixedColor;
-      fill.style.boxShadow = `0 0 ${10 + (val/5)}px ${mixedColor}`;
+      fill.style.background = color;
+      fill.style.boxShadow = `0 0 ${10 + (val/5)}px ${color}`;
   }
   if(thumb) {
       thumb.style.left = val + "%";
-      thumb.style.boxShadow = `0 0 ${15 + (val/4)}px ${mixedColor}`;
+      thumb.style.background = '#fff';
+      thumb.style.boxShadow = `0 0 ${15 + (val/3)}px ${color}`;
   }
 }
 
@@ -165,7 +170,7 @@ function renderHome(t) {
           }).join("")}
         </div>
       </div>
-      <button id="createB" class="w-full py-4 mt-4 luxury-btn" ${S.pendingMode ? `style="border-color:${t.accent}; color:${t.accent}"` : ""} ${S.isLoading || !S.name ? 'disabled' : ''}>Ouvrir un salon</button>
+      <button id="createB" class="w-full py-4 mt-4 luxury-btn" ${act => act ? `style="border-color:${t.accent}; color:${t.accent}"` : ""} ${S.isLoading || !S.name ? 'disabled' : ''}>Ouvrir un salon</button>
     </div>
 
     <div class="luxury-card p-4 flex flex-row gap-4 items-center">
@@ -230,8 +235,9 @@ function renderLobby(r, t) {
         ${ps.map(p => `
           <div class="flex items-center justify-between py-2 border-b border-white/5 last:border-0">
             <div class="flex items-center gap-4">
-              <span class="font-display font-light text-white text-lg capitalize tracking-wide">${esc(p.name)}</span>
+              <span class="font-display font-light text-white text-lg capitalize tracking-wide ${p.connected === false ? 'opacity-40' : ''}">${esc(p.name)}</span>
               ${p.id === S.pid ? `<span class="text-[9px] font-display uppercase tracking-widest border border-white/20 text-white/60 px-2 py-0.5">Vous</span>` : ''}
+              ${p.connected === false ? `<span class="text-[9px] font-display uppercase tracking-widest text-red-500/80">Absent</span>` : ''}
             </div>
             ${isHost ? `<button onclick="window.cycleJoker('${p.id}')" class="text-white/40 hover:text-white transition-colors" title="Modifier le pouvoir">${JOKERS[p.joker]?.icon("w-5 h-5")}</button>` : `<div class="text-white/20">${JOKERS[p.joker]?.icon("w-5 h-5")}</div>`}
           </div>
@@ -303,16 +309,16 @@ function renderVoting(r, t) {
     ${!voted ? `
       ${jokerActionHtml}
       <div class="mt-4 flex flex-col items-center gap-8 px-4">
-        <span id="sv" class="text-6xl font-display font-light text-white tracking-tighter">${S.voteValue}%</span>
+        <span id="sv" class="text-6xl font-display font-light text-white tracking-tighter" style="color:${t.accent}">${S.voteValue}%</span>
         
         <div id="slider-container" class="relative w-full h-12 flex items-center">
           <div class="absolute left-0 right-0 h-0.5 bg-white/10 rounded-full"></div>
           <div id="slider-fill" class="absolute left-0 h-0.5 rounded-full transition-all duration-75" style="width: ${S.voteValue}%; background: ${t.accent}; box-shadow: 0 0 10px ${t.accent};"></div>
           <div id="slider-thumb" class="absolute h-8 w-1.5 bg-white rounded-sm transition-all duration-75 transform -translate-x-1/2" style="left: ${S.voteValue}%; box-shadow: 0 0 15px ${t.accent};"></div>
-          <input type="range" id="slider" min="0" max="100" value="${S.voteValue}" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" style="touch-action: pan-x;" />
+          <input type="range" id="slider" min="0" max="100" value="${S.voteValue}" class="thermo-slider absolute inset-0 z-10" />
         </div>
 
-        <button id="voteB" class="w-full py-4 luxury-btn mt-2" style="border-color:${t.accent}; color:${t.accent}">Sceller la décision</button>
+        <button id="voteB" class="w-full py-4 luxury-btn mt-2 breathing" style="border-color:${t.accent}; color:${t.accent}">Sceller la décision</button>
       </div>
     ` : `
       <div class="mt-10 flex flex-col items-center">
