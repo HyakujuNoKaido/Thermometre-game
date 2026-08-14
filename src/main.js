@@ -25,7 +25,6 @@ function handleHubReturn() {
     app.classList.add('fade-out');
   }
   setTimeout(() => {
-    // FIX : On remonte proprement à la racine du domaine où se trouve ton Hub.
     window.location.href = '/'; 
   }, 600);
 }
@@ -98,7 +97,10 @@ UI.onAfterRender(function() {
           avgEl.classList.remove("blur-[2px]");
           avgEl.textContent = target.toString().padStart(2, '0');
           
-          if(flashEl) flashEl.classList.add("animate-flash");
+          if(flashEl) {
+             flashEl.classList.remove("hidden");
+             flashEl.classList.add("animate-flash");
+          }
           haptic('heavy');
           
           detailsEl.classList.remove("opacity-0");
