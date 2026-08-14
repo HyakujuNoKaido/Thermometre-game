@@ -52,16 +52,22 @@
     </div>
   </div>
 
-  <div id="rulesModal" class="fixed inset-0 z-[60] hidden bg-black/90 backdrop-blur-lg flex items-center justify-center px-5 pointer-events-auto">
-    <div class="luxury-card w-full max-w-sm p-8 flex flex-col relative animate-pop">
+  <!-- MODALE RÈGLES & POUVOIRS (Accessible en tout temps) -->
+  <div id="rulesModal" class="fixed inset-0 z-[250] hidden bg-black/90 backdrop-blur-lg flex items-center justify-center px-5 pointer-events-auto">
+    <div class="luxury-card w-full max-w-md p-8 flex flex-col relative animate-pop max-h-[85vh]">
       <button onclick="toggleRules()" class="absolute top-4 right-4 text-white/40 hover:text-white font-display text-xs uppercase tracking-widest outline-none">Fermer</button>
-      <h2 class="text-3xl font-serif italic mb-6 text-white tracking-wide">L'Étiquette</h2>
-      <div class="text-white/60 space-y-4 font-display text-xs uppercase tracking-widest leading-relaxed max-h-[60vh] overflow-y-auto scroll pr-2">
-        <p><span class="text-white">I.</span> L'hôte impose le ton de la table.</p>
-        <p><span class="text-white">II.</span> La cible jauge sa propre valeur secrètement.</p>
-        <p><span class="text-white">III.</span> Le groupe juge à l'aveugle.</p>
-        <p><span class="text-white">IV.</span> La vérité appartient au groupe. L'écart dicte la sentence.</p>
-        <p><span class="text-white">V.</span> Chacun possède un privilège occulte. Soyez stratège.</p>
+      <h2 class="text-3xl font-serif italic mb-4 text-white tracking-wide">L'Étiquette & Privilèges</h2>
+      <div class="text-white/70 space-y-4 font-display text-[11px] uppercase tracking-widest leading-relaxed overflow-y-auto scroll pr-2">
+        <p><span class="text-white">I. Déroulement :</span> L'hôte lance les tours. La cible s'évalue, le groupe vote à l'aveugle. L'écart avec la moyenne du groupe détermine les gorgées.</p>
+        <p><span class="text-white">II. La Part des Anges :</span> Tour clément aléatoire. Pas de gorgée, le pire score subit le gage de l'hôte.</p>
+        <p><span class="text-white">III. Pacte de Sang :</span> Destinées liées entre deux joueurs. Partage des lourdes peines en cas d'écart critique.</p>
+        <hr class="border-white/10 my-3">
+        <p class="text-white font-bold mb-2">Les 5 Privilèges Secrets :</p>
+        <p><b>Bouclier :</b> Immunité totale. Zéro gorgée encaissée.</p>
+        <p><b>Miroir :</b> Renvoie l'attaque d'un Cul Sec à l'expéditeur.</p>
+        <p><b>Double :</b> Quitte ou double sur vos points et gorgées.</p>
+        <p><b>Cul Sec :</b> Condamnation immédiate et ciblée d'un adversaire.</p>
+        <p><b>Voleur :</b> Dérobe furtivement le privilège d'un adversaire.</p>
       </div>
     </div>
   </div>
