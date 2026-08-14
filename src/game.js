@@ -6,6 +6,16 @@ let revealing = false;
 let promoting = false;
 let lastActionId = null;
 
+// Nettoyage de salle si tout le monde est parti
+async function cleanRoomIfEmpty(code) {
+  try {
+    const snap = await db.ref(`rooms/${code}/players`).get();
+    if (!snap.exists() || Object.keys(snap.val()).length === 0) {
+      await db.ref(`rooms/${code}`).remove();
+    }
+  } catch(e) {}
+}
+
 export async function tryReconnect() {
   const code = sessionStorage.getItem('thermo_code'); 
   const pid = sessionStorage.getItem('thermo_pid');
@@ -68,20 +78,22 @@ export async function joinRoom() {
 
 function enterRoom(code, pid) {
   S.code = code; S.pid = pid; history.replaceState(null, "", "?room=" + code);
-  
   if (S.roomRef) { S.roomRef.off(); }
   
-  // FIX : Empêche le "Ghost Disconnect" quand on rafraichit la page
   const connRef = db.ref(`rooms/${code}/players/${pid}/connected`);
   connRef.onDisconnect().cancel(); 
-  connRef.onDisconnect().set(false);
-  connRef.set(true);
+  // Suppression réelle du noeud au lieu de juste connected: false pour libérer la DB
+  db.ref(`rooms/${code}/players/${pid}`).onDisconnect().remove().then(() => {
+    db.ref(`rooms/${code}/players`).onDisconnect().cancel(); // Éviter suppression globale erronée
+  });
 
   S.roomRef = db.ref("rooms/" + code);
-  
   S.roomRef.on("value", snap => { 
     const room = snap.val();
-    if (!room || !room.players || !room.players[S.pid]) { detach(); S.screen = "HOME"; S.room = null; toast("Cette table a été fermée."); render(); return; }
+    if (!room || !room.players || !room.players[S.pid]) { 
+      cleanRoomIfEmpty(code); 
+      detach(); S.screen = "HOME"; S.room = null; toast("Cette table a été fermée."); render(); return; 
+    }
     S.room = room; 
     S.screen = "ROOM"; 
 
@@ -91,7 +103,6 @@ function enterRoom(code, pid) {
            showSmashAlert(room.lastAction);
        }
     }
-
     promoteHostIfNeeded(); hostAutoReveal(); render();
   });
 }
@@ -132,7 +143,7 @@ export async function activateCounter() {
 export async function stealJoker(targetId) {
   const r = S.room;
   const targetP = r.players[targetId];
-  if (!targetP || targetP.jokerConsumed || !targetP.joker) return toast("Impossible de dérober cette cible.");
+  if (!targetP || targetP.jokerConsumed || !targetP.joker) return toast("Cible protégée.");
   haptic('medium');
   const stolenJoker = targetP.joker;
   const actorName = S.room.players[S.pid].name;
@@ -181,16 +192,17 @@ function detach() {
 }
 
 export async function quitGame() { 
-  try { if (S.code && S.pid) await db.ref(`rooms/${S.code}/players/${S.pid}`).remove(); } catch(e) {}
+  try { 
+    if (S.code && S.pid) await db.ref(`rooms/${S.code}/players/${S.pid}`).remove(); 
+    cleanRoomIfEmpty(S.code);
+  } catch(e) {}
   detach(); S.screen = "HOME"; render(); 
 }
 
-export async function kickPlayer(id) { await db.ref(`rooms/${S.code}/players/${id}`).remove(); }
 export async function changeMaxRounds(num) { if(S.pid !== S.room.hostId) return; await S.roomRef.update({ maxRounds: num }); }
 export function pickMode(m) { S.pendingMode = m; render(); }
 export async function chooseMode(m) { haptic('light'); await S.roomRef.update({ mode: m }); }
 
-// FIX : Assure la migration de l'Hôte même quand celui-ci refresh brutalement
 async function promoteHostIfNeeded() { 
   const r = S.room; if (!r || !r.players || promoting || r.hostId === S.pid) return; 
   const host = r.players[r.hostId];
@@ -198,17 +210,23 @@ async function promoteHostIfNeeded() {
     const conn = connectedArr(r).sort((a, b) => a.id < b.id ? -1 : 1); 
     if (conn.length > 0 && conn[0].id === S.pid) { 
       promoting = true;
-      try { await S.roomRef.update({ hostId: S.pid }); toast("Vous avez la gestion de la table.", true); } catch(e) {} finally { promoting = false; }
+      try { await S.roomRef.update({ hostId: S.pid }); toast("Vous dirigez la table.", true); } catch(e) {} finally { promoting = false; }
     } 
   } 
 }
 
 export async function startRound() {
   const r = S.room; if (S.pid !== r.hostId) return;
-  if (connectedArr(r).length < 2) return toast("Invitez au moins un convive.");
+  const conn = connectedArr(r);
+  if (conn.length < 2) return toast("Invitez au moins un convive.");
   haptic('heavy');
-  const t = rand(connectedArr(r)); const qText = rand(QUESTIONS[r.mode]).replace(/{name}/g, t.name);
-  const expectedVoters = {}; connectedArr(r).forEach(p => expectedVoters[p.id] = true);
+  
+  const t = rand(conn); 
+  const others = conn.filter(p => p.id !== t.id);
+  const t2 = others.length > 0 ? rand(others) : t;
+
+  const qText = rand(QUESTIONS[r.mode]).replace(/{name}/g, t.name).replace(/{name2}/g, t2.name);
+  const expectedVoters = {}; conn.forEach(p => expectedVoters[p.id] = true);
   
   const upd = { phase: "VOTING", round: (r.round || 0) + 1, question: {text: qText, targetId: t.id, targetName: t.name}, expectedVoters, votes: null, result: null, startedAt: ServerValue.TIMESTAMP };
   Object.keys(r.players).forEach(id => { upd[`players/${id}/jokerActive`] = false; });
@@ -217,14 +235,6 @@ export async function startRound() {
 
 export async function nextRound() { const r = S.room; if (r.maxRounds > 0 && r.round >= r.maxRounds) return endGame(); startRound(); }
 export async function vote() { haptic('heavy'); await db.ref(`rooms/${S.code}/votes/${S.pid}`).set(Number(S.voteValue)); }
-
-function getPenalty(diff) {
-  if (diff <= 10) return { sips: 0, shot: false };
-  if (diff <= 20) return { sips: 1, shot: false };
-  if (diff <= 30) return { sips: 2, shot: false };
-  if (diff <= 40) return { sips: 3, shot: false };
-  return { sips: 0, shot: true };
-}
 
 export async function hostAutoReveal() {  
   try {
@@ -244,10 +254,8 @@ export async function hostAutoReveal() {
     
     Object.keys(r.players).forEach(id => {
        const p = r.players[id];
-       if (p.jokerActive && p.joker && !p.jokerConsumed) {
-           if (p.joker !== "SHIELD" && p.joker !== "MIRROR") {
-               usedJokersLog.push({ id, name: p.name, joker: p.joker });
-           }
+       if (p.jokerActive && p.joker && !p.jokerConsumed && p.joker !== "SHIELD" && p.joker !== "MIRROR") {
+           usedJokersLog.push({ id, name: p.name, joker: p.joker });
        }
     });
 
@@ -283,48 +291,58 @@ export async function hostAutoReveal() {
 
     const hasJoker = (id, jName) => { const p = r.players[id]; return p && p.jokerActive && p.joker === jName && !p.jokerConsumed; };
 
+    // --- NOUVEAU CALCUL : LE PRIX DU CONSENSUS ---
     const tid = r.question.targetId; 
     const tv = votes[tid] !== undefined ? votes[tid] : 50; 
-    const nonTargetVotes = Object.keys(votes).filter(id => id !== tid).map(id => votes[id]);
-    const average = nonTargetVotes.length > 0 ? Math.round(nonTargetVotes.reduce((a, b) => a + b, 0) / nonTargetVotes.length) : 50;
+    const allVotes = Object.values(votes);
+    const average = allVotes.length > 0 ? Math.round(allVotes.reduce((a, b) => a + b, 0) / allVotes.length) : 50;
     
     const targetDiff = Math.abs(tv - average);
-    const targetPenalty = getPenalty(targetDiff);
-    let targetSips = targetPenalty.sips;
-    let targetShot = targetPenalty.shot;
-    let targetMsg = "";
+    let targetSips = 0; let targetShot = false; let targetMsg = ""; let givesSips = 0;
+
+    if (targetDiff <= 10) {
+        givesSips = 3;
+        targetMsg = "Lucidité parfaite. Cible distribue 3 gorgées.";
+    } else if (targetDiff <= 20) {
+        targetSips = 1; targetMsg = "Légère dissonance (1 gorgée).";
+    } else if (targetDiff <= 30) {
+        targetSips = 2; targetMsg = "Le voile de l'illusion (2 gorgées).";
+    } else {
+        targetSips = 4; targetMsg = "Déconnexion absolue (4 gorgées).";
+    }
+
+    if (hasJoker(tid, "DOUBLE")) {
+        if (givesSips > 0) givesSips *= 2;
+        if (targetSips > 0) targetSips *= 2;
+        targetMsg = givesSips > 0 ? "Pari gagné ! Distribuez le double." : "Pari raté, sanction doublée.";
+    }
 
     if (hasJoker(tid, "SHIELD") || hasJoker(tid, "MIRROR")) {
-        targetSips = 0; targetShot = false; targetMsg = "Immunité accordée par privilège.";
-    } else if (hasJoker(tid, "DOUBLE")) {
-        targetSips *= 2; 
-        targetMsg = targetDiff <= 10 ? "Pari audacieux remporté." : "Pari raté, la sentence s'alourdit.";
-    } else {
-        if (targetDiff <= 10) targetMsg = "Lucidité parfaite.";
-        else if (targetDiff <= 20) targetMsg = "Légère dissonance.";
-        else if (targetDiff <= 30) targetMsg = "Le voile de l'illusion.";
-        else if (targetDiff <= 40) targetMsg = "Déni prononcé.";
-        else targetMsg = "Déconnexion clinique de la réalité.";
+        targetSips = 0; givesSips = 0;
+        targetMsg = "Immunité accordée par privilège.";
     }
 
     const groupResults = [];
     Object.keys(votes).forEach(id => {
       if (id === tid || !r.players[id]) return;
-      const diff = Math.abs(votes[id] - average);
-      let penalty = getPenalty(diff);
+      const playerDiff = Math.abs(votes[id] - average);
+      let sips = 0;
       
-      if (hasJoker(id, "SHIELD") || hasJoker(id, "MIRROR")) {
-          penalty.sips = 0; penalty.shot = false;
-      } else if (hasJoker(id, "DOUBLE")) {
-          penalty.sips *= 2;
+      // Pénalité pour le groupe : si la cible boit, ceux qui ont encore plus mal jugé que la cible boivent aussi.
+      if (targetSips > 0 && playerDiff > targetDiff + 5) {
+          sips = 1;
       }
-      groupResults.push({ id, name: r.players[id].name, diff, sips: penalty.sips, shot: penalty.shot });
+      
+      if (hasJoker(id, "SHIELD") || hasJoker(id, "MIRROR")) sips = 0;
+      if (hasJoker(id, "DOUBLE")) sips *= 2;
+      
+      groupResults.push({ id, name: r.players[id].name, diff: playerDiff, sips, shot: false });
     });
 
     const result = { 
-      average: average, targetVote: tv, targetName: r.question.targetName || "La cible", 
-      targetId: tid, targetDiff: targetDiff, targetSips: targetSips, targetShot: targetShot, targetMsg: targetMsg,
-      groupResults: groupResults, usedJokersLog: usedJokersLog, jokerShotVictims: jokerShotVictims
+      average, targetVote: tv, targetName: r.question.targetName || "La cible", 
+      targetId: tid, targetDiff, targetSips, targetShot, targetMsg, givesSips,
+      groupResults, usedJokersLog, jokerShotVictims
     };
     
     const updates = { phase: "REVEAL", result: result };
