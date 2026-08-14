@@ -9,7 +9,6 @@ export function toast(msg, ok=false) {
   setTimeout(() => { el.classList.remove('fade-in'); el.classList.add('fade-out'); setTimeout(() => el.remove(), 600); }, 2500); 
 }
 
-// ALERTE CARTE VOLANTE (GLOBALE SUR TOUS LES ÉCRANS)
 export function showSmashAlert(action) {
   const container = document.getElementById("smash-alert");
   if (!container) return;
@@ -17,14 +16,14 @@ export function showSmashAlert(action) {
   let title = "Privilège";
   let sub = `${esc(action.actor)} abat sa carte`;
   let color = "var(--accent)"; 
-  let iconSvg = icons.logo("w-12 h-12");
+  let iconSvg = icons.logo("w-10 h-10");
 
-  if (action.type === "SHOT") { title = "Cul Sec"; sub = `${esc(action.actor)} condamne ${esc(action.target)}`; iconSvg = icons.shot("w-12 h-12"); color = "#ef4444"; } 
-  else if (action.type === "THIEF") { title = "Voleur"; sub = `${esc(action.actor)} dépouille ${esc(action.target)}`; iconSvg = icons.thief("w-12 h-12"); } 
-  else if (action.type === "SHIELD") { title = "Bouclier"; sub = `${esc(action.actor)} se protège`; iconSvg = icons.shield("w-12 h-12"); color = "#06b6d4"; } 
-  else if (action.type === "DOUBLE") { title = "Double"; sub = `${esc(action.actor)} double la mise`; iconSvg = icons.double("w-12 h-12"); color = "#eab308"; } 
-  else if (action.type === "MIRROR") { title = "Miroir"; sub = `${esc(action.actor)} renvoie l'attaque`; iconSvg = icons.mirror("w-12 h-12"); color = "#ec4899"; } 
-  else if (action.type === "COUNTER") { title = "Riposte"; sub = `${esc(action.actor)} contre-attaque !`; iconSvg = action.joker === 'SHIELD' ? icons.shield("w-12 h-12") : icons.mirror("w-12 h-12"); color = "#06b6d4"; }
+  if (action.type === "SHOT") { title = "Cul Sec"; sub = `${esc(action.actor)} condamne ${esc(action.target)}`; iconSvg = icons.shot("w-10 h-10"); color = "#ef4444"; } 
+  else if (action.type === "THIEF") { title = "Voleur"; sub = `${esc(action.actor)} dépouille ${esc(action.target)}`; iconSvg = icons.thief("w-10 h-10"); } 
+  else if (action.type === "SHIELD") { title = "Bouclier"; sub = `${esc(action.actor)} se protège`; iconSvg = icons.shield("w-10 h-10"); color = "#06b6d4"; } 
+  else if (action.type === "DOUBLE") { title = "Double"; sub = `${esc(action.actor)} double la mise`; iconSvg = icons.double("w-10 h-10"); color = "#eab308"; } 
+  else if (action.type === "MIRROR") { title = "Miroir"; sub = `${esc(action.actor)} renvoie l'attaque`; iconSvg = icons.mirror("w-10 h-10"); color = "#ec4899"; } 
+  else if (action.type === "COUNTER") { title = "Riposte"; sub = `${esc(action.actor)} contre-attaque !`; iconSvg = action.joker === 'SHIELD' ? icons.shield("w-10 h-10") : icons.mirror("w-10 h-10"); color = "#06b6d4"; }
 
   container.innerHTML = `
     <div class="flex flex-col items-center justify-center w-full h-full relative z-50 pointer-events-none px-4">
@@ -40,7 +39,6 @@ export function showSmashAlert(action) {
   `;
 
   container.classList.remove("hidden");
-  // FORCE REFLOW POUR LANCER L'ANIMATION SUR TOUS LES MOBILES
   void container.offsetWidth;
 
   setTimeout(() => { 
@@ -54,6 +52,8 @@ export function toggleRules() {
   if (!modal) return;
   if (modal.classList.contains('hidden')) modal.classList.remove('hidden'); else modal.classList.add('hidden');
 }
+
+window.toggleRules = toggleRules;
 
 function applyBg() { 
   let t = THEMES[(S.room && S.room.mode) || S.pendingMode] || THEMES.Chill;
@@ -95,7 +95,27 @@ export function updateThermometerColor(val) {
   }
 }
 
-// GESTION DU TOUCHER SUR LA CARTE INTERACTIVE (DOUBLE TAP / FLIP)
+// HEADER PERMANENT (ID Salon + Règles accessibles en tout temps)
+function header() {
+  const roomCodeHtml = (S.room && S.code) ? `
+    <div class="flex items-center gap-2 px-3 py-1.5 luxury-card border border-white/20">
+       <span class="font-display text-[8px] uppercase tracking-widest text-white/50">Room:</span>
+       <span class="font-mono text-xs uppercase tracking-widest font-bold select-all" style="color:var(--accent)">${S.code}</span>
+    </div>
+  ` : '';
+
+  return `<header class="flex justify-between items-center mb-4 pt-2 relative z-30">
+    <div class="flex items-center gap-2">
+      ${roomCodeHtml}
+    </div>
+    <div class="flex items-center gap-2">
+      <button onclick="window.toggleRules()" class="px-3 py-1.5 luxury-card border border-white/20 font-display text-[9px] uppercase tracking-widest text-white/80 hover:text-white transition-colors">
+        L'Étiquette
+      </button>
+    </div>
+  </header>`;
+}
+
 window.flipTarotCard = function(e) {
   if (e) { e.stopPropagation(); e.preventDefault(); }
   const card = document.getElementById('tarot-card-interactive');
@@ -188,8 +208,8 @@ function renderHome(t) {
     }
   } catch(e) {}
 
-  return `<div class="flex-1 flex flex-col justify-center pb-8 mt-12 animate-pop relative z-10">
-    <div class="text-center mb-10">
+  return `<div class="flex-1 flex flex-col justify-center pb-8 mt-4 animate-pop relative z-10">
+    <div class="text-center mb-8">
       <h1 class="text-4xl font-serif italic tracking-wide text-white mb-2">Le <span style="color:var(--accent); transition: color 0.5s ease;">Thermo</span>mètre</h1>
       <p class="font-display text-[10px] text-white/40 uppercase tracking-widest">Évaluer. Sanctionner. Répéter.</p>
     </div>
@@ -258,15 +278,9 @@ function renderLobby(r, t) {
     </div>
   `;
 
-  return `<div class="flex-1 flex flex-col pb-8 mt-10 relative z-10">
-    <div class="flex justify-between items-center mb-6 px-2">
-      <button onclick="window.toggleRules()" class="font-display text-[10px] uppercase tracking-widest text-white/50 border border-white/10 px-3 py-1.5 rounded-sm hover:text-white transition-colors">L'Étiquette</button>
+  return `<div class="flex-1 flex flex-col pb-8 mt-2 relative z-10">
+    <div class="flex justify-end items-center mb-4 px-2">
       <button onclick="window.quitGame()" class="font-display text-[10px] uppercase tracking-widest text-red-500/80 border border-red-500/30 px-3 py-1.5 rounded-sm hover:text-red-500 transition-colors">Quitter</button>
-    </div>
-
-    <div class="luxury-card p-6 text-center flex flex-col items-center justify-center gap-2">
-      <span class="text-[10px] font-display uppercase tracking-widest text-white/40">Code d'accès</span>
-      <span class="text-3xl font-serif italic tracking-wider uppercase select-all" style="color:${t.accent}">Room ${S.code}</span>
     </div>
 
     ${jokerSection}
@@ -332,12 +346,12 @@ function renderVoting(r, t) {
       }
 
       jokerActionHtml = `
-      <div class="tarot-scene-interactive mb-4">
+      <div class="tarot-scene-interactive mb-2">
         <div id="tarot-card-interactive" class="tarot-card-interactive" ontouchstart="window.flipTarotCard(event)" onclick="window.flipTarotCard(event)">
            <div class="tarot-face tarot-front">
               <span style="color:${t.accent}" class="mb-1 drop-shadow-md">${myJoker.icon("w-8 h-8")}</span>
               <span class="font-serif italic text-white text-base tracking-wide text-center leading-none">${esc(myJoker.name)}</span>
-              <span class="font-display text-[7px] text-white/40 uppercase tracking-widest mt-1 border border-white/10 px-1.5 py-0.5 rounded-sm bg-black/40">Abattre</span>
+              <span class="font-display text-[7px] text-white/40 uppercase tracking-widest mt-2 border border-white/10 px-2 py-0.5 rounded-sm bg-black/40">Abattre</span>
            </div>
            <div class="tarot-face tarot-back" style="border-color:${t.accent}">
               ${backContent}
@@ -357,40 +371,40 @@ function renderVoting(r, t) {
   
   let angelHtml = "";
   if (r.angelRound) {
-      angelHtml = `<div class="w-full border border-[#FFD700]/30 bg-[#FFD700]/5 p-3 text-center text-[#FFD700] font-serif italic text-sm tracking-wide mt-4">
-        ${icons.angel("w-5 h-5 mx-auto mb-1")} La Part des Anges : Ce tour, la table ne boit pas. La pire estimation subira le gage de l'Hôte.
+      angelHtml = `<div class="w-full border border-[#FFD700]/30 bg-[#FFD700]/5 p-2 text-center text-[#FFD700] font-serif italic text-xs tracking-wide mt-2">
+        ${icons.angel("w-4 h-4 mx-auto mb-0.5")} La Part des Anges : Ce tour, la table ne boit pas.
       </div>`;
   }
 
-  return `${pactHtml}<div class="flex-1 flex flex-col justify-center gap-6 pb-8 mt-4 animate-pop relative z-10">
-    <div class="text-center pt-8 relative">
-      <span class="absolute top-0 left-1/2 -translate-x-1/2 font-display text-[10px] uppercase tracking-widest text-white/30 border border-white/10 px-3 py-1">${r.angelRound ? 'LA PART DES ANGES' : roundCounter}</span>
-      <h2 class="text-3xl font-serif italic leading-snug mt-6 px-4" style="${r.angelRound ? 'color:#FFD700' : ''}">"${esc(q.text)}"</h2>
-      ${amTarget ? `<span class="mt-4 inline-block text-xs font-display uppercase tracking-widest border border-white/20 px-4 py-2 glow-active bg-white/5 text-white" style="border-color:${t.accent}; box-shadow:0 0 15px ${t.accent}40">Cible : Vous-même</span>` : ''}
+  return `${pactHtml}<div class="flex-1 flex flex-col justify-center gap-4 pb-8 mt-2 animate-pop relative z-10">
+    <div class="text-center pt-2 relative">
+      <span class="font-display text-[9px] uppercase tracking-widest text-white/30 border border-white/10 px-3 py-1">${r.angelRound ? 'LA PART DES ANGES' : roundCounter}</span>
+      <h2 class="text-2xl font-serif italic leading-snug mt-3 px-4" style="${r.angelRound ? 'color:#FFD700' : ''}">"${esc(q.text)}"</h2>
+      ${amTarget ? `<span class="mt-2 inline-block text-[10px] font-display uppercase tracking-widest border border-white/20 px-3 py-1 glow-active bg-white/5 text-white" style="border-color:${t.accent}; box-shadow:0 0 15px ${t.accent}40">Cible : Vous-même</span>` : ''}
     </div>
     
     ${angelHtml}
 
     ${!voted ? `
       ${jokerActionHtml}
-      <div class="mt-2 flex flex-col items-center gap-6 px-4">
+      <div class="flex flex-col items-center gap-4 px-4">
         
         <div class="relative w-full h-10 glass-tube rounded-full overflow-hidden flex items-center p-1">
            <div id="slider-fill" class="h-full rounded-full mercury-fluid pointer-events-none" style="width: ${S.voteValue}%; background: ${t.accent};"></div>
            <input type="range" id="slider" min="0" max="100" value="${S.voteValue}" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-50" style="touch-action: pan-x;" />
         </div>
         
-        <span id="sv" class="text-6xl font-display font-light text-white tracking-tighter" style="color:${t.accent}">${S.voteValue}%</span>
+        <span id="sv" class="text-5xl font-display font-light text-white tracking-tighter" style="color:${t.accent}">${S.voteValue}%</span>
 
-        <button onclick="window.vote()" class="w-full py-4 luxury-btn mt-2 breathing bg-black/50" style="border-color:${t.accent}; color:${t.accent}">Sceller la décision</button>
+        <button onclick="window.vote()" class="w-full py-3.5 luxury-btn breathing bg-black/50" style="border-color:${t.accent}; color:${t.accent}">Sceller la décision</button>
       </div>
     ` : `
-      <div class="mt-10 flex flex-col items-center">
-        <span class="font-display text-[10px] uppercase tracking-widest text-white/40 mb-6 animate-pulse">Le tribunal délibère...</span>
-        <div class="w-full luxury-card p-5 flex flex-col gap-2">
+      <div class="mt-6 flex flex-col items-center">
+        <span class="font-display text-[10px] uppercase tracking-widest text-white/40 mb-4 animate-pulse">Le tribunal délibère...</span>
+        <div class="w-full luxury-card p-4 flex flex-col gap-2">
           ${connectedArr(r).map(p => {
             const hasV = (r.votes || {})[p.id] !== undefined;
-            return `<div class="flex justify-between items-center py-3 border-b border-white/5 last:border-0"><span class="font-display font-light text-lg capitalize tracking-wide ${hasV ? 'text-white' : 'text-white/30'}">${esc(p.name)}</span> ${hasV ? `<span class="font-display text-[10px] uppercase tracking-widest" style="color:${t.accent}">Validé</span>` : `<span class="font-display text-[10px] uppercase tracking-widest text-white/30">Décision...</span>`}</div>`;
+            return `<div class="flex justify-between items-center py-2 border-b border-white/5 last:border-0"><span class="font-display font-light text-base capitalize tracking-wide ${hasV ? 'text-white' : 'text-white/30'}">${esc(p.name)}</span> ${hasV ? `<span class="font-display text-[9px] uppercase tracking-widest" style="color:${t.accent}">Validé</span>` : `<span class="font-display text-[9px] uppercase tracking-widest text-white/30">Décision...</span>`}</div>`;
           }).join('')}
         </div>
       </div>
@@ -407,9 +421,9 @@ function renderReveal(r, t) {
   if (S.pid !== res.targetId && myVote !== undefined) {
       const myDiff = Math.abs(myVote - res.average);
       myStatsHtml = `
-        <div class="mt-6 w-full p-4 border border-white/10 flex justify-between items-center">
-          <span class="text-white/50 text-[10px] font-display uppercase tracking-widest">Votre vote : <span class="text-white">${myVote}%</span></span>
-          <span class="text-[10px] font-display uppercase tracking-widest" style="color:${t.accent}">Écart : <span class="text-white">${myDiff} pts</span></span>
+        <div class="mt-4 w-full p-3 border border-white/10 flex justify-between items-center">
+          <span class="text-white/50 text-[9px] font-display uppercase tracking-widest">Votre vote : <span class="text-white">${myVote}%</span></span>
+          <span class="text-[9px] font-display uppercase tracking-widest" style="color:${t.accent}">Écart : <span class="text-white">${myDiff} pts</span></span>
         </div>
       `;
   }
@@ -418,15 +432,15 @@ function renderReveal(r, t) {
   if (res.usedJokersLog && res.usedJokersLog.length > 0) {
       jokersLogHtml = res.usedJokersLog.map(log => {
           if (log.blocked) {
-              return `<div class="w-full border border-white/20 p-3 mb-2 text-center text-white text-[10px] font-display uppercase tracking-widest">
+              return `<div class="w-full border border-white/20 p-2.5 mb-2 text-center text-white text-[9px] font-display uppercase tracking-widest">
                 <span style="color:${t.accent}">${esc(log.name)}</span> a utilisé son Bouclier contre ${esc(log.blocked)}
               </div>`;
           } else if (log.reflectedTo) {
-              return `<div class="w-full border border-white/20 p-3 mb-2 text-center text-white text-[10px] font-display uppercase tracking-widest">
+              return `<div class="w-full border border-white/20 p-2.5 mb-2 text-center text-white text-[9px] font-display uppercase tracking-widest">
                 <span style="color:${t.accent}">${esc(log.name)}</span> a renvoyé l'attaque sur ${esc(log.reflectedTo)}
               </div>`;
           }
-          return `<div class="w-full border border-white/20 p-3 mb-2 text-center text-white text-[10px] font-display uppercase tracking-widest">
+          return `<div class="w-full border border-white/20 p-2.5 mb-2 text-center text-white text-[9px] font-display uppercase tracking-widest">
             <span style="color:${t.accent}">${esc(log.name)}</span> a engagé sa carte
           </div>`;
       }).join("");
@@ -436,11 +450,11 @@ function renderReveal(r, t) {
   if (res.jokerShotVictims && res.jokerShotVictims.length > 0) {
       jokerShotVictimsHtml = res.jokerShotVictims.map(v => {
           if (v.originalTarget) {
-               return `<div class="w-full border border-white/40 p-4 mb-3 text-center text-white font-display uppercase tracking-widest text-xs">
-                Effet Miroir : ${esc(v.name)} subit son propre CUL SEC (Cible intiale : ${esc(v.originalTarget)})
+               return `<div class="w-full border border-white/40 p-3 mb-2 text-center text-white font-display uppercase tracking-widest text-[10px]">
+                Effet Miroir : ${esc(v.name)} subit son propre CUL SEC (Cible : ${esc(v.originalTarget)})
               </div>`;
           }
-          return `<div class="w-full border border-red-500/50 p-4 mb-3 text-center text-white font-display uppercase tracking-widest text-xs">
+          return `<div class="w-full border border-red-500/50 p-3 mb-2 text-center text-white font-display uppercase tracking-widest text-[10px]">
             ${esc(v.name)} subit une condamnation ciblée (CUL SEC)
           </div>`;
       }).join("");
@@ -448,31 +462,31 @@ function renderReveal(r, t) {
 
   let targetVerdictHtml = "";
   if (r.angelRound) {
-    targetVerdictHtml = `<div class="w-full border border-[#FFD700]/50 p-5 text-center text-white font-serif italic tracking-wide flex flex-col gap-2 mt-4">
-      <span class="text-2xl" style="color:#FFD700">Clémence Divine</span>
-      <span class="text-xs font-display font-sans text-white/80 tracking-widest uppercase">${res.targetMsg}</span>
-      ${res.angelLoser ? `<span class="mt-2 text-[10px] font-display text-[#FFD700] uppercase tracking-widest border-t border-[#FFD700]/30 pt-2">Conséquence physique pour ${esc(res.angelLoser.name)} (${res.angelLoser.diff} pts d'écart)</span>` : ''}
+    targetVerdictHtml = `<div class="w-full border border-[#FFD700]/50 p-4 text-center text-white font-serif italic tracking-wide flex flex-col gap-1.5 mt-3">
+      <span class="text-xl" style="color:#FFD700">Clémence Divine</span>
+      <span class="text-[10px] font-display font-sans text-white/80 tracking-widest uppercase">${res.targetMsg}</span>
+      ${res.angelLoser ? `<span class="mt-1 text-[9px] font-display text-[#FFD700] uppercase tracking-widest border-t border-[#FFD700]/30 pt-1.5">Conséquence pour ${esc(res.angelLoser.name)} (${res.angelLoser.diff} pts d'écart)</span>` : ''}
     </div>`;
   } else {
     if (res.givesSips > 0) {
-      targetVerdictHtml = `<div class="w-full border border-white/20 p-5 text-center text-white font-serif italic tracking-wide flex flex-col gap-2 mt-4">
-        <span class="text-2xl" style="color:${t.accent}">${esc(res.targetName)} distribue ${res.givesSips} gorgée${res.givesSips > 1 ? 's' : ''}</span>
-        <span class="text-xs font-display font-sans text-white/60 tracking-widest uppercase">${res.targetMsg}</span>
+      targetVerdictHtml = `<div class="w-full border border-white/20 p-4 text-center text-white font-serif italic tracking-wide flex flex-col gap-1.5 mt-3">
+        <span class="text-xl" style="color:${t.accent}">${esc(res.targetName)} distribue ${res.givesSips} gorgée${res.givesSips > 1 ? 's' : ''}</span>
+        <span class="text-[10px] font-display font-sans text-white/60 tracking-widest uppercase">${res.targetMsg}</span>
       </div>`;
     } else if (res.targetShot) {
-      targetVerdictHtml = `<div class="w-full border border-red-500/50 p-5 text-center text-white font-serif italic tracking-wide flex flex-col gap-2 mt-4">
-        <span class="text-2xl">Condamnation absolue : CUL SEC</span>
-        <span class="text-xs font-display font-sans text-white/60 tracking-widest uppercase">${res.targetMsg} (${res.targetDiff} pts d'écart)</span>
+      targetVerdictHtml = `<div class="w-full border border-red-500/50 p-4 text-center text-white font-serif italic tracking-wide flex flex-col gap-1.5 mt-3">
+        <span class="text-xl">Condamnation absolue : CUL SEC</span>
+        <span class="text-[10px] font-display font-sans text-white/60 tracking-widest uppercase">${res.targetMsg} (${res.targetDiff} pts d'écart)</span>
       </div>`;
     } else if (res.targetSips > 0) {
-      targetVerdictHtml = `<div class="w-full border border-white/20 p-5 text-center text-white font-serif italic tracking-wide flex flex-col gap-2 mt-4">
-        <span class="text-2xl">${esc(res.targetName)} boit ${res.targetSips} gorgée${res.targetSips > 1 ? 's' : ''}</span>
-        <span class="text-xs font-display font-sans text-white/60 tracking-widest uppercase">${res.targetMsg}</span>
+      targetVerdictHtml = `<div class="w-full border border-white/20 p-4 text-center text-white font-serif italic tracking-wide flex flex-col gap-1.5 mt-3">
+        <span class="text-xl">${esc(res.targetName)} boit ${res.targetSips} gorgée${res.targetSips > 1 ? 's' : ''}</span>
+        <span class="text-[10px] font-display font-sans text-white/60 tracking-widest uppercase">${res.targetMsg}</span>
       </div>`;
     } else {
-      targetVerdictHtml = `<div class="w-full border border-white/20 p-5 text-center text-white font-serif italic tracking-wide flex flex-col gap-2 mt-4">
-        <span class="text-2xl" style="color:${t.accent}">${esc(res.targetName)} ne boit pas.</span>
-        <span class="text-xs font-display font-sans text-white/60 tracking-widest uppercase">${res.targetMsg}</span>
+      targetVerdictHtml = `<div class="w-full border border-white/20 p-4 text-center text-white font-serif italic tracking-wide flex flex-col gap-1.5 mt-3">
+        <span class="text-xl" style="color:${t.accent}">${esc(res.targetName)} ne boit pas.</span>
+        <span class="text-[10px] font-display font-sans text-white/60 tracking-widest uppercase">${res.targetMsg}</span>
       </div>`;
     }
   }
@@ -481,15 +495,15 @@ function renderReveal(r, t) {
   const penalizedGroup = (res.groupResults || []).filter(p => p.sips > 0 || p.shot || p.collateral).sort((a,b) => b.diff - a.diff);
   
   if (penalizedGroup.length === 0 && !r.angelRound) {
-    groupVerdictHtml = `<div class="w-full border border-white/10 p-4 text-center text-white/50 font-display text-[10px] uppercase tracking-widest mt-4">Le groupe échappe aux pénalités</div>`;
+    groupVerdictHtml = `<div class="w-full border border-white/10 p-3 text-center text-white/50 font-display text-[9px] uppercase tracking-widest mt-3">Le groupe échappe aux pénalités</div>`;
   } else if (!r.angelRound) {
     const listHtml = penalizedGroup.map(p => {
       const penalty = p.shot ? "CUL SEC" : `${p.sips} gorgée${p.sips > 1 ? 's' : ''}`;
       const colMsg = p.collateral ? `<span class="text-red-400 block text-[8px]">+ ${p.collateral}</span>` : "";
-      return `<div class="flex justify-between items-center text-xs font-display uppercase py-2 border-b border-white/5 last:border-0"><span class="text-white">${esc(p.name)} <span class="text-white/30 text-[9px] tracking-widest">(${p.diff} pts)</span>${colMsg}</span> <span class="text-white/80">${penalty}</span></div>`;
+      return `<div class="flex justify-between items-center text-xs font-display uppercase py-1.5 border-b border-white/5 last:border-0"><span class="text-white">${esc(p.name)} <span class="text-white/30 text-[8px] tracking-widest">(${p.diff} pts)</span>${colMsg}</span> <span class="text-white/80">${penalty}</span></div>`;
     }).join("");
-    groupVerdictHtml = `<div class="w-full border border-white/20 p-4 text-left mt-4">
-      <span class="block text-center text-white/50 font-display uppercase text-[9px] tracking-widest mb-4">Balles Perdues & Dégâts collatéraux</span>
+    groupVerdictHtml = `<div class="w-full border border-white/20 p-3 text-left mt-3">
+      <span class="block text-center text-white/50 font-display uppercase text-[9px] tracking-widest mb-2">Balles Perdues & Dégâts collatéraux</span>
       ${listHtml}
     </div>`;
   }
@@ -505,43 +519,43 @@ function renderReveal(r, t) {
        const v = (r.votes || {})[p.id];
        const isTarget = p.id === res.targetId;
        const opacityClass = p.connected === false ? 'opacity-40' : '';
-       return `<div class="flex justify-between items-center py-2 border-b border-white/5 last:border-0 ${isTarget ? 'text-white' : 'text-white/60'} ${opacityClass}">
-         <span class="text-sm font-display font-light capitalize tracking-wide">${esc(p.name)} ${isTarget ? '<span class="text-[9px] font-display text-white/40 tracking-widest uppercase">(Cible)</span>' : ''}</span>
-         <span class="font-display font-light text-xl" ${isTarget ? `style="color:${t.accent}"` : ''}>${v !== undefined ? v.toString().padStart(2, '0') + '%' : '---'}</span>
+       return `<div class="flex justify-between items-center py-1.5 border-b border-white/5 last:border-0 ${isTarget ? 'text-white' : 'text-white/60'} ${opacityClass}">
+         <span class="text-xs font-display font-light capitalize tracking-wide">${esc(p.name)} ${isTarget ? '<span class="text-[8px] font-display text-white/40 tracking-widest uppercase">(Cible)</span>' : ''}</span>
+         <span class="font-display font-light text-lg" ${isTarget ? `style="color:${t.accent}"` : ''}>${v !== undefined ? v.toString().padStart(2, '0') + '%' : '---'}</span>
        </div>`;
   }).join("");
 
   const hostControls = isHost ? `
-    <div class="flex flex-col gap-4 mt-6 w-full">
-      <button onclick="window.nextRound()" class="w-full py-4 luxury-btn bg-black/50" style="border-color:${t.accent}; color:${t.accent}">${r.maxRounds > 0 && r.round >= r.maxRounds ? 'Bilan Final' : 'Question Suivante'}</button>
-      <button onclick="window.endGame()" class="w-full py-4 luxury-btn !border-red-500/30 !text-red-500/80 hover:!bg-red-500/10 transition-colors bg-black/50">Clôturer la session</button>
+    <div class="flex flex-col gap-3 mt-4 w-full">
+      <button onclick="window.nextRound()" class="w-full py-3.5 luxury-btn bg-black/50" style="border-color:${t.accent}; color:${t.accent}">${r.maxRounds > 0 && r.round >= r.maxRounds ? 'Bilan Final' : 'Question Suivante'}</button>
+      <button onclick="window.endGame()" class="w-full py-3.5 luxury-btn !border-red-500/30 !text-red-500/80 hover:!bg-red-500/10 transition-colors bg-black/50">Clôturer la session</button>
     </div>
-  ` : `<p class="font-display text-[10px] text-center uppercase tracking-widest text-white/40 mt-8">En attente de l'hôte...</p>`;
+  ` : `<p class="font-display text-[9px] text-center uppercase tracking-widest text-white/40 mt-6">En attente de l'hôte...</p>`;
 
-  return `${pactHtml}<div class="flex-1 flex flex-col gap-5 pb-8 mt-6 relative z-10">
+  return `${pactHtml}<div class="flex-1 flex flex-col gap-4 pb-8 mt-2 relative z-10">
     <div class="text-center">
       <p class="text-white/40 text-[9px] font-display uppercase tracking-widest">Le Verdict Social</p>
-      <h2 class="text-2xl font-serif italic text-white tracking-wide mt-2 capitalize">${esc(res.targetName)} VS Moyenne</h2>
+      <h2 class="text-xl font-serif italic text-white tracking-wide mt-1 capitalize">${esc(res.targetName)} VS Moyenne</h2>
     </div>
     
-    <div class="text-center animate-pop mt-4 h-24 flex items-center justify-center">
-      <span id="reveal-avg" class="font-display font-light text-white opacity-0 text-7xl tracking-tighter">00</span>
+    <div class="text-center animate-pop mt-2 h-20 flex items-center justify-center">
+      <span id="reveal-avg" class="font-display font-light text-white opacity-0 text-6xl tracking-tighter">00</span>
     </div>
     
     <div id="reveal-details" class="flex flex-col opacity-0 transition-opacity duration-700">
       ${jokersLogHtml}
       ${jokerShotVictimsHtml}
       
-      <div class="luxury-card p-6 flex flex-col items-center">
+      <div class="luxury-card p-5 flex flex-col items-center">
         <div class="flex w-full justify-around items-center">
           <div class="flex flex-col text-center gap-1">
-            <span class="text-white/40 text-[9px] font-display uppercase tracking-widest">La Moyenne</span>
-            <span class="text-3xl font-display font-light text-white">${res.average}%</span>
+            <span class="text-white/40 text-[8px] font-display uppercase tracking-widest">La Moyenne</span>
+            <span class="text-2xl font-display font-light text-white">${res.average}%</span>
           </div>
-          <div class="w-px h-10 bg-white/10"></div>
+          <div class="w-px h-8 bg-white/10"></div>
           <div class="flex flex-col text-center gap-1">
-            <span class="text-white/40 text-[9px] font-display uppercase tracking-widest">La Cible</span>
-            <span class="text-3xl font-display font-light" style="color:${t.accent}">${res.targetVote}%</span>
+            <span class="text-white/40 text-[8px] font-display uppercase tracking-widest">La Cible</span>
+            <span class="text-2xl font-display font-light" style="color:${t.accent}">${res.targetVote}%</span>
           </div>
         </div>
         
@@ -550,9 +564,9 @@ function renderReveal(r, t) {
         ${myStatsHtml}
       </div>
       
-      <div class="w-full luxury-card p-5 mt-4">
-        <h4 class="text-[9px] font-display uppercase tracking-widest mb-4 text-center">Les Évaluations</h4>
-        <div class="max-h-44 overflow-y-auto scroll pr-2">
+      <div class="w-full luxury-card p-4 mt-3">
+        <h4 class="text-[8px] text-white/40 font-display uppercase tracking-widest mb-2 text-center">Les Évaluations</h4>
+        <div class="max-h-36 overflow-y-auto scroll pr-2">
           ${recapList}
         </div>
       </div>
@@ -564,32 +578,32 @@ function renderReveal(r, t) {
 
 function renderStats(r, t) { 
   const rk = r.ranking; const isHost = S.pid === r.hostId;
-  return `<div class="flex-1 flex flex-col gap-6 pb-8 mt-10 relative z-10">
-    <div class="text-center mb-4">
-      <h2 class="text-3xl font-serif italic tracking-wide text-white">Fin de Session</h2>
+  return `<div class="flex-1 flex flex-col gap-4 pb-8 mt-6 relative z-10">
+    <div class="text-center mb-2">
+      <h2 class="text-2xl font-serif italic tracking-wide text-white">Fin de Session</h2>
     </div>
     
-    <div class="luxury-card p-8 text-center flex flex-col items-center justify-center border border-white/20 glow-active" style="border-color:${t.accent}60">
-      <span class="text-[9px] font-display uppercase tracking-widest text-white/50 mb-4">La plus grande lucidité</span>
-      <p class="text-4xl font-display font-light text-white capitalize tracking-wide mb-4" style="color:${t.accent}">${esc(rk.winner.name)}</p>
-      <span class="font-display text-[10px] text-white/60 border border-white/10 px-4 py-2 uppercase tracking-widest">${rk.winner.score} pts d'erreur cumulés</span>
+    <div class="luxury-card p-6 text-center flex flex-col items-center justify-center border border-white/20 glow-active" style="border-color:${t.accent}60">
+      <span class="text-[9px] font-display uppercase tracking-widest text-white/50 mb-2">La plus grande lucidité</span>
+      <p class="text-3xl font-display font-light text-white capitalize tracking-wide mb-2" style="color:${t.accent}">${esc(rk.winner.name)}</p>
+      <span class="font-display text-[9px] text-white/60 border border-white/10 px-3 py-1.5 uppercase tracking-widest">${rk.winner.score} pts d'erreur cumulés</span>
     </div>
     
-    <div class="luxury-card p-8 text-center flex flex-col items-center justify-center mt-2 border border-white/5 opacity-80">
-      <span class="text-[9px] font-display uppercase tracking-widest text-white/40 mb-4">Déni absolu (Dernière place)</span>
-      <p class="text-3xl font-display font-light text-white/80 capitalize tracking-wide mb-4">${esc(rk.loser.name)}</p>
-      <span class="font-display text-[10px] text-white/40 border border-white/10 px-4 py-2 uppercase tracking-widest">${rk.loser.score} pts d'erreur cumulés</span>
+    <div class="luxury-card p-6 text-center flex flex-col items-center justify-center mt-1 border border-white/5 opacity-80">
+      <span class="text-[9px] font-display uppercase tracking-widest text-white/40 mb-2">Déni absolu (Dernière place)</span>
+      <p class="text-2xl font-display font-light text-white/80 capitalize tracking-wide mb-2">${esc(rk.loser.name)}</p>
+      <span class="font-display text-[9px] text-white/40 border border-white/10 px-3 py-1.5 uppercase tracking-widest">${rk.loser.score} pts d'erreur cumulés</span>
     </div>
 
-    <div class="mt-8 border border-white/20 p-6 text-center bg-white/5">
-      <span class="text-[9px] font-display uppercase tracking-widest text-white/50 block mb-3">La Sentence Légitime</span>
-      <p class="text-xs font-display text-white leading-relaxed uppercase tracking-widest">
+    <div class="mt-4 border border-white/20 p-4 text-center bg-white/5">
+      <span class="text-[9px] font-display uppercase tracking-widest text-white/50 block mb-2">La Sentence Légitime</span>
+      <p class="text-[11px] font-display text-white leading-relaxed uppercase tracking-widest">
         <span style="color:${t.accent}">${esc(rk.winner.name)}</span> détient l'autorité absolue pour imposer une ultime sanction à <span>${esc(rk.loser.name)}</span>.
       </p>
     </div>
     
-    <div class="mt-8">
-      ${isHost ? `<button onclick="window.restart()" class="w-full py-4 luxury-btn bg-black/50" style="border-color:${t.accent}; color:${t.accent}">Nouvelle Session</button>` : `<p class="font-display text-[10px] text-center uppercase tracking-widest text-white/40">Session clôturée</p>`}
+    <div class="mt-4">
+      ${isHost ? `<button onclick="window.restart()" class="w-full py-3.5 luxury-btn bg-black/50" style="border-color:${t.accent}; color:${t.accent}">Nouvelle Session</button>` : `<p class="font-display text-[9px] text-center uppercase tracking-widest text-white/40">Session clôturée</p>`}
     </div>
   </div>`; 
 }
@@ -630,7 +644,7 @@ export function render() {
     else if (S.room.phase === "STATS") body = renderStats(S.room, t);
   }
   
-  const html = body;
+  const html = header() + body;
   if (app.__html === html) return;
 
   const active = document.activeElement;
