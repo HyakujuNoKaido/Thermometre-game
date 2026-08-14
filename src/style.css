@@ -2,7 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ANTI-BARRE NOIRE IOS */
 html {
   background-color: #050505 !important;
   height: -webkit-fill-available;
@@ -18,6 +17,7 @@ body {
   color: #fff; 
   -webkit-font-smoothing: antialiased;
   overscroll-behavior: none;
+  font-variant-numeric: tabular-nums; /* FIX: Stabilité absolue des chiffres */
 }
 
 input, select, textarea, button { font-size: 16px !important; outline: none; touch-action: manipulation; }
@@ -26,7 +26,6 @@ input, select, textarea, button { font-size: 16px !important; outline: none; tou
 .font-display { font-family: 'Outfit', sans-serif; }
 .font-serif { font-family: 'Playfair Display', serif; }
 
-/* === LE WRAPPER IOS BORDERLESS === */
 .app-wrapper {
   position: absolute;
   top: 0; right: 0; bottom: 0; left: 0;
@@ -42,7 +41,6 @@ input, select, textarea, button { font-size: 16px !important; outline: none; tou
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
-  /* Marges automatiques s'adaptant à l'encoche et la barre du bas */
   padding-top: max(env(safe-area-inset-top), 60px);
   padding-bottom: max(env(safe-area-inset-bottom), 30px);
 }
@@ -53,6 +51,7 @@ input, select, textarea, button { font-size: 16px !important; outline: none; tou
   opacity: 0.04; mix-blend-mode: overlay;
 }
 
+/* === ANIMATIONS DE BASE === */
 .fade-in { animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 .fade-out { animation: fadeOut 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -61,8 +60,13 @@ input, select, textarea, button { font-size: 16px !important; outline: none; tou
 .animate-pop { animation: pop .5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 @keyframes pop { 0% { opacity: 0; transform: scale(.95); } 100% { opacity: 1; transform: scale(1); } }
 
+/* FLASH DE RÉVÉLATION DU SCORE */
 .animate-flash { animation: flashBang 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 @keyframes flashBang { 0% { opacity: 1; } 10% { opacity: 0.8; } 100% { opacity: 0; } }
+
+/* === LE FLASH VISCÉRAL (ALERTE) === */
+.animate-flash-fast { animation: flashFast 0.6s ease-out forwards; }
+@keyframes flashFast { 0% { opacity: 0.7; } 100% { opacity: 0; } }
 
 /* === ALERTE CARTE VOLANTE === */
 .flying-tarot-alert {
@@ -80,6 +84,23 @@ input, select, textarea, button { font-size: 16px !important; outline: none; tou
   40% { transform: translateY(0) scale(1) rotate(-3deg); opacity: 1; }
   75% { transform: translateY(0) scale(1.05) rotate(3deg); opacity: 1; }
   100% { transform: translateY(-40vh) scale(0.4) rotate(-20deg); opacity: 0; }
+}
+
+/* === PARTICULES D'AMBIANCE === */
+.particle { position: absolute; border-radius: 50%; opacity: 0; pointer-events: none; }
+.bubble { background: rgba(255, 255, 255, 0.1); animation: floatUp var(--dur) linear infinite; }
+@keyframes floatUp { 
+  0% { transform: translateY(100vh) scale(0.5); opacity: 0; } 
+  20% { opacity: 1; } 
+  80% { opacity: 1; } 
+  100% { transform: translateY(-10vh) scale(1.5); opacity: 0; } 
+}
+.ember { background: #ff4500; box-shadow: 0 0 10px #ff4500, 0 0 20px #ff0000; animation: floatEmber var(--dur) ease-in-out infinite; }
+@keyframes floatEmber { 
+  0% { transform: translate(0, 100vh) scale(0.2); opacity: 0; } 
+  20% { opacity: 0.8; } 
+  50% { transform: translate(var(--drift), 50vh) scale(1); opacity: 0.8; } 
+  100% { transform: translate(calc(var(--drift) * -1), -10vh) scale(0.2); opacity: 0; } 
 }
 
 /* === CARTE TAROT 3D CSS INTERACTIVE === */
