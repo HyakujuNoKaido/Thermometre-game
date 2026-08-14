@@ -6,11 +6,8 @@ html, body {
   background-color: #050505 !important;
   margin: 0; padding: 0;
   width: 100%; height: 100%;
-  max-width: 100%; max-height: 100%;
-  overflow: hidden !important;
-  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-  overscroll-behavior: none; touch-action: none;
-  -webkit-text-size-adjust: 100%;
+  min-height: 100vh;
+  overflow-x: hidden;
   font-family: 'Outfit', sans-serif; 
   color: #fff; 
   -webkit-font-smoothing: antialiased;
@@ -39,28 +36,22 @@ input, select, textarea, button { font-size: 16px !important; outline: none; }
 .animate-flash { animation: flashBang 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 @keyframes flashBang { 0% { opacity: 1; } 10% { opacity: 0.8; } 100% { opacity: 0; } }
 
-/* === CARTE D'ALERTE (SMASH) VOLANTE === */
-.card-alert-container { perspective: 1200px; }
+/* === CARTE D'ALERTE VOLANTE (SMASH) === */
 .card-alert {
-  width: 160px; height: 240px; margin: 0 auto;
-  transform-style: preserve-3d; position: relative;
-  animation: flyInCard 1.8s cubic-bezier(0.2, 0.9, 0.3, 1.1) forwards;
-}
-@keyframes flyInCard {
-  0% { transform: translateY(80vh) scale(0.2) rotateY(-90deg) rotateZ(30deg); opacity: 0; }
-  35% { transform: translateY(-5vh) scale(1.1) rotateY(180deg) rotateZ(-5deg); opacity: 1; }
-  60%, 100% { transform: translateY(0) scale(1) rotateY(360deg) rotateZ(0deg); opacity: 1; }
-}
-.card-alert-face {
-  position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden;
-  border-radius: 8px; border: 1px solid rgba(255,255,255,0.3);
+  width: 140px; height: 200px; margin: 0 auto;
+  position: relative; border-radius: 8px;
   background: linear-gradient(135deg, #151515, #000);
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+  animation: flyInCard 2.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
-.card-alert-back { transform: rotateY(180deg); }
+@keyframes flyInCard {
+  0% { transform: translateY(60vh) scale(0.3) rotate(-20deg); opacity: 0; }
+  30% { transform: translateY(-2vh) scale(1.1) rotate(5deg); opacity: 1; }
+  70% { transform: translateY(0) scale(1) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(-30vh) scale(0.8) rotate(10deg); opacity: 0; }
+}
 
-/* === CARTE TAROT INTERACTIVE (VOTE) - CORRIGÉE MOBILE === */
+/* === CARTE TAROT INTERACTIVE (VOTE) === */
 .tarot-scene-interactive { perspective: 1000px; width: 100%; height: 180px; z-index: 50; touch-action: manipulation; }
 .tarot-card-interactive {
   width: 130px; height: 180px; margin: 0 auto; position: relative;
@@ -78,13 +69,25 @@ input, select, textarea, button { font-size: 16px !important; outline: none; }
   border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); 
   background: linear-gradient(135deg, #111, #000);
   box-shadow: 0 10px 20px rgba(0,0,0,0.5);
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  pointer-events: auto;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px;
+  pointer-events: auto; box-sizing: border-box;
 }
 .tarot-front { z-index: 2; }
-.tarot-back { transform: rotateY(180deg); background: rgba(8,8,8,0.98); z-index: 1; }
 
-/* Gestion tactile dynamique des faces */
+/* FIX DE LA SUPERPOSITION DU VERSO (TAROT-BACK) */
+.tarot-back {
+  transform: rotateY(180deg);
+  background: #080808;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-align: center;
+  padding: 8px;
+}
+
 .tarot-card-interactive:not(.flipped) .tarot-back { pointer-events: none; }
 .tarot-card-interactive.flipped .tarot-front { pointer-events: none; }
 
