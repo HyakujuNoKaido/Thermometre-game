@@ -125,12 +125,17 @@ UI.onAfterRender(function() {
 });
 
 async function initApp() {
-  syncLaTablePlayers();
-  
-  const urlRoom = new URLSearchParams(window.location.search).get("room");
-  if (urlRoom) S.joinCode = urlRoom.toUpperCase();
-  
-  if (await tryReconnect()) return;
+  try {
+    syncLaTablePlayers();
+    
+    const urlRoom = new URLSearchParams(window.location.search).get("room");
+    if (urlRoom) S.joinCode = urlRoom.toUpperCase();
+    
+    const reconnected = await tryReconnect();
+    if (reconnected) return;
+  } catch (e) {
+    console.error("Erreur critique d'initialisation :", e);
+  }
   UI.render();
 }
 
