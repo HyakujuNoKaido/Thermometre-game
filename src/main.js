@@ -42,7 +42,6 @@ function bindInputs() {
   if (g("restartB")) g("restartB").onclick = Game.restart;
 
   const sl = g("slider");
-  const sliderContainer = document.getElementById("slider-container");
   if (sl) {
     sl.value = S.voteValue; 
     UI.updateThermometerColor(S.voteValue);
@@ -60,12 +59,6 @@ function bindInputs() {
         else if (val > 50) haptic('medium');
         else haptic('light');
       }
-
-      if (sliderContainer) {
-         if (val > 85) sliderContainer.className = "relative w-full h-12 flex items-center shake-heavy";
-         else if (val > 65) sliderContainer.className = "relative w-full h-12 flex items-center shake-light";
-         else sliderContainer.className = "relative w-full h-12 flex items-center";
-      }
     };
   }
 }
@@ -82,7 +75,7 @@ UI.onAfterRender(function() {
     if (avgEl && detailsEl) {
       const target = Number(S.room.result?.average) || 0;
       let rolls = 0;
-      const maxRolls = 40; 
+      const maxRolls = 30; // Suspense un peu plus court (1.2s)
       
       avgEl.classList.remove("opacity-0");
       avgEl.classList.add("blur-[2px]");
