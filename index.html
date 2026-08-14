@@ -5,31 +5,23 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no, viewport-fit=cover" />
 <title>Le Thermomètre | La Carte</title>
 <meta name="theme-color" content="#050505" />
-<meta name="apple-mobile-web-app-capable" content="yes" />
-<meta name="mobile-web-app-capable" content="yes" />
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Playfair+Display:ital,wght@0,600;1,600&display=swap" rel="stylesheet">
-
 <link rel="icon" href="./icon.svg" type="image/svg+xml" />
-<link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png" />
-<link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png" />
 <link rel="manifest" href="./manifest.json" />
-
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 </head>
 
 <body>
+<!-- Le Container WebGL 3D (Arrière-plan absolu) -->
+<div id="webgl-container" class="fixed inset-0 z-0 pointer-events-none"></div>
 
 <div id="flash-overlay" class="fixed inset-0 bg-white opacity-0 pointer-events-none z-[200]"></div>
+<div id="gold-overlay" class="fixed inset-0 bg-[#FFB800] mix-blend-overlay opacity-0 pointer-events-none z-[150] transition-opacity duration-1000"></div>
 
-<div class="fixed inset-0 w-full h-full overflow-hidden z-0">
+<div class="fixed inset-0 w-full h-full overflow-hidden z-10">
   <div class="noise-overlay"></div>
 
-  <!-- FIX : z-[200] et pointer-events-auto pour garantir le clic -->
   <button id="hubReturnBtn" class="fixed top-[env(safe-area-inset-top,10px)] left-4 mt-4 z-[200] flex items-center gap-2 text-white/50 hover:text-white transition-colors font-display text-xs uppercase tracking-widest outline-none cursor-pointer pointer-events-auto">
     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
     La Carte
@@ -46,6 +38,7 @@
   </div>
 
   <div id="counterModal" class="fixed inset-0 z-[60] hidden bg-black/90 backdrop-blur-lg flex items-center justify-center px-5 pointer-events-auto">
+    <!-- UI Modal inchangée -->
     <div class="luxury-card w-full max-w-sm p-8 text-center flex flex-col items-center relative overflow-hidden animate-pop">
        <div class="relative z-10 w-full flex flex-col items-center">
           <h2 class="text-2xl font-serif italic mb-2 text-white tracking-wide" id="counter-title">Offensive ciblée</h2>
@@ -58,21 +51,7 @@
     </div>
   </div>
 
-  <div id="rulesModal" class="fixed inset-0 z-[60] hidden bg-black/90 backdrop-blur-lg flex items-center justify-center px-5 pointer-events-auto">
-    <div class="luxury-card w-full max-w-sm p-8 flex flex-col relative animate-pop">
-      <button onclick="toggleRules()" class="absolute top-4 right-4 text-white/40 hover:text-white font-display text-xs uppercase tracking-widest outline-none">Fermer</button>
-      <h2 class="text-3xl font-serif italic mb-6 text-white tracking-wide">L'Étiquette</h2>
-      <div class="text-white/60 space-y-4 font-display text-xs uppercase tracking-widest leading-relaxed max-h-[60vh] overflow-y-auto scroll pr-2">
-        <p><span class="text-white">I.</span> L'hôte impose le ton de la table.</p>
-        <p><span class="text-white">II.</span> La cible jauge sa propre valeur secrètement.</p>
-        <p><span class="text-white">III.</span> Le groupe juge à l'aveugle.</p>
-        <p><span class="text-white">IV.</span> La vérité appartient au groupe. L'écart dicte la sentence.</p>
-        <p><span class="text-white">V.</span> Chacun possède un privilège occulte. Soyez stratège.</p>
-      </div>
-    </div>
-  </div>
-
-  <div id="app" class="w-full max-w-md mx-auto h-full overflow-x-hidden overflow-y-auto px-5 pt-16 pb-8 flex flex-col relative z-10 fade-in" style="-webkit-overflow-scrolling: touch;">
+  <div id="app" class="w-full max-w-md mx-auto h-full overflow-x-hidden overflow-y-auto px-5 pt-16 pb-8 flex flex-col relative z-20 fade-in" style="-webkit-overflow-scrolling: touch;">
     <!-- Injecté par ui.js -->
   </div>
 </div>
