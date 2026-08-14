@@ -68,7 +68,15 @@ export async function joinRoom() {
 
 function enterRoom(code, pid) {
   S.code = code; S.pid = pid; history.replaceState(null, "", "?room=" + code);
-  db.ref(`rooms/${code}/players/${pid}`).onDisconnect().update({ connected: false });
+  
+  if (S.roomRef) { S.roomRef.off(); }
+  
+  // FIX : Empêche le "Ghost Disconnect" quand on rafraichit la page
+  const connRef = db.ref(`rooms/${code}/players/${pid}/connected`);
+  connRef.onDisconnect().cancel(); 
+  connRef.onDisconnect().set(false);
+  connRef.set(true);
+
   S.roomRef = db.ref("rooms/" + code);
   
   S.roomRef.on("value", snap => { 
@@ -182,10 +190,11 @@ export async function changeMaxRounds(num) { if(S.pid !== S.room.hostId) return;
 export function pickMode(m) { S.pendingMode = m; render(); }
 export async function chooseMode(m) { haptic('light'); await S.roomRef.update({ mode: m }); }
 
+// FIX : Assure la migration de l'Hôte même quand celui-ci refresh brutalement
 async function promoteHostIfNeeded() { 
   const r = S.room; if (!r || !r.players || promoting || r.hostId === S.pid) return; 
   const host = r.players[r.hostId];
-  if (!host) { 
+  if (!host || host.connected === false) { 
     const conn = connectedArr(r).sort((a, b) => a.id < b.id ? -1 : 1); 
     if (conn.length > 0 && conn[0].id === S.pid) { 
       promoting = true;
