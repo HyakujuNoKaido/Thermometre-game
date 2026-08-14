@@ -48,6 +48,16 @@ export function showSmashAlert(action) {
   }, 3500); 
 }
 
+export function confirmCounter() {
+  document.getElementById("counterModal").classList.add("hidden");
+  if (activateCounter) activateCounter();
+}
+export function ignoreCounter() {
+  document.getElementById("counterModal").classList.add("hidden");
+}
+window.confirmCounter = confirmCounter;
+window.ignoreCounter = ignoreCounter;
+
 export function toggleRules() {
   const modal = document.getElementById('rulesModal');
   if (!modal) return;
@@ -95,7 +105,7 @@ export function updateThermometerColor(val) {
   }
 }
 
-// GESTION DU FLIP DE LA CARTE 3D (AVEC TOUCHER MOBILE GARANTI)
+// GESTION DU FLIP 3D DES CARTES AVEC INTERACTIONS TACTILES SÉCURISÉES
 window.flipTarotCard = function(e) {
   if (e) { e.stopPropagation(); e.preventDefault(); }
   const card = document.getElementById('tarot-card-interactive');
@@ -185,7 +195,7 @@ function header() {
     </div>
   ` : '';
 
-  return `<header class="flex justify-between items-center mb-4 pt-2 relative z-30">
+  return `<header class="flex justify-between items-center mb-4 pt-2 relative z-30 pl-28">
     <div class="flex items-center gap-2">
       ${roomCodeHtml}
     </div>
@@ -240,7 +250,7 @@ function renderHome(t) {
       <input id="joinI" oninput="window.updateJoinCode(this.value)" maxlength="4" placeholder="ROOM" value="${esc(S.joinCode)}" class="flex-1 min-w-0 bg-transparent border-none px-2 py-2 text-xl font-display tracking-[0.2em] text-center uppercase outline-none text-white placeholder:text-white/10"/>
       <button id="joinB" onclick="window.joinRoom()" class="py-3 px-6 border border-white/20 text-xs font-display uppercase tracking-widest hover:bg-white/10 transition-all text-white rounded-sm">Rejoindre</button>
     </div>
-  `; 
+  </div>`; 
 }
 
 function renderLobby(r, t) { 
@@ -317,7 +327,7 @@ function renderLobby(r, t) {
        ${connectedArr(r).length < 2 ? `<p class="font-display text-xs text-center uppercase tracking-widest text-white/40 mb-4">En attente des invités...</p>` : ''}
        ${isHost ? `<button onclick="window.startRound()" class="w-full py-4 luxury-btn" style="border-color:${t.accent}; color:${t.accent}" ${connectedArr(r).length < 2 ? 'disabled' : ''}>Ouvrir les débats</button>` : (!isHost && connectedArr(r).length >= 2 ? `<p class="font-display text-xs text-center uppercase tracking-widest text-white/40 animate-pulse">Le maître de cérémonie prépare la table...</p>` : "")}
     </div>
-  </div>`;
+  `;
 }
 
 function renderVoting(r, t) { 
@@ -335,24 +345,24 @@ function renderVoting(r, t) {
       if (myJokerStr === "THIEF") {
           const stealablePlayers = connectedArr(r).filter(p => p.id !== S.pid && p.joker && !p.jokerConsumed);
           if (stealablePlayers.length > 0) {
-              backContent = `<span class="text-white/50 font-display uppercase tracking-widest text-[8px] block mb-1">Dérober :</span>
+              backContent = `<span class="text-white/60 font-display uppercase tracking-widest text-[8px] block mb-1">Dérober :</span>
               <div class="flex flex-col gap-1 w-full px-1 max-h-24 overflow-y-auto scroll">
-                  ${stealablePlayers.map(p => `<button onclick="window.confirmTarotAction('steal', '${p.id}', event)" class="w-full py-2 border border-white/25 text-white font-display text-[9px] uppercase tracking-widest hover:bg-white/15 transition-colors rounded-sm">${esc(p.name)}</button>`).join("")}
+                  ${stealablePlayers.map(p => `<button ontouchstart="window.confirmTarotAction('steal', '${p.id}', event)" onclick="window.confirmTarotAction('steal', '${p.id}', event)" class="w-full py-2 border border-white/30 text-white font-display text-[9px] uppercase tracking-widest bg-black/80 rounded-sm">${esc(p.name)}</button>`).join("")}
               </div>`;
           } else {
               backContent = `<span class="text-white/40 text-[9px] font-display uppercase tracking-widest text-center px-1">Aucune cible</span>`;
           }
       } else if (myJokerStr === "SHOT") {
           const attackablePlayers = connectedArr(r).filter(p => p.id !== S.pid);
-          backContent = `<span class="text-white/50 font-display uppercase tracking-widest text-[8px] block mb-1">Condamner :</span>
+          backContent = `<span class="text-white/60 font-display uppercase tracking-widest text-[8px] block mb-1">Condamner :</span>
           <div class="flex flex-col gap-1 w-full px-1 max-h-24 overflow-y-auto scroll">
-              ${attackablePlayers.map(p => `<button onclick="window.confirmTarotAction('shot', '${p.id}', event)" class="w-full py-2 border border-white/25 text-white font-display text-[9px] uppercase tracking-widest hover:bg-white/15 transition-colors rounded-sm">${esc(p.name)}</button>`).join("")}
+              ${attackablePlayers.map(p => `<button ontouchstart="window.confirmTarotAction('shot', '${p.id}', event)" onclick="window.confirmTarotAction('shot', '${p.id}', event)" class="w-full py-2 border border-white/30 text-white font-display text-[9px] uppercase tracking-widest bg-black/80 rounded-sm">${esc(p.name)}</button>`).join("")}
           </div>`;
       } else {
           backContent = `
             <span class="text-white font-serif italic text-xs mb-2">Confirmer ?</span>
-            <button onclick="window.confirmTarotAction('toggle', null, event)" class="w-[90%] py-2.5 border text-white font-display text-[10px] uppercase tracking-widest hover:bg-white/15 transition-colors rounded-sm font-bold" style="border-color:${t.accent}">Confirmer</button>
-            <button onclick="window.unflipTarotCard(event)" class="w-[90%] mt-1.5 py-2 border border-white/20 text-white/60 font-display text-[9px] uppercase tracking-widest hover:text-white transition-colors rounded-sm">Retour</button>
+            <button ontouchstart="window.confirmTarotAction('toggle', null, event)" onclick="window.confirmTarotAction('toggle', null, event)" class="w-[90%] py-2.5 border text-white font-display text-[10px] uppercase tracking-widest bg-black/80 rounded-sm font-bold" style="border-color:${t.accent}">Confirmer</button>
+            <button ontouchstart="window.unflipTarotCard(event)" onclick="window.unflipTarotCard(event)" class="w-[90%] mt-1.5 py-2 border border-white/20 text-white/60 font-display text-[9px] uppercase tracking-widest bg-black/60 rounded-sm">Retour</button>
           `;
       }
 
@@ -616,7 +626,7 @@ function renderStats(r, t) {
     <div class="mt-8">
       ${isHost ? `<button onclick="window.restart()" class="w-full py-4 luxury-btn bg-black/50" style="border-color:${t.accent}; color:${t.accent}">Nouvelle Session</button>` : `<p class="font-display text-[10px] text-center uppercase tracking-widest text-white/40">Session clôturée</p>`}
     </div>
-  </div>`; 
+  `; 
 }
 
 let afterRenderHook = null;
