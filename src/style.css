@@ -75,7 +75,7 @@ input, select, textarea, button { font-size: 16px !important; outline: none; }
   position: absolute; inset: 0; backface-visibility: hidden; border-radius: 8px;
   border: 1px solid rgba(255,255,255,0.15); background: linear-gradient(135deg, #111, #000);
   box-shadow: 0 10px 20px rgba(0,0,0,0.5);
-  display: flex; flex-direction: column; align-items: center; justify-content: center; p-4;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1rem;
 }
 .tarot-back { transform: rotateY(180deg); background: rgba(5,5,5,0.9); }
 
