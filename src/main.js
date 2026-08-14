@@ -54,11 +54,7 @@ function handleHubReturn() {
 }
 
 function bindInputs() {
-  const g = id => document.getElementById(id);
-  const ni = g("nameI"); if (ni) ni.oninput = e => { S.name = e.target.value; sessionStorage.setItem('thermo_name', S.name); };
-  const ji = g("joinI"); if (ji) ji.oninput = e => S.joinCode = e.target.value.toUpperCase();
-
-  const sl = g("slider");
+  const sl = document.getElementById("slider");
   if (sl) {
     sl.value = S.voteValue; 
     UI.updateThermometerColor(S.voteValue);
